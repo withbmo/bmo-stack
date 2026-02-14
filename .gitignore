@@ -67,3 +67,6 @@ override.tf.json
 *_override.tf.json
 .terraformrc
 terraform.rc
+
+# Prisma generated client (regenerated via `pnpm db:generate`)
+packages/db/src/generated/
