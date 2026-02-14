@@ -6,7 +6,7 @@ COPY packages ./packages
 RUN corepack enable && pnpm install --frozen-lockfile
 
 FROM deps AS build
-RUN pnpm --filter @pytholit/web build
+RUN pnpm --filter @pytholit/web... build
 
 FROM node:20-alpine AS runner
 WORKDIR /app
