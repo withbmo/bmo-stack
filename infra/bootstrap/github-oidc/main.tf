@@ -21,8 +21,14 @@ locals {
 
   oidc_provider_arn = var.create_oidc_provider ? aws_iam_openid_connect_provider.github[0].arn : var.github_oidc_provider_arn
 
-  dev_subs  = [for b in var.dev_branch_patterns : "repo:${local.repo_slug}:ref:refs/heads/${b}"]
-  prod_subs = [for b in var.prod_branch_patterns : "repo:${local.repo_slug}:ref:refs/heads/${b}"]
+  dev_subs = concat(
+    [for b in var.dev_branch_patterns : "repo:${local.repo_slug}:ref:refs/heads/${b}"],
+    ["repo:${local.repo_slug}:environment:dev"]
+  )
+  prod_subs = concat(
+    [for b in var.prod_branch_patterns : "repo:${local.repo_slug}:ref:refs/heads/${b}"],
+    ["repo:${local.repo_slug}:environment:prod"]
+  )
 
   plan_subs = concat(
     [for b in var.dev_branch_patterns : "repo:${local.repo_slug}:ref:refs/heads/${b}"],
