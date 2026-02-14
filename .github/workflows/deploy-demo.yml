@@ -215,7 +215,7 @@ jobs:
             exit 1
           fi
 
-          run_arn="$(aws ecs run-task \
+          run_output="$(aws ecs run-task \
             --cluster "$cluster_name" \
             --launch-type FARGATE \
             --task-definition "$task_def" \
@@ -233,8 +233,15 @@ jobs:
                 }
               ]
             }' \
-            --query 'tasks[0].taskArn' \
-            --output text)"
+            --output json)"
+
+          run_arn="$(echo "$run_output" | jq -r '.tasks[0].taskArn // empty')"
+          failure_count="$(echo "$run_output" | jq '.failures | length')"
+          if [[ "$failure_count" -gt 0 || -z "$run_arn" ]]; then
+            echo "Failed to start migration task."
+            echo "$run_output" | jq -r '.failures[]? | "- \(.arn // "unknown"): \(.reason // "unknown reason") \(.detail // "")"'
+            exit 1
+          fi
 
           echo "Migration task started: $run_arn"
           aws ecs wait tasks-stopped --cluster "$cluster_name" --tasks "$run_arn"
