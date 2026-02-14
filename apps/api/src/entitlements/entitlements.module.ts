@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
+
+import { DatabaseModule } from '../database/database.module';
 import { EntitlementsController } from './entitlements.controller';
 import { EntitlementsService } from './entitlements.service';
-import { DatabaseModule } from '../database/database.module';
 
 @Module({
   imports: [DatabaseModule],

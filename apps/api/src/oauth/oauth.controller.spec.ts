@@ -1,11 +1,12 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
+
 import { OauthController } from './oauth.controller';
+import { OauthService } from './oauth.service';
 import { OauthCodeService } from './oauth-code.service';
 import { OauthStateService } from './oauth-state.service';
-import { OauthService } from './oauth.service';
-import { ConfigService } from '@nestjs/config';
 
 describe('OauthController (exchange)', () => {
   let app: INestApplication;

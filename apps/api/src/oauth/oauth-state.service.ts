@@ -31,6 +31,15 @@ export class OauthStateService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit() {
     if (!this.redisUrl) return;
+    if (
+      !this.redisUrl.startsWith('redis://') &&
+      !this.redisUrl.startsWith('rediss://')
+    ) {
+      this.logger.warn(
+        'REDIS_URL is set but does not use redis:// or rediss://. Falling back to memory store.'
+      );
+      return;
+    }
     const client = createClient({ url: this.redisUrl });
     client.on('error', (err: unknown) => {
       this.logger.warn(`Redis error: ${err instanceof Error ? err.message : String(err)}`);

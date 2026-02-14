@@ -1,17 +1,18 @@
 import {
-  Injectable,
-  UnauthorizedException,
+  BadRequestException,
   ConflictException,
   ForbiddenException,
-  BadRequestException,
+  Injectable,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
-import { PrismaService } from '../database/prisma.service';
-import type { SignupDto, LoginDto, ResetPasswordDto } from '@pytholit/validation/class-validator';
 import type { LoginResponse } from '@pytholit/contracts';
 import { exclude } from '@pytholit/db';
+import type { LoginDto, ResetPasswordDto,SignupDto } from '@pytholit/validation/class-validator';
+import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
+
+import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
 export class AuthService {

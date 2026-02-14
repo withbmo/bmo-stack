@@ -31,6 +31,13 @@ jobs:
         with:
           terraform_wrapper: false
 
+      - name: Validate AWS role secret
+        run: |
+          if [[ -z "${{ secrets.AWS_ROLE_TO_ASSUME }}" ]]; then
+            echo "Missing AWS_ROLE_TO_ASSUME secret."
+            exit 1
+          fi
+
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:

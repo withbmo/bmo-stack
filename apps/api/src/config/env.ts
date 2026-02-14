@@ -1,4 +1,4 @@
-import { cleanEnv, str, bool, num } from 'envalid';
+import { bool, cleanEnv, num,str } from 'envalid';
 
 export function validateEnv() {
   return cleanEnv(process.env, {

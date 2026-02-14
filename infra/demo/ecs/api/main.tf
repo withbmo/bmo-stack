@@ -4,12 +4,19 @@ resource "aws_cloudwatch_log_group" "this" {
 }
 
 locals {
-  container_secrets = [
+  base_secrets = [
     for s in [
       { name = "JWT_SECRET", valueFrom = var.jwt_secret_arn },
       { name = "ENV_SESSION_SECRET", valueFrom = var.env_session_secret_arn }
     ] : s if s.valueFrom != null && s.valueFrom != ""
   ]
+
+  db_secrets = var.db_credentials_secret_arn != null && var.db_credentials_secret_arn != "" ? [
+    { name = "DB_USER", valueFrom = "${var.db_credentials_secret_arn}:username::" },
+    { name = "DB_PASSWORD", valueFrom = "${var.db_credentials_secret_arn}:password::" }
+  ] : []
+
+  container_secrets = concat(local.base_secrets, local.db_secrets)
 }
 
 resource "aws_ecs_task_definition" "this" {
@@ -38,6 +45,12 @@ resource "aws_ecs_task_definition" "this" {
           awslogs-stream-prefix = "api"
         }
       }
+      environment = [
+        { name = "DB_HOST", value = var.db_host != null ? var.db_host : "" },
+        { name = "DB_PORT", value = tostring(var.db_port) },
+        { name = "DB_NAME", value = var.db_name != null ? var.db_name : "" },
+        { name = "DB_SSLMODE", value = "require" }
+      ]
       secrets = local.container_secrets
     }
   ])

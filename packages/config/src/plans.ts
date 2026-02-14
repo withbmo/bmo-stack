@@ -68,8 +68,9 @@ export function validatePlans(plans: Plan[]): void {
     if (!featureIdSet) {
       featureIdSet = currentFeatureIds;
     } else {
-      const missing = [...featureIdSet].filter((id) => !currentFeatureIds.has(id));
-      const extra = [...currentFeatureIds].filter((id) => !featureIdSet.has(id));
+      const baselineFeatureIds = featureIdSet;
+      const missing = [...baselineFeatureIds].filter((id) => !currentFeatureIds.has(id));
+      const extra = [...currentFeatureIds].filter((id) => !baselineFeatureIds.has(id));
       if (missing.length > 0 || extra.length > 0) {
         errors.push(
           `plans[${index}].features must match feature IDs across plans (missing: ${missing.join(

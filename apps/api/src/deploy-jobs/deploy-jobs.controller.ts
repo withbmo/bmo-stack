@@ -1,17 +1,18 @@
 import {
+  Body,
   Controller,
   Get,
-  Post,
-  Param,
-  Body,
-  Query,
   HttpCode,
   HttpStatus,
+  Param,
+  Post,
+  Query,
 } from '@nestjs/common';
-import { DeployJobsService } from './deploy-jobs.service';
-import { CreateDeployJobDto } from '@pytholit/validation/class-validator';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { DeployJob } from '@pytholit/contracts';
+import { CreateDeployJobDto } from '@pytholit/validation/class-validator';
+
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { DeployJobsService } from './deploy-jobs.service';
 
 /**
  * Deploy Jobs Controller

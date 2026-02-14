@@ -1,4 +1,5 @@
 import { Global, Module } from '@nestjs/common';
+
 import { TurnstileService } from './services/turnstile.service';
 
 @Global()

@@ -1,7 +1,8 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
+
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { EntitlementsService } from './entitlements.service';
 import { RecordEntitlementUsageDto } from './dto/record-usage.dto';
+import { EntitlementsService } from './entitlements.service';
 
 @Controller('entitlements')
 export class EntitlementsController {

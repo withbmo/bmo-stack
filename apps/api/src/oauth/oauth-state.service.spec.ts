@@ -1,5 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { createClient } from 'redis';
+
 import { OauthStateService } from './oauth-state.service';
 
 type MockRedisClient = {

@@ -1,24 +1,25 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerGuard,ThrottlerModule } from '@nestjs/throttler';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
-import { ProjectsModule } from './projects/projects.module';
-import { EnvironmentsModule } from './environments/environments.module';
-import { DeployJobsModule } from './deploy-jobs/deploy-jobs.module';
-import { OtpModule } from './otp/otp.module';
-import { OauthModule } from './oauth/oauth.module';
-import { BillingModule } from './billing/billing.module';
-import { EmailModule } from './email/email.module';
-import { CommonModule } from './common/common.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
-import { WizardModule } from './wizard/wizard.module';
+import { BillingModule } from './billing/billing.module';
+import { CommonModule } from './common/common.module';
 import { validateEnv } from './config/env';
+import { DatabaseModule } from './database/database.module';
+import { DeployJobsModule } from './deploy-jobs/deploy-jobs.module';
+import { EmailModule } from './email/email.module';
 import { EntitlementsModule } from './entitlements/entitlements.module';
+import { EnvironmentsModule } from './environments/environments.module';
+import { OauthModule } from './oauth/oauth.module';
+import { OtpModule } from './otp/otp.module';
+import { ProjectsModule } from './projects/projects.module';
+import { UsersModule } from './users/users.module';
+import { WizardModule } from './wizard/wizard.module';
 
 @Module({
   imports: [

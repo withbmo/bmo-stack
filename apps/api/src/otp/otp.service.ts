@@ -1,11 +1,12 @@
-import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import type { OTPPurpose } from '@pytholit/contracts';
+import * as crypto from 'crypto';
+
+import { TurnstileService } from '../common/services/turnstile.service';
 import { PrismaService } from '../database/prisma.service';
 import { EmailService } from '../email/email.service';
-import { TurnstileService } from '../common/services/turnstile.service';
-import * as crypto from 'crypto';
-import type { OTPPurpose } from '@pytholit/contracts';
 
 /**
  * OTP Service

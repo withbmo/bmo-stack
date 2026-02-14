@@ -33,6 +33,17 @@ module "security" {
   tags              = local.tags
 }
 
+module "postgres" {
+  source                = "./postgres"
+  project_name          = var.project_name
+  vpc_id                = module.servicesvpc.vpc_id
+  private_subnet_ids    = module.servicesvpc.private_subnet_ids
+  ecs_security_group_id = module.security.ecs_services_security_group_id
+  master_username       = var.postgres_master_username
+  instances             = var.postgres_instances
+  tags                  = local.tags
+}
+
 module "secrets" {
   source       = "./secrets"
   project_name = var.project_name
@@ -40,9 +51,12 @@ module "secrets" {
 }
 
 module "iam" {
-  source      = "./iam"
-  tags        = local.tags
-  secret_arns = [module.secrets.jwt_secret_arn, module.secrets.env_session_secret_arn]
+  source = "./iam"
+  tags   = local.tags
+  secret_arns = concat(
+    [module.secrets.jwt_secret_arn, module.secrets.env_session_secret_arn],
+    values(module.postgres.master_secret_arns)
+  )
 }
 
 module "dynamodb" {
@@ -112,19 +126,23 @@ module "ecs_web" {
 }
 
 module "ecs_api" {
-  source                 = "./ecs/api"
-  cluster_arn            = module.ecs_shared.cluster_arn
-  cluster_name           = module.ecs_shared.cluster_name
-  private_subnet_ids     = module.servicesvpc.private_subnet_ids
-  security_group_id      = module.security.ecs_services_security_group_id
-  execution_role_arn     = module.iam.ecs_execution_role_arn
-  task_role_arn          = module.iam.api_task_role_arn
-  jwt_secret_arn         = module.secrets.jwt_secret_arn
-  env_session_secret_arn = module.secrets.env_session_secret_arn
-  enable_load_balancer   = var.enable_alb
-  target_group_arn       = var.enable_alb ? module.alb_app[0].api_target_group_arn : null
-  image                  = var.images.api
-  tags                   = local.tags
+  source                    = "./ecs/api"
+  cluster_arn               = module.ecs_shared.cluster_arn
+  cluster_name              = module.ecs_shared.cluster_name
+  private_subnet_ids        = module.servicesvpc.private_subnet_ids
+  security_group_id         = module.security.ecs_services_security_group_id
+  execution_role_arn        = module.iam.ecs_execution_role_arn
+  task_role_arn             = module.iam.api_task_role_arn
+  jwt_secret_arn            = module.secrets.jwt_secret_arn
+  env_session_secret_arn    = module.secrets.env_session_secret_arn
+  db_host                   = module.postgres.endpoints[var.api_database_env]
+  db_port                   = module.postgres.ports[var.api_database_env]
+  db_name                   = "pytholit_${var.api_database_env}"
+  db_credentials_secret_arn = module.postgres.master_secret_arns[var.api_database_env]
+  enable_load_balancer      = var.enable_alb
+  target_group_arn          = var.enable_alb ? module.alb_app[0].api_target_group_arn : null
+  image                     = var.images.api
+  tags                      = local.tags
 }
 
 module "ecs_terminal_gateway" {

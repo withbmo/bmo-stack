@@ -1,9 +1,10 @@
-import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import { AppModule } from './app.module';
-import helmet from 'helmet';
+import { NestFactory } from '@nestjs/core';
+import type { NextFunction,Request, Response } from 'express';
 import * as express from 'express';
-import type { Request, Response, NextFunction } from 'express';
+import helmet from 'helmet';
+
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   // Disable Nest's default body parser so we can:

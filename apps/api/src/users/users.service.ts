@@ -1,16 +1,17 @@
 import {
+  BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
-  ConflictException,
-  BadRequestException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
-import { exclude } from '@pytholit/db';
-import { UpdateUserDto } from './dto/update-user.dto';
 import type { UserProfile } from '@pytholit/contracts';
+import { exclude } from '@pytholit/db';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+
+import { PrismaService } from '../database/prisma.service';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 /**
  * Users Service

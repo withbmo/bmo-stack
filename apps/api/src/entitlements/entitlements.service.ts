@@ -4,8 +4,9 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
 import { getDefaultPlan, getPlanById } from '@pytholit/config';
+
+import { PrismaService } from '../database/prisma.service';
 type ConfigPlan = ReturnType<typeof getDefaultPlan>;
 type ConfigPlanFeature = ConfigPlan['features'][number];
 

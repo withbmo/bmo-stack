@@ -1,9 +1,10 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
-import { OtpService } from './otp.service';
+import { Body, Controller, HttpCode, HttpStatus,Post } from '@nestjs/common';
+import type { OTPVerifyResponse } from '@pytholit/contracts';
+
+import { Public } from '../auth/decorators/public.decorator';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
-import { Public } from '../auth/decorators/public.decorator';
-import type { OTPVerifyResponse } from '@pytholit/contracts';
+import { OtpService } from './otp.service';
 
 /**
  * OTP Controller

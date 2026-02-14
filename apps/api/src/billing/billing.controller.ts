@@ -1,24 +1,25 @@
 import {
+  Body,
   Controller,
   Get,
-  Post,
-  Body,
   Headers,
-  Req,
-  Query,
   HttpCode,
   HttpStatus,
+  Post,
+  Query,
   type RawBodyRequest,
+  Req,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { BillingService } from './billing.service';
-import { StripeService } from './stripe.service';
+import type { Request } from 'express';
+
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
-import type { Request } from 'express';
+import { BillingService } from './billing.service';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
-import { ValidatePaymentMethodDto } from './dto/validate-payment-method.dto';
 import { RecordUsageDto } from './dto/record-usage.dto';
+import { ValidatePaymentMethodDto } from './dto/validate-payment-method.dto';
+import { StripeService } from './stripe.service';
 
 /**
  * Billing Controller

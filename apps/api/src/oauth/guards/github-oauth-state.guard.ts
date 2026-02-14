@@ -1,5 +1,6 @@
 import { ExecutionContext, Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+
 import { OauthStateService } from '../oauth-state.service';
 
 @Injectable()

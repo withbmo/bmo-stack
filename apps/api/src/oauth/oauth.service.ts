@@ -1,7 +1,8 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import { AuthService } from '../auth/auth.service';
+import { BadRequestException,Injectable } from '@nestjs/common';
 import type { LoginResponse } from '@pytholit/contracts';
+
+import { AuthService } from '../auth/auth.service';
+import { PrismaService } from '../database/prisma.service';
 
 export interface OAuthProfile {
   provider: 'google' | 'github';

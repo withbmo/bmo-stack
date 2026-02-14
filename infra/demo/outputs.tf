@@ -30,6 +30,18 @@ output "env_session_secret_arn" {
   value = module.secrets.env_session_secret_arn
 }
 
+output "postgres_endpoints" {
+  value = module.postgres.endpoints
+}
+
+output "postgres_ports" {
+  value = module.postgres.ports
+}
+
+output "postgres_master_secret_arns" {
+  value = module.postgres.master_secret_arns
+}
+
 output "app_alb_dns_name" {
   value = try(module.alb_app[0].alb_dns_name, null)
 }

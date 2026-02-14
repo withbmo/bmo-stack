@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Post, UsePipes, ValidationPipe } from '@nestjs/common';
+
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { WizardGenerateDto } from './dto/wizard-generate.dto';
 import { WizardService } from './wizard.service';

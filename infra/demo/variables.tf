@@ -44,6 +44,52 @@ variable "enable_dns_acm" {
   default = false
 }
 
+variable "postgres_master_username" {
+  type    = string
+  default = "pytholit_admin"
+}
+
+variable "api_database_env" {
+  type        = string
+  default     = "dev"
+  description = "Which postgres instance the API should use (dev|prod)"
+
+  validation {
+    condition     = contains(["dev", "prod"], var.api_database_env)
+    error_message = "api_database_env must be one of: dev, prod."
+  }
+}
+
+variable "postgres_instances" {
+  type = map(object({
+    instance_class          = string
+    allocated_storage       = number
+    max_allocated_storage   = number
+    backup_retention_period = number
+    multi_az                = bool
+    deletion_protection     = bool
+  }))
+
+  default = {
+    dev = {
+      instance_class          = "db.t4g.micro"
+      allocated_storage       = 20
+      max_allocated_storage   = 100
+      backup_retention_period = 1
+      multi_az                = false
+      deletion_protection     = false
+    }
+    prod = {
+      instance_class          = "db.t4g.micro"
+      allocated_storage       = 20
+      max_allocated_storage   = 100
+      backup_retention_period = 1
+      multi_az                = false
+      deletion_protection     = false
+    }
+  }
+}
+
 variable "images" {
   type = object({
     web              = string

@@ -1,5 +1,5 @@
-import { IsString, IsBoolean, IsOptional, MinLength, MaxLength, Matches } from 'class-validator';
 import { PROJECT_CONSTANTS } from '@pytholit/validation/zod';
+import { IsBoolean, IsOptional, IsString, Matches,MaxLength, MinLength } from 'class-validator';
 
 export class UpdateProjectDto {
   @IsOptional()

@@ -76,6 +76,14 @@ jobs:
           echo "aws_role=$aws_role" >> "$GITHUB_OUTPUT"
           echo "image_tag=$image_tag" >> "$GITHUB_OUTPUT"
 
+      - name: Validate AWS role secret
+        run: |
+          if [[ -z "${{ steps.context.outputs.aws_role }}" ]]; then
+            echo "Missing AWS role secret for selected environment."
+            echo "Set AWS_ROLE_TO_ASSUME_DEV for dev and AWS_ROLE_TO_ASSUME_PROD for prod."
+            exit 1
+          fi
+
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -168,6 +176,82 @@ jobs:
             echo "No environment tfvars file found at infra/demo/$tfvars_file, using defaults."
           fi
           terraform apply "${args[@]}"
+
+      - name: Run Prisma migrations (one-off ECS task)
+        run: |
+          set -euo pipefail
+
+          cluster_name="demo-services-cluster"
+          service_name="demo-api"
+          task_def="$(aws ecs describe-services \
+            --cluster "$cluster_name" \
+            --services "$service_name" \
+            --query 'services[0].taskDefinition' \
+            --output text)"
+
+          subnet_csv="$(aws ecs describe-services \
+            --cluster "$cluster_name" \
+            --services "$service_name" \
+            --query 'services[0].networkConfiguration.awsvpcConfiguration.subnets' \
+            --output text | tr '\t' ',')"
+          sg_csv="$(aws ecs describe-services \
+            --cluster "$cluster_name" \
+            --services "$service_name" \
+            --query 'services[0].networkConfiguration.awsvpcConfiguration.securityGroups' \
+            --output text | tr '\t' ',')"
+
+          if [[ -z "$task_def" || "$task_def" == "None" ]]; then
+            echo "Could not resolve API task definition."
+            exit 1
+          fi
+
+          if [[ -z "$subnet_csv" || "$subnet_csv" == "None" ]]; then
+            echo "Could not resolve API subnets."
+            exit 1
+          fi
+
+          if [[ -z "$sg_csv" || "$sg_csv" == "None" ]]; then
+            echo "Could not resolve API security groups."
+            exit 1
+          fi
+
+          run_arn="$(aws ecs run-task \
+            --cluster "$cluster_name" \
+            --launch-type FARGATE \
+            --task-definition "$task_def" \
+            --count 1 \
+            --network-configuration "awsvpcConfiguration={subnets=[$subnet_csv],securityGroups=[$sg_csv],assignPublicIp=DISABLED}" \
+            --overrides '{
+              "containerOverrides": [
+                {
+                  "name": "api",
+                  "command": [
+                    "sh",
+                    "-lc",
+                    "ENC_USER=$(node -p \"encodeURIComponent(process.env.DB_USER)\"); ENC_PASS=$(node -p \"encodeURIComponent(process.env.DB_PASSWORD)\"); export DATABASE_URL=\\\"postgresql://${ENC_USER}:${ENC_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}?schema=public&sslmode=${DB_SSLMODE:-require}\\\"; node_modules/.bin/prisma migrate deploy --schema packages/db/prisma/schema.prisma"
+                  ]
+                }
+              ]
+            }' \
+            --query 'tasks[0].taskArn' \
+            --output text)"
+
+          echo "Migration task started: $run_arn"
+          aws ecs wait tasks-stopped --cluster "$cluster_name" --tasks "$run_arn"
+
+          exit_code="$(aws ecs describe-tasks \
+            --cluster "$cluster_name" \
+            --tasks "$run_arn" \
+            --query 'tasks[0].containers[0].exitCode' \
+            --output text)"
+
+          if [[ "$exit_code" != "0" ]]; then
+            echo "Migration task failed with exit code: $exit_code"
+            aws logs tail /ecs/demo-api --since 15m || true
+            exit 1
+          fi
+
+          echo "Prisma migrations applied successfully."
 
       - name: Deploy summary
         run: |

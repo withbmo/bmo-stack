@@ -1,25 +1,27 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
-import { StripeService } from './stripe.service';
-import type Stripe from 'stripe';
 import {
-  getPlans,
-  getPlanById,
-  getStripePriceId,
   getDefaultPlan,
+  getPlanById,
   getPlanCredits,
+  getPlans,
+  getStripePriceId,
   PLANS,
 } from '@pytholit/config';
 import type { BillingInterval, Plan as ApiPlan, PublicPlan } from '@pytholit/contracts';
+import type Stripe from 'stripe';
+
+import { PrismaService } from '../database/prisma.service';
+import { StripeService } from './stripe.service';
 
 type ConfigPlan = ReturnType<typeof getDefaultPlan>;
 import { Logger } from '@nestjs/common';
 import { Prisma } from '@pytholit/db';
+
 import { EntitlementsService } from '../entitlements/entitlements.service';
 
 /**
@@ -64,7 +66,11 @@ export class BillingService {
   private toPublicPlan(plan: ConfigPlan | null): PublicPlan | null {
     const apiPlan = this.toApiPlan(plan);
     if (!apiPlan) return null;
-    const { stripePriceIdMonthly, stripePriceIdYearly, ...rest } = apiPlan;
+    const {
+      stripePriceIdMonthly: _stripePriceIdMonthly,
+      stripePriceIdYearly: _stripePriceIdYearly,
+      ...rest
+    } = apiPlan;
     return rest;
   }
 

@@ -1,21 +1,22 @@
 import {
-  Controller,
-  Get,
-  Patch,
-  Delete,
-  Post,
   Body,
+  Controller,
+  Delete,
+	FileTypeValidator,
+  Get,
+	MaxFileSizeValidator,
+	ParseFilePipe,
+  Patch,
+  Post,
 	UploadedFile,
 	UseInterceptors,
-	ParseFilePipe,
-	MaxFileSizeValidator,
-	FileTypeValidator,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { UsersService } from './users.service';
-import { UpdateUserDto } from './dto/update-user.dto';
 import type { UserProfile } from '@pytholit/contracts';
+
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UsersService } from './users.service';
 
 /**
  * Users Controller

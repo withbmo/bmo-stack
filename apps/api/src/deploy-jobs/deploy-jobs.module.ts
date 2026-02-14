@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
+
+import { EnvironmentsModule } from '../environments/environments.module';
+import { ProjectsModule } from '../projects/projects.module';
 import { DeployJobsController } from './deploy-jobs.controller';
 import { DeployJobsService } from './deploy-jobs.service';
-import { ProjectsModule } from '../projects/projects.module';
-import { EnvironmentsModule } from '../environments/environments.module';
 
 @Module({
   imports: [ProjectsModule, EnvironmentsModule],

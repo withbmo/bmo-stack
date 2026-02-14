@@ -1,28 +1,29 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Delete,
-  Param,
   Body,
-  UseGuards,
-  Req,
-  Res,
+  Controller,
+  Delete,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Post,
+  Req,
+  Res,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
-import { OauthService, OAuthProfile } from './oauth.service';
+import { AuthGuard } from '@nestjs/passport';
+import type { Request, Response } from 'express';
+
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { Public } from '../auth/decorators/public.decorator';
+import { ExchangeCodeDto } from './dto/exchange-code.dto';
+import { GithubOauthStateGuard } from './guards/github-oauth-state.guard';
+import { GoogleOauthStateGuard } from './guards/google-oauth-state.guard';
+import { OAuthProfile,OauthService } from './oauth.service';
 import { OauthCodeService } from './oauth-code.service';
 import { OauthStateService } from './oauth-state.service';
-import { ExchangeCodeDto } from './dto/exchange-code.dto';
-import { Public } from '../auth/decorators/public.decorator';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { GoogleOauthStateGuard } from './guards/google-oauth-state.guard';
-import { GithubOauthStateGuard } from './guards/github-oauth-state.guard';
-import type { Request, Response } from 'express';
 
 /**
  * OAuth Controller

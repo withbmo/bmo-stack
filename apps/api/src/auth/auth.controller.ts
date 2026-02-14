@@ -1,9 +1,10 @@
-import { Body, Controller, Post, Get, HttpCode, HttpStatus } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { SignupDto, LoginDto, ResetPasswordDto } from '@pytholit/validation/class-validator';
+import { Body, Controller, Get, HttpCode, HttpStatus,Post } from '@nestjs/common';
 import type { LoginResponse } from '@pytholit/contracts';
-import { Public } from './decorators/public.decorator';
+import { LoginDto, ResetPasswordDto,SignupDto } from '@pytholit/validation/class-validator';
+
+import { AuthService } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
+import { Public } from './decorators/public.decorator';
 
 /**
  * Auth Controller

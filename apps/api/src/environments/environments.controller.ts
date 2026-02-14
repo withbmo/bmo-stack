@@ -1,22 +1,23 @@
 import {
+  Body,
   Controller,
   Get,
-  Post,
-  Patch,
-  Param,
-  Body,
   HttpCode,
   HttpStatus,
+  Param,
+  Patch,
+  Post,
 } from '@nestjs/common';
-import { EnvironmentsService } from './environments.service';
+import type { Environment } from '@pytholit/contracts';
 import {
   CreateEnvironmentDto,
   CreateEnvironmentSessionDto,
   SetEnvironmentAccessModeDto,
   UpdateEnvironmentDto,
 } from '@pytholit/validation/class-validator';
+
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import type { Environment } from '@pytholit/contracts';
+import { EnvironmentsService } from './environments.service';
 
 @Controller('environments')
 export class EnvironmentsController {

@@ -1,13 +1,14 @@
 import {
-  Injectable,
-  NotFoundException,
   ConflictException,
   ForbiddenException,
+  Injectable,
+  NotFoundException,
 } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import type { CreateProjectDto } from '@pytholit/validation/class-validator';
 import type { Project } from '@pytholit/contracts';
 import { slugify } from '@pytholit/utils';
+import type { CreateProjectDto } from '@pytholit/validation/class-validator';
+
+import { PrismaService } from '../database/prisma.service';
 import { UpdateProjectDto } from './dto/update-project.dto';
 
 /**

@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
+
+import { EntitlementsModule } from '../entitlements/entitlements.module';
 import { BillingController } from './billing.controller';
 import { BillingService } from './billing.service';
 import { StripeService } from './stripe.service';
-import { EntitlementsModule } from '../entitlements/entitlements.module';
 
 @Module({
   imports: [EntitlementsModule],

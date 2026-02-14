@@ -1,6 +1,7 @@
 project_name      = "pytholit-dev"
 domain_name       = "pytholit.dev"
 app_domain_prefix = "dev"
+api_database_env  = "dev"
 
 # Keep false until AWS enables ALB creation for this account.
 enable_alb     = false

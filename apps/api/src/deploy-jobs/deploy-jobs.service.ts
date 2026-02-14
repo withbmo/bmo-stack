@@ -1,15 +1,16 @@
 import {
+  BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
-  ForbiddenException,
-  BadRequestException,
 } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import { ProjectsService } from '../projects/projects.service';
-import { EnvironmentsService } from '../environments/environments.service';
-import { CreateDeployJobDto } from '@pytholit/validation/class-validator';
 import type { DeployJob, DeployJobStep } from '@pytholit/contracts';
 import type { Prisma } from '@pytholit/db';
+import { CreateDeployJobDto } from '@pytholit/validation/class-validator';
+
+import { PrismaService } from '../database/prisma.service';
+import { EnvironmentsService } from '../environments/environments.service';
+import { ProjectsService } from '../projects/projects.service';
 
 /**
  * Deploy Jobs Service

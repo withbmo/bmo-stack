@@ -1,18 +1,19 @@
 import {
-  Injectable,
-  NotFoundException,
+  BadRequestException,
   ConflictException,
   ForbiddenException,
-  BadRequestException,
+  Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { createHash, randomBytes } from 'crypto';
-import { PrismaService } from '../database/prisma.service';
+import type { Environment } from '@pytholit/contracts';
 import {
   CreateEnvironmentDto,
   UpdateEnvironmentDto,
 } from '@pytholit/validation/class-validator';
-import type { Environment } from '@pytholit/contracts';
+import { createHash, randomBytes } from 'crypto';
+
+import { PrismaService } from '../database/prisma.service';
 
 type OrchestratorStatus =
   | 'queued'

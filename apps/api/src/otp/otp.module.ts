@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+
+import { getJwtSecret } from '../auth/auth.config';
+import { EmailModule } from '../email/email.module';
 import { OtpController } from './otp.controller';
 import { OtpService } from './otp.service';
-import { EmailModule } from '../email/email.module';
-import { getJwtSecret } from '../auth/auth.config';
 
 @Module({
   imports: [

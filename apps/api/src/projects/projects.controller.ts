@@ -1,19 +1,20 @@
 import {
   Body,
   Controller,
-  Post,
-  Get,
-  Patch,
   Delete,
-  Param,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Patch,
+  Post,
 } from '@nestjs/common';
-import { ProjectsService } from './projects.service';
-import { CreateProjectDto } from '@pytholit/validation/class-validator';
-import { UpdateProjectDto } from './dto/update-project.dto';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { Project } from '@pytholit/contracts';
+import { CreateProjectDto } from '@pytholit/validation/class-validator';
+
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { UpdateProjectDto } from './dto/update-project.dto';
+import { ProjectsService } from './projects.service';
 
 /**
  * Projects Controller
