@@ -80,21 +80,20 @@ export const PLAN_FEATURES = {
   },
 } as const;
 
+export type { Plan, PlanFeature, PlanFeatureValue, PublicPlan } from './plans';
 export {
-  PLANS,
-  DEFAULT_PLAN_ID,
   CREDITS_PER_USD,
+  DEFAULT_PLAN_ID,
   getCreditsForUsd,
+  getDefaultPlan,
+  getPlanById,
+  getPlanByPriceId,
+  getPlanCredits,
   getPlans,
   getPublicPlans,
-  getPlanById,
-  getDefaultPlan,
   getStripePriceId,
-  getPlanCredits,
-  getPlanByPriceId,
+  PLANS,
 } from './plans';
-
-export type { Plan, PlanFeature, PlanFeatureValue, PublicPlan } from './plans';
 
 export const ROUTES = {
   home: '/',

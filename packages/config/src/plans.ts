@@ -1,7 +1,7 @@
+import { PlanSchema, PlansSchema } from './plans.schema';
+import enterprisePlan from './plans/enterprise.json';
 import freePlan from './plans/free.json';
 import proPlan from './plans/pro.json';
-import enterprisePlan from './plans/enterprise.json';
-import { PlanSchema, PlansSchema } from './plans.schema';
 
 export type BillingInterval = 'month' | 'year';
 
@@ -104,9 +104,13 @@ export type PublicPlan = Omit<
 >;
 
 export function getPublicPlans(): PublicPlan[] {
-  return getPlans().map(({ stripePriceIdMonthly, stripePriceIdYearly, ...rest }) => ({
-    ...rest,
-  }));
+  return getPlans().map(
+    ({
+      stripePriceIdMonthly: _stripePriceIdMonthly,
+      stripePriceIdYearly: _stripePriceIdYearly,
+      ...rest
+    }) => ({ ...rest })
+  );
 }
 
 export function getPlanById(planId: string): Plan | null {
