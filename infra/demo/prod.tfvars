@@ -1,4 +1,4 @@
-project_name      = "pytholit-prod"
+project_name      = "pytholit-demo"
 domain_name       = "pytholit.dev"
 app_domain_prefix = ""
 api_database_env  = "prod"
