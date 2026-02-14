@@ -160,6 +160,14 @@ jobs:
           }
           EOF
 
+      - name: Reclaim disk before Terraform
+        run: |
+          set -euo pipefail
+          docker system df || true
+          docker builder prune -af || true
+          docker system prune -af --volumes || true
+          df -h
+
       - name: Terraform init
         working-directory: infra/demo
         run: terraform init -input=false
