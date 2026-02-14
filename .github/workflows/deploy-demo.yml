@@ -223,24 +223,23 @@ jobs:
             exit 1
           fi
 
+          migration_cmd='const { execSync } = require("node:child_process"); const enc = encodeURIComponent; const required = ["DB_HOST","DB_PORT","DB_NAME","DB_USER","DB_PASSWORD"]; const missing = required.filter((k) => !process.env[k]); if (missing.length) { console.error("Missing DB env vars:", missing.join(", ")); process.exit(1); } const sslmode = process.env.DB_SSLMODE || "require"; const databaseUrl = `postgresql://${enc(process.env.DB_USER)}:${enc(process.env.DB_PASSWORD)}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}?schema=public&sslmode=${sslmode}`; execSync("packages/db/node_modules/.bin/prisma migrate deploy --schema packages/db/prisma/schema.prisma", { stdio: "inherit", env: { ...process.env, DATABASE_URL: databaseUrl } });'
+          overrides_json="$(jq -n --arg cmd "$migration_cmd" '{
+            containerOverrides: [
+              {
+                name: "api",
+                command: ["node", "-e", $cmd]
+              }
+            ]
+          }')"
+
           run_output="$(aws ecs run-task \
             --cluster "$cluster_name" \
             --launch-type FARGATE \
             --task-definition "$task_def" \
             --count 1 \
             --network-configuration "awsvpcConfiguration={subnets=[$subnet_csv],securityGroups=[$sg_csv],assignPublicIp=DISABLED}" \
-            --overrides '{
-              "containerOverrides": [
-                {
-                  "name": "api",
-                  "command": [
-                    "sh",
-                    "-lc",
-                    "ENC_USER=$(node -p \"encodeURIComponent(process.env.DB_USER)\"); ENC_PASS=$(node -p \"encodeURIComponent(process.env.DB_PASSWORD)\"); export DATABASE_URL=\\\"postgresql://${ENC_USER}:${ENC_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}?schema=public&sslmode=${DB_SSLMODE:-require}\\\"; packages/db/node_modules/.bin/prisma migrate deploy --schema packages/db/prisma/schema.prisma"
-                  ]
-                }
-              ]
-            }' \
+            --overrides "$overrides_json" \
             --output json)"
 
           run_arn="$(echo "$run_output" | jq -r '.tasks[0].taskArn // empty')"
