@@ -1,0 +1,125 @@
+/* Pytholit Utility Classes
+ * Reusable utility classes for borders, shadows, scrollbars, and patterns
+ */
+
+/* ===== Borders ===== */
+.brutal-border {
+  border: 1px solid var(--color-border-default);
+}
+
+.brutal-border-thick {
+  border: 2px solid var(--color-border-default);
+}
+
+/* ===== Nexus Shadow Effects ===== */
+.nexus-shadow {
+  box-shadow: 8px 8px 0px 0px var(--color-brand-primary);
+}
+
+.nexus-shadow-btn-wrapper {
+  position: relative;
+  display: inline-block;
+  z-index: 0;
+  isolation: isolate;
+  transition: transform 0.2s ease;
+}
+
+.nexus-shadow-btn-wrapper::before {
+  content: '';
+  display: block;
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-brand-primary);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transform: translate(8px, 8px);
+  z-index: 0;
+  pointer-events: none;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.nexus-shadow-btn-wrapper:hover {
+  transform: translateY(-4px);
+}
+
+.nexus-shadow-btn-wrapper:hover::before {
+  transform: translate(4px, 4px);
+  background-color: var(--color-nexus-neon);
+}
+
+.nexus-shadow-btn-back {
+  display: none;
+}
+
+.nexus-shadow-btn {
+  position: relative;
+  z-index: 1;
+  background-color: var(--color-brand-primary);
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.nexus-shadow-btn-wrapper:hover .nexus-shadow-btn {
+  transform: translate(4px, 4px);
+  background-color: var(--color-nexus-neon);
+}
+
+.nexus-shadow-hover:hover {
+  box-shadow: 4px 4px 0px 0px var(--color-nexus-neon);
+  transform: translate(2px, 2px);
+}
+
+/* ===== Glass Effects ===== */
+.glass-panel {
+  background: rgba(20, 20, 20, 0.75);
+  backdrop-filter: blur(12px);
+}
+
+/* ===== Custom Scrollbars ===== */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+  border: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-primary);
+}
+
+/* Editor tabs bar: thin horizontal scrollbar only */
+.editor-tabs-scroll::-webkit-scrollbar {
+  height: 5px;
+}
+
+.editor-tabs-scroll::-webkit-scrollbar-track {
+  background: var(--color-nexus-dark);
+}
+
+.editor-tabs-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-nexus-gray);
+  border: none;
+}
+
+.editor-tabs-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-primary);
+}
+
+/* Hide scrollbar utility */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ===== Grid Pattern Background ===== */
+.bg-grid-pattern {
+  background-image: none;
+}

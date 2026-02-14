@@ -1,0 +1,94 @@
+{
+  "id": "pytholit-python-service",
+  "version": "2026.02.08",
+  "title": "Pytholit Python Service",
+  "steps": [
+    {
+      "id": "identity",
+      "title": "Project Identity",
+      "fields": [
+        { "id": "name", "label": "Project Name", "type": "string", "required": true },
+        { "id": "description", "label": "Description", "type": "string" }
+      ]
+    },
+    {
+      "id": "framework",
+      "title": "Framework",
+      "fields": [
+        {
+          "id": "framework",
+          "label": "Framework",
+          "type": "select",
+          "options": [
+            { "label": "FastAPI", "value": "fastapi" },
+            { "label": "Django", "value": "django" }
+          ],
+          "default": "fastapi"
+        }
+      ]
+    },
+    {
+      "id": "persistence",
+      "title": "Persistence",
+      "fields": [
+        {
+          "id": "databases",
+          "label": "Databases",
+          "type": "multi",
+          "options": [
+            { "label": "PostgreSQL", "value": "postgres" },
+            { "label": "Redis", "value": "redis" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "deps",
+      "title": "Dependency Manager",
+      "fields": [
+        {
+          "id": "dependencyManager",
+          "label": "Dependency Manager",
+          "type": "select",
+          "options": [
+            { "label": "uv", "value": "uv" },
+            { "label": "poetry", "value": "poetry" },
+            { "label": "requirements.txt", "value": "requirements.txt" }
+          ],
+          "default": "uv"
+        }
+      ]
+    }
+  ],
+  "rules": {
+    "files": {
+      "Dockerfile": {
+        "base": "sources/docker/base.Dockerfile.part",
+        "variants": [
+          { "when": { "dependencyManager": "uv" }, "use": "sources/docker/install-uv.Dockerfile.part" },
+          { "when": { "dependencyManager": "poetry" }, "use": "sources/docker/install-requirements.Dockerfile.part" },
+          { "when": { "dependencyManager": "requirements.txt" }, "use": "sources/docker/install-requirements.Dockerfile.part" }
+        ],
+        "addons": [
+          { "when": { "framework": "fastapi" }, "use": "sources/docker/run-uv.Dockerfile.part" },
+          { "when": { "framework": "django" }, "use": "sources/docker/run-gunicorn.Dockerfile.part" }
+        ]
+      },
+      "docker-compose.yml": {
+        "base": "sources/compose/base.compose.yml.part",
+        "addons": [
+          { "when": { "databases": "postgres" }, "use": "sources/compose/postgres.compose.yml.part" },
+          { "when": { "databases": "redis" }, "use": "sources/compose/redis.compose.yml.part" }
+        ]
+      },
+      "start.sh": {
+        "base": "sources/scripts/base.start.sh.part",
+        "variants": [
+          { "when": { "dependencyManager": "uv" }, "use": "sources/scripts/uv.start.sh.part" },
+          { "when": { "dependencyManager": "poetry" }, "use": "sources/scripts/pip.start.sh.part" },
+          { "when": { "dependencyManager": "requirements.txt" }, "use": "sources/scripts/pip.start.sh.part" }
+        ]
+      }
+    }
+  }
+}

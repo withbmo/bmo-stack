@@ -1,0 +1,48 @@
+import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { OtpService } from './otp.service';
+import { SendOtpDto } from './dto/send-otp.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { Public } from '../auth/decorators/public.decorator';
+import type { OTPVerifyResponse } from '@pytholit/contracts';
+
+/**
+ * OTP Controller
+ * Handles OTP sending and verification endpoints
+ */
+@Controller('otp')
+export class OtpController {
+  constructor(private readonly otpService: OtpService) {}
+
+  @Public()
+  @Post('send')
+  @HttpCode(HttpStatus.OK)
+  async send(
+    @Body() sendOtpDto: SendOtpDto
+  ): Promise<{ message: string; expiresIn: number }> {
+    return this.otpService.sendOtp(
+      sendOtpDto.email,
+      sendOtpDto.purpose,
+      sendOtpDto.captchaToken
+    );
+  }
+
+  @Public()
+  @Post('verify')
+  @HttpCode(HttpStatus.OK)
+  async verify(@Body() verifyOtpDto: VerifyOtpDto): Promise<OTPVerifyResponse> {
+    return this.otpService.verifyOtp(
+      verifyOtpDto.email,
+      verifyOtpDto.code,
+      verifyOtpDto.purpose
+    );
+  }
+
+  @Public()
+  @Post('resend')
+  @HttpCode(HttpStatus.OK)
+  async resend(
+    @Body() body: { email: string; purpose: string }
+  ): Promise<{ message: string; expiresIn: number }> {
+    return this.otpService.resendOtp(body.email, body.purpose as any);
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "free",
+  "name": "free",
+  "displayName": "Free",
+  "description": "For getting started and personal projects.",
+  "monthlyPrice": 0,
+  "yearlyPrice": 0,
+  "stripePriceIdMonthly": null,
+  "stripePriceIdYearly": null,
+  "isDefault": true,
+  "features": [
+    { "id": "projects", "name": "Projects", "description": null, "value": 3 },
+    { "id": "environments", "name": "Environments", "description": null, "value": 2 },
+    { "id": "deployments", "name": "Monthly deployments", "description": null, "value": 10 },
+    { "id": "storage", "name": "Storage (GB)", "description": null, "value": 1 },
+    { "id": "support", "name": "Support", "description": null, "value": "community" }
+  ],
+  "isActive": true
+}

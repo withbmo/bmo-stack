@@ -1,0 +1,66 @@
+/* Pytholit Design System - Theme Variables
+ * Tailwind v4 theme configuration with semantic tokens
+ */
+
+/* Define colors in :root for base.css, utilities.css, and var() usage */
+:root {
+  --color-nexus-black: #1e1e1e;
+  --color-nexus-dark: #252526;
+  --color-nexus-gray: #3c3c3c;
+  --color-nexus-muted: #9da5b4;
+  --color-nexus-light: #d4d4d4;
+  --color-nexus-purple: #6d28d9;
+  --color-nexus-neon: #a855f7;
+  --color-nexus-accent: #4ec9b0;
+  --color-bg-app: #1e1e1e;
+  --color-bg-dashboard: #1e1e1e;
+  --color-bg-panel: #252526;
+  --color-bg-surface: #2d2d2d;
+  --color-border-default: #3c3c3c;
+  --color-border-dim: #2a2a2a;
+  --color-border-highlight: #6d28d9;
+  --color-text-primary: #d4d4d4;
+  --color-text-secondary: #9da5b4;
+  --color-brand-primary: #6d28d9;
+  --color-brand-accent: #4ec9b0;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'Space Grotesk', sans-serif;
+}
+
+@theme {
+  /* ===== Nexus Color Palette (raw colors) ===== */
+  --color-nexus-black: #1e1e1e;
+  --color-nexus-dark: #252526;
+  --color-nexus-gray: #3c3c3c;
+  --color-nexus-muted: #9da5b4;
+  --color-nexus-light: #d4d4d4;
+  --color-nexus-purple: #6d28d9;
+  --color-nexus-neon: #a855f7;
+  --color-nexus-accent: #4ec9b0;
+
+  /* ===== Semantic Tokens (use these in components) ===== */
+  --color-bg-app: #1e1e1e;
+  --color-bg-dashboard: #1e1e1e;
+  --color-bg-panel: #252526;
+  --color-bg-surface: #2d2d2d;
+  --color-border-default: #3c3c3c;
+  --color-border-dim: #2a2a2a;
+  --color-border-highlight: #6d28d9;
+  --color-text-primary: #d4d4d4;
+  --color-text-secondary: #9da5b4;
+  --color-brand-primary: #6d28d9;
+  --color-brand-accent: #4ec9b0;
+
+  /* ===== Typography ===== */
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'Space Grotesk', sans-serif;
+
+  /* ===== Animation Shortcuts ===== */
+  --animate-pulse-fast: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-marquee: marquee 25s linear infinite;
+  --animate-glitch: glitch 1s linear infinite;
+  --animate-glitch-autoplay: glitch-autoplay 5s ease-in-out infinite;
+  --animate-scan: scan 4s linear infinite;
+  --animate-spin-slow: spin 12s linear infinite;
+  --animate-spin-reverse-slower: spin 16s linear infinite reverse;
+}

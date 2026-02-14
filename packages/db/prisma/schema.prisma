@@ -1,0 +1,285 @@
+// Pytholit Database Schema
+// Converted from SQLAlchemy models to Prisma
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// User & Authentication
+// ============================================================================
+
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  username          String    @unique
+  fullName          String?   @map("full_name")
+  bio               String?
+  avatarUrl         String?   @map("avatar_url")
+  hashedPassword    String    @map("hashed_password")
+
+  // Status flags
+  isActive          Boolean   @default(true) @map("is_active")
+  isSuperuser       Boolean   @default(false) @map("is_superuser")
+  isEmailVerified   Boolean   @default(false) @map("is_email_verified")
+
+  // External service IDs
+  stripeCustomerId  String?   @unique @map("stripe_customer_id")
+  novuSubscriberId  String?   @unique @map("novu_subscriber_id")
+
+  // Timestamps
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  projects          Project[]
+  environments      Environment[]
+  deployJobs        DeployJob[]
+  wizardBuilds      WizardBuild[]
+  otps              Otp[]
+  oauthAccounts     OAuthAccount[]
+  paymentMethods    UserPaymentMethod[]
+  payments          Payment[]
+  invoices          Invoice[]
+  subscriptions     Subscription[]
+  usageCounters     UsageCounter[]
+
+  @@map("users")
+}
+
+model OAuthAccount {
+  id            String    @id @default(uuid())
+  userId        String    @map("user_id")
+  provider      String    // google, github
+  accountId     String    @map("account_id")
+  accountEmail  String?   @map("account_email")
+  accessToken   String?   @map("access_token")
+  refreshToken  String?   @map("refresh_token")
+  expiresAt     DateTime? @map("expires_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, accountId])
+  @@map("oauth_accounts")
+}
+
+model Otp {
+  id                String    @id @default(uuid())
+  userId            String    @map("user_id")
+  codeHash          String    @map("code_hash")
+  idempotencyKey    String?   @unique @map("idempotency_key")
+  purpose           String    // email_verification, password_reset, 2fa, login_verification
+  attemptsCount     Int       @default(0) @map("attempts_count")
+  isUsed            Boolean   @default(false) @map("is_used")
+  expiresAt         DateTime  @map("expires_at")
+  nextRequestAt     DateTime? @map("next_request_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("otps")
+}
+
+// ============================================================================
+// Projects & Environments
+// ============================================================================
+
+model Project {
+  id                String    @id @default(uuid())
+  ownerId           String    @map("owner_id")
+  name              String
+  slug              String
+  repoExportEnabled Boolean   @default(false) @map("repo_export_enabled")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  owner             User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  deployJobs        DeployJob[]
+  wizardBuilds      WizardBuild[]
+
+  @@unique([ownerId, slug])
+  @@map("projects")
+}
+
+model Environment {
+  id            String    @id @default(uuid())
+  ownerId       String    @map("owner_id")
+  projectId     String?   @map("project_id") // Nullable for backward compatibility
+  name          String    // dev, staging, prod
+  displayName   String    @map("display_name")
+  tierPolicy    String    @default("free") @map("tier_policy") // free, pro, enterprise
+  executionMode String    @default("managed") @map("execution_mode") // managed, byo_aws
+  region        String    @default("us-east-1")
+  visibility    String    @default("private") // public, private
+  config        Json?     // Environment configuration (JSONB)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  owner         User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  deployJobs    DeployJob[]
+
+  @@unique([ownerId, name])
+  @@map("environments")
+}
+
+// ============================================================================
+// Deployments
+// ============================================================================
+
+enum DeployJobStatus {
+  queued
+  running
+  succeeded
+  failed
+  canceled
+}
+
+model DeployJob {
+  id                    String    @id @default(uuid())
+  projectId             String    @map("project_id")
+  environmentId         String    @map("environment_id")
+  triggeredByUserId     String?   @map("triggered_by_user_id")
+  status                DeployJobStatus @default(queued)
+  currentStep           String?   @map("current_step")
+  steps                 Json      // Array of deployment steps (JSONB)
+  source                Json      // Deployment source info (git, upload, template)
+  executionModeSnapshot String    @map("execution_mode_snapshot")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  startedAt             DateTime? @map("started_at")
+  finishedAt            DateTime? @map("finished_at")
+
+  project               Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  environment           Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  triggeredBy           User?     @relation(fields: [triggeredByUserId], references: [id], onDelete: SetNull)
+
+  @@map("deploy_jobs")
+}
+
+// ============================================================================
+// Wizard (Project generation)
+// ============================================================================
+
+model WizardBuild {
+  id        String   @id @default(uuid())
+  ownerId   String   @map("owner_id")
+  projectId String   @map("project_id")
+  version   String   // Wizard blueprint version (e.g. 2026.02.08)
+
+  inputs    Json     // Raw + default-applied inputs used to generate
+  manifest  Json     // WizardManifest (files, metadata)
+  lock      Json?    // Optional BlueprintLock (debug/audit)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@index([projectId])
+  @@map("wizard_builds")
+}
+
+// ============================================================================
+// Billing & Subscriptions
+// ============================================================================
+
+model Subscription {
+  id                  String    @id @default(uuid())
+  userId              String    @map("user_id")
+  planId              String?   @map("plan_id")
+  status              String    // active, canceled, past_due, unpaid, trialing
+  stripeSubscriptionId String   @unique @map("stripe_subscription_id")
+  currentPeriodStart  DateTime  @map("current_period_start")
+  currentPeriodEnd    DateTime  @map("current_period_end")
+  cancelAtPeriodEnd   Boolean   @default(false) @map("cancel_at_period_end")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+model UserPaymentMethod {
+  id                    String    @id @default(uuid())
+  userId                String    @map("user_id")
+  stripePaymentMethodId String    @unique @map("stripe_payment_method_id")
+  type                  String    // card, bank_account
+  last4                 String
+  brand                 String?
+  expiryMonth           Int?      @map("expiry_month")
+  expiryYear            Int?      @map("expiry_year")
+  isDefault             Boolean   @default(false) @map("is_default")
+  createdAt             DateTime  @default(now()) @map("created_at")
+
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_payment_methods")
+}
+
+model Payment {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  stripePaymentId String    @unique @map("stripe_payment_id")
+  /// Amount in minor units (e.g. cents)
+  amount          Int
+  currency        String    @default("usd")
+  status          String    // pending, succeeded, failed, refunded
+  description     String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model Invoice {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  stripeInvoiceId String    @unique @map("stripe_invoice_id")
+  /// Amount in minor units (e.g. cents)
+  amount          Int
+  currency        String    @default("usd")
+  status          String    // draft, open, paid, void, uncollectible
+  paidAt          DateTime? @map("paid_at")
+  dueDate         DateTime? @map("due_date")
+  invoiceUrl      String?   @map("invoice_url")
+  pdfUrl          String?   @map("invoice_pdf")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("invoices")
+}
+
+model StripeWebhookEvent {
+  /// Stripe event id (e.g. evt_...)
+  id        String   @id
+  type      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("stripe_webhook_events")
+}
+
+model UsageCounter {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  featureId   String   @map("feature_id")
+  periodStart DateTime @map("period_start")
+  periodEnd   DateTime @map("period_end")
+  used        Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, featureId, periodStart, periodEnd])
+  @@map("usage_counters")
+}

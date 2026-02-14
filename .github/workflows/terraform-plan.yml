@@ -1,0 +1,88 @@
+name: Terraform Plan (demo)
+
+on:
+  pull_request:
+    paths:
+      - "infra/demo/**"
+      - ".github/workflows/terraform-plan.yml"
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+
+env:
+  AWS_REGION: us-east-1
+  TF_IN_AUTOMATION: "true"
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: infra/demo
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform fmt check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init
+        run: terraform init -input=false
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Terraform plan
+        run: terraform plan -input=false -no-color -out=tfplan
+
+      - name: Render plan text
+        run: terraform show -no-color tfplan > tfplan.txt
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-demo-plan
+          path: infra/demo/tfplan.txt
+
+      - name: Extract plan summary
+        id: summary
+        run: |
+          plan_line="$(grep -E '^Plan:' tfplan.txt | tail -n 1 || true)"
+          if [[ -z "$plan_line" ]]; then
+            plan_line="Plan summary not found. Check plan artifact."
+          fi
+          echo "line=$plan_line" >> "$GITHUB_OUTPUT"
+
+      - name: Comment summary on PR
+        uses: actions/github-script@v7
+        env:
+          PLAN_SUMMARY: ${{ steps.summary.outputs.line }}
+        with:
+          script: |
+            const body = [
+              "### Terraform plan (`infra/demo`)",
+              "",
+              process.env.PLAN_SUMMARY,
+              "",
+              "Full plan is attached as artifact: `terraform-demo-plan`."
+            ].join("\n");
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });

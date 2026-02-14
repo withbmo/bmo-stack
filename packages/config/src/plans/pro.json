@@ -1,0 +1,19 @@
+{
+  "id": "pro",
+  "name": "pro",
+  "displayName": "Pro",
+  "description": "For teams shipping production workloads.",
+  "monthlyPrice": 29,
+  "yearlyPrice": 290,
+  "stripePriceIdMonthly": null,
+  "stripePriceIdYearly": null,
+  "isDefault": false,
+  "features": [
+    { "id": "projects", "name": "Projects", "description": null, "value": 25 },
+    { "id": "environments", "name": "Environments", "description": null, "value": 10 },
+    { "id": "deployments", "name": "Monthly deployments", "description": null, "value": 100 },
+    { "id": "storage", "name": "Storage (GB)", "description": null, "value": 50 },
+    { "id": "support", "name": "Support", "description": null, "value": "email" }
+  ],
+  "isActive": true
+}

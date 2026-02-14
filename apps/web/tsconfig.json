@@ -1,0 +1,38 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "jsx": "preserve",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/site/*": ["./src/site/*"],
+      "@/dashboard/*": ["./src/dashboard/*"],
+      "@/shared/*": ["./src/shared/*"],
+      "@/common/*": ["./src/shared/*"],
+      "@/common/auth/*": ["./src/site/components/auth/*"],
+      "@/common/features/auth/*": ["./src/shared/auth/*"],
+      "@/common/data/*": ["./src/shared/data/*"],
+      "@/common/lib/*": ["./src/shared/lib/*"],
+      "@/common/types": ["./src/shared/types/index.ts"],
+      "@/common/types/*": ["./src/shared/types/*"],
+      "@/common/constants": ["./src/shared/constants/index.ts"],
+      "@/common/constants/*": ["./src/shared/constants/*"],
+      "@/dashboard/shared/layout/*": ["./src/shared/components/layout/*"]
+    },
+    "noEmit": true,
+    "incremental": true
+  },
+  "include": [
+    "next-env.d.ts",
+    "swagger-ui-react.d.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}

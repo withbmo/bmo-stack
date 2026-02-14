@@ -1,0 +1,8 @@
+/* Pytholit Design System Styles
+ * Theme first so :root and @theme are available for base/utilities
+ */
+
+@import './theme.css';
+@import './base.css';
+@import './animations.css';
+@import './utilities.css';

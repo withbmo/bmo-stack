@@ -1,0 +1,176 @@
+name: Deploy Demo
+
+on:
+  push:
+    branches:
+      - main
+      - "release/**"
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "docker/**"
+      - "infra/demo/**"
+      - "scripts/build-and-push-demo-images.sh"
+      - ".github/workflows/deploy-demo.yml"
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+      image_tag:
+        description: "Optional image tag override (default: git short SHA)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: demo-deploy-${{ github.ref_name }}
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: us-east-1
+  TF_IN_AUTOMATION: "true"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.target_env || (startsWith(github.ref, 'refs/heads/release/') && 'prod' || 'dev') }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve deploy context
+        id: context
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            deploy_env="${{ inputs.target_env }}"
+          elif [[ "${GITHUB_REF}" == refs/heads/release/* ]]; then
+            deploy_env="prod"
+          else
+            deploy_env="dev"
+          fi
+
+          if [[ "$deploy_env" == "prod" ]]; then
+            aws_role="${{ secrets.AWS_ROLE_TO_ASSUME_PROD }}"
+          else
+            aws_role="${{ secrets.AWS_ROLE_TO_ASSUME_DEV }}"
+          fi
+
+          if [[ -n "${{ inputs.image_tag }}" ]]; then
+            image_tag="${{ inputs.image_tag }}"
+          else
+            image_tag="${GITHUB_SHA::12}"
+          fi
+
+          echo "deploy_env=$deploy_env" >> "$GITHUB_OUTPUT"
+          echo "aws_role=$aws_role" >> "$GITHUB_OUTPUT"
+          echo "image_tag=$image_tag" >> "$GITHUB_OUTPUT"
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ steps.context.outputs.aws_role }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Resolve deployment metadata
+        id: meta
+        run: |
+          account_id="$(aws sts get-caller-identity --query Account --output text)"
+          registry="${account_id}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          echo "deploy_env=${{ steps.context.outputs.deploy_env }}" >> "$GITHUB_OUTPUT"
+          echo "registry=$registry" >> "$GITHUB_OUTPUT"
+          echo "image_tag=${{ steps.context.outputs.image_tag }}" >> "$GITHUB_OUTPUT"
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Ensure ECR repositories exist
+        run: |
+          set -euo pipefail
+          repos=(web api ingress-router env-orchestrator terminal-gateway)
+          for repo in "${repos[@]}"; do
+            if ! aws ecr describe-repositories --repository-names "$repo" >/dev/null 2>&1; then
+              aws ecr create-repository \
+                --repository-name "$repo" \
+                --image-tag-mutability IMMUTABLE \
+                --image-scanning-configuration scanOnPush=true >/dev/null
+            fi
+          done
+
+      - name: Build and push images
+        run: |
+          set -euo pipefail
+          registry="${{ steps.meta.outputs.registry }}"
+          tag="${{ steps.meta.outputs.image_tag }}"
+
+          declare -a services=(
+            "web:docker/web.Dockerfile"
+            "api:docker/api.Dockerfile"
+            "ingress-router:docker/ingress-router.Dockerfile"
+            "env-orchestrator:docker/env-orchestrator.Dockerfile"
+            "terminal-gateway:docker/terminal-gateway.Dockerfile"
+          )
+
+          for item in "${services[@]}"; do
+            name="${item%%:*}"
+            dockerfile="${item##*:}"
+            image="${registry}/${name}:${tag}"
+            echo "Building ${image}"
+            docker build -f "${dockerfile}" -t "${image}" .
+            docker push "${image}"
+          done
+
+      - name: Write Terraform image overrides
+        run: |
+          cat > infra/demo/ci-images.auto.tfvars.json <<EOF
+          {
+            "images": {
+              "web": "${{ steps.meta.outputs.registry }}/web:${{ steps.meta.outputs.image_tag }}",
+              "api": "${{ steps.meta.outputs.registry }}/api:${{ steps.meta.outputs.image_tag }}",
+              "terminal_gateway": "${{ steps.meta.outputs.registry }}/terminal-gateway:${{ steps.meta.outputs.image_tag }}",
+              "ingress_router": "${{ steps.meta.outputs.registry }}/ingress-router:${{ steps.meta.outputs.image_tag }}",
+              "orchestrator": "${{ steps.meta.outputs.registry }}/env-orchestrator:${{ steps.meta.outputs.image_tag }}"
+            }
+          }
+          EOF
+
+      - name: Terraform init
+        working-directory: infra/demo
+        run: terraform init -input=false
+
+      - name: Terraform apply
+        working-directory: infra/demo
+        run: |
+          args=(-input=false -auto-approve -var-file=ci-images.auto.tfvars.json)
+          tfvars_file="${{ steps.meta.outputs.deploy_env }}.tfvars"
+          if [[ -f "$tfvars_file" ]]; then
+            echo "Using environment tfvars: $tfvars_file"
+            args+=(-var-file="$tfvars_file")
+          else
+            echo "No environment tfvars file found at infra/demo/$tfvars_file, using defaults."
+          fi
+          terraform apply "${args[@]}"
+
+      - name: Deploy summary
+        run: |
+          echo "Environment: ${{ steps.meta.outputs.deploy_env }}"
+          echo "Deployed image tag: ${{ steps.meta.outputs.image_tag }}"
+          echo "ECR registry: ${{ steps.meta.outputs.registry }}"

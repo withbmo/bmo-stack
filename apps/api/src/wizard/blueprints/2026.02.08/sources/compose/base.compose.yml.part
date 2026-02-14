@@ -1,0 +1,7 @@
+services:
+  app:
+    build: .
+    ports:
+      - "{{port}}:{{port}}"
+    environment:
+      - PORT={{port}}

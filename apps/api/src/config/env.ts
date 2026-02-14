@@ -1,0 +1,36 @@
+import { cleanEnv, str, bool, num } from 'envalid';
+
+export function validateEnv() {
+  return cleanEnv(process.env, {
+    NODE_ENV: str({ default: 'development' }),
+    PORT: num({ default: 3001 }),
+    FRONTEND_URL: str({ default: 'http://localhost:3000' }),
+    DATABASE_URL: str({ default: '' }),
+    STRIPE_SECRET_KEY: str({ default: '' }),
+    STRIPE_WEBHOOK_SECRET: str({ default: '' }),
+    TURNSTILE_SECRET_KEY: str({ default: '' }),
+    REDIS_URL: str({ default: '' }),
+    JWT_EXPIRES_IN: str({ default: '1h' }),
+    GOOGLE_CLIENT_ID: str({ default: '' }),
+    GOOGLE_CLIENT_SECRET: str({ default: '' }),
+    GOOGLE_CALLBACK_URL: str({ default: '' }),
+    GITHUB_CLIENT_ID: str({ default: '' }),
+    GITHUB_CLIENT_SECRET: str({ default: '' }),
+    GITHUB_CALLBACK_URL: str({ default: '' }),
+    ZEPTOMAIL_API_KEY: str({ default: '' }),
+    ZEPTOMAIL_BASE_URL: str({ default: '' }),
+    ZEPTOMAIL_FROM_EMAIL: str({ default: '' }),
+    ZEPTOMAIL_FROM_NAME: str({ default: '' }),
+    UPLOAD_DIR: str({ default: '' }),
+    WIZARD_DEFAULT_VERSION: str({ default: '' }),
+    OTP_EXPIRY_MINUTES: num({ default: 10 }),
+    OTP_LENGTH: num({ default: 6 }),
+    PASSWORD_RESET_TOKEN_EXPIRY_MINUTES: num({ default: 30 }),
+    JWT_SECRET: str({ default: 'dev-secret' }),
+    ENV_SESSION_SECRET: str({ default: '' }),
+    ENV_SESSION_TTL_SECONDS: num({ default: 120 }),
+    TERMINAL_GATEWAY_WS_URL: str({ default: 'wss://terminal.pytholit.dev/ws' }),
+    ENABLE_EXTERNAL_PROD_API_KEY_MODE: bool({ default: false }),
+    ENTITLEMENTS_ENABLED: bool({ default: false }),
+  });
+}

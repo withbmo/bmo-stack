@@ -1,0 +1,19 @@
+{
+  "id": "enterprise",
+  "name": "enterprise",
+  "displayName": "Enterprise",
+  "description": "For security, scale, and dedicated support.",
+  "monthlyPrice": 199,
+  "yearlyPrice": 1990,
+  "stripePriceIdMonthly": null,
+  "stripePriceIdYearly": null,
+  "isDefault": false,
+  "features": [
+    { "id": "projects", "name": "Projects", "description": null, "value": "unlimited" },
+    { "id": "environments", "name": "Environments", "description": null, "value": "unlimited" },
+    { "id": "deployments", "name": "Monthly deployments", "description": null, "value": "unlimited" },
+    { "id": "storage", "name": "Storage (GB)", "description": null, "value": "unlimited" },
+    { "id": "support", "name": "Support", "description": null, "value": "24/7" }
+  ],
+  "isActive": true
+}

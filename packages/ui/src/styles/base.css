@@ -1,0 +1,37 @@
+/* Pytholit Base Styles
+ * HTML/body, scrollbar, and selection styles
+ */
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* App background and typography */
+body {
+  background-color: var(--color-nexus-black);
+  color: var(--color-nexus-light);
+  overflow-x: hidden;
+  font-family: var(--font-sans);
+}
+
+/* ===== Main Scrollbar ===== */
+::-webkit-scrollbar {
+  width: 12px;
+  background: var(--color-nexus-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-brand-primary);
+  border: 2px solid var(--color-nexus-dark);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-nexus-neon);
+}
+
+/* ===== Text Selection ===== */
+::selection {
+  background: var(--color-nexus-neon);
+  color: #000;
+}

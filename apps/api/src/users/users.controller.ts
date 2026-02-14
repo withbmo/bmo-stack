@@ -1,0 +1,62 @@
+import {
+  Controller,
+  Get,
+  Patch,
+  Delete,
+  Post,
+  Body,
+	UploadedFile,
+	UseInterceptors,
+	ParseFilePipe,
+	MaxFileSizeValidator,
+	FileTypeValidator,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { UsersService } from './users.service';
+import { UpdateUserDto } from './dto/update-user.dto';
+import type { UserProfile } from '@pytholit/contracts';
+
+/**
+ * Users Controller
+ * Handles user profile management endpoints
+ */
+@Controller('users')
+export class UsersController {
+  constructor(private readonly usersService: UsersService) {}
+
+  @Get('me')
+  async getProfile(@CurrentUser() user: any): Promise<UserProfile> {
+    return this.usersService.getUserProfile(user.id);
+  }
+
+  @Patch('me')
+  async updateProfile(
+    @CurrentUser() user: any,
+    @Body() updateUserDto: UpdateUserDto
+  ): Promise<UserProfile> {
+    return this.usersService.updateProfile(user.id, updateUserDto);
+  }
+
+  @Post('me/avatar')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadAvatar(
+    @CurrentUser() user: any,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }), // 2MB
+          new FileTypeValidator({ fileType: /(jpg|jpeg|png)$/ }),
+        ],
+      })
+    )
+    file: Express.Multer.File
+  ): Promise<{ avatarUrl: string }> {
+    return this.usersService.uploadAvatar(user.id, file);
+  }
+
+  @Delete('me/avatar')
+  async deleteAvatar(@CurrentUser() user: any): Promise<{ message: string }> {
+    return this.usersService.deleteAvatar(user.id);
+  }
+}
