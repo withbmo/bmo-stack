@@ -233,22 +233,39 @@ jobs:
             ]
           }')"
 
-          run_output="$(aws ecs run-task \
-            --cluster "$cluster_name" \
-            --launch-type FARGATE \
-            --task-definition "$task_def" \
-            --count 1 \
-            --network-configuration "awsvpcConfiguration={subnets=[$subnet_csv],securityGroups=[$sg_csv],assignPublicIp=DISABLED}" \
-            --overrides "$overrides_json" \
-            --output json)"
+          run_arn=""
+          for attempt in 1 2; do
+            run_output="$(aws ecs run-task \
+              --cluster "$cluster_name" \
+              --launch-type FARGATE \
+              --task-definition "$task_def" \
+              --count 1 \
+              --network-configuration "awsvpcConfiguration={subnets=[$subnet_csv],securityGroups=[$sg_csv],assignPublicIp=DISABLED}" \
+              --overrides "$overrides_json" \
+              --output json)"
 
-          run_arn="$(echo "$run_output" | jq -r '.tasks[0].taskArn // empty')"
-          failure_count="$(echo "$run_output" | jq '.failures | length')"
-          if [[ "$failure_count" -gt 0 || -z "$run_arn" ]]; then
-            echo "Failed to start migration task."
+            run_arn="$(echo "$run_output" | jq -r '.tasks[0].taskArn // empty')"
+            failure_count="$(echo "$run_output" | jq '.failures | length')"
+            failure_text="$(echo "$run_output" | jq -r '.failures[]? | "\(.reason // "unknown reason") \(.detail // "")"' | tr '\n' ' ')"
+
+            if [[ "$failure_count" -eq 0 && -n "$run_arn" ]]; then
+              break
+            fi
+
+            echo "Failed to start migration task (attempt $attempt)."
             echo "$run_output" | jq -r '.failures[]? | "- \(.arn // "unknown"): \(.reason // "unknown reason") \(.detail // "")"'
+
+            if [[ "$attempt" -eq 1 && "$failure_text" == *"limit on the number of vCPUs"* ]]; then
+              echo "Quota pressure detected; scaling demo services down to desired=1 and retrying..."
+              for svc in demo-web demo-api demo-ingress-router demo-terminal-gateway demo-orchestrator; do
+                aws ecs update-service --cluster "$cluster_name" --service "$svc" --desired-count 1 >/dev/null || true
+              done
+              sleep 15
+              continue
+            fi
+
             exit 1
-          fi
+          done
 
           echo "Migration task started: $run_arn"
           aws ecs wait tasks-stopped --cluster "$cluster_name" --tasks "$run_arn"

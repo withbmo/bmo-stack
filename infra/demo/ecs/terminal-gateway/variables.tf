@@ -22,7 +22,15 @@ variable "image" {
 }
 variable "desired_count" {
   type    = number
-  default = 2
+  default = 1
+}
+variable "autoscaling_min_capacity" {
+  type    = number
+  default = 1
+}
+variable "autoscaling_max_capacity" {
+  type    = number
+  default = 12
 }
 variable "tags" {
   type    = map(string)
