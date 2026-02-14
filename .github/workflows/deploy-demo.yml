@@ -228,7 +228,7 @@ jobs:
                   "command": [
                     "sh",
                     "-lc",
-                    "ENC_USER=$(node -p \"encodeURIComponent(process.env.DB_USER)\"); ENC_PASS=$(node -p \"encodeURIComponent(process.env.DB_PASSWORD)\"); export DATABASE_URL=\\\"postgresql://${ENC_USER}:${ENC_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}?schema=public&sslmode=${DB_SSLMODE:-require}\\\"; node_modules/.bin/prisma migrate deploy --schema packages/db/prisma/schema.prisma"
+                    "ENC_USER=$(node -p \"encodeURIComponent(process.env.DB_USER)\"); ENC_PASS=$(node -p \"encodeURIComponent(process.env.DB_PASSWORD)\"); export DATABASE_URL=\\\"postgresql://${ENC_USER}:${ENC_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}?schema=public&sslmode=${DB_SSLMODE:-require}\\\"; packages/db/node_modules/.bin/prisma migrate deploy --schema packages/db/prisma/schema.prisma"
                   ]
                 }
               ]
