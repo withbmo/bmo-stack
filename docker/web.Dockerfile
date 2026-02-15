@@ -7,6 +7,9 @@ RUN corepack enable && pnpm install --frozen-lockfile
 
 FROM deps AS build
 RUN pnpm --filter @pytholit/web... build
+# In some CI/buildkit cases the `public/` dir may not exist (or may be empty).
+# Ensure the path exists so the runtime stage COPY doesn't fail.
+RUN mkdir -p /app/apps/web/public
 
 FROM node:20-alpine AS runner
 WORKDIR /app
