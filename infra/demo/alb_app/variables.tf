@@ -19,6 +19,12 @@ variable "certificate_arn" {
   default = null
 }
 
+variable "enable_https" {
+  type        = bool
+  default     = false
+  description = "Create HTTPS listener (certificate_arn may still be unknown at plan time)."
+}
+
 variable "tags" {
   type    = map(string)
   default = {}

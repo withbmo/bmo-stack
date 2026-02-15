@@ -14,6 +14,10 @@ resource "aws_lb_target_group" "ingress" {
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
   target_type = "ip"
+
+  health_check {
+    path = "/health"
+  }
 }
 
 resource "aws_lb_listener" "http" {
@@ -28,7 +32,7 @@ resource "aws_lb_listener" "http" {
 }
 
 resource "aws_lb_listener" "https" {
-  count = var.certificate_arn != null ? 1 : 0
+  count = var.enable_https ? 1 : 0
 
   load_balancer_arn = aws_lb.this.arn
   port              = 443

@@ -17,7 +17,8 @@ resource "aws_lb_target_group" "web" {
   target_type = "ip"
 
   health_check {
-    path = "/"
+    path    = "/"
+    matcher = "200-399"
   }
 }
 
@@ -39,6 +40,10 @@ resource "aws_lb_target_group" "terminal" {
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
   target_type = "ip"
+
+  health_check {
+    path = "/health"
+  }
 }
 
 resource "aws_lb_listener" "http" {
@@ -85,7 +90,7 @@ resource "aws_lb_listener_rule" "terminal_http" {
 }
 
 resource "aws_lb_listener" "https" {
-  count = var.certificate_arn != null ? 1 : 0
+  count = var.enable_https ? 1 : 0
 
   load_balancer_arn = aws_lb.this.arn
   port              = 443
@@ -99,7 +104,7 @@ resource "aws_lb_listener" "https" {
 }
 
 resource "aws_lb_listener_rule" "api_https" {
-  count = var.certificate_arn != null ? 1 : 0
+  count = var.enable_https ? 1 : 0
 
   listener_arn = aws_lb_listener.https[0].arn
   priority     = 10
@@ -117,7 +122,7 @@ resource "aws_lb_listener_rule" "api_https" {
 }
 
 resource "aws_lb_listener_rule" "terminal_https" {
-  count = var.certificate_arn != null ? 1 : 0
+  count = var.enable_https ? 1 : 0
 
   listener_arn = aws_lb_listener.https[0].arn
   priority     = 20
