@@ -26,11 +26,12 @@ module "tgw" {
 }
 
 module "security" {
-  source            = "./security"
-  services_vpc_id   = module.servicesvpc.vpc_id
-  envs_vpc_id       = module.envsvpc.vpc_id
-  services_vpc_cidr = var.services_vpc_cidr
-  tags              = local.tags
+  source             = "./security"
+  services_vpc_id    = module.servicesvpc.vpc_id
+  envs_vpc_id        = module.envsvpc.vpc_id
+  services_vpc_cidr  = var.services_vpc_cidr
+  edge_proxy_enabled = local.edge_proxy_enabled
+  tags               = local.tags
 }
 
 module "postgres" {
@@ -68,6 +69,21 @@ module "compute" {
   source                = "./compute"
   instance_profile_name = module.iam.env_instance_profile_name
   security_group_ids    = [module.security.env_instance_security_group_id]
+  tags                  = local.tags
+}
+
+module "edge_proxy" {
+  count = local.edge_proxy_enabled ? 1 : 0
+
+  source                = "./edge_proxy"
+  region                = var.region
+  vpc_id                = module.servicesvpc.vpc_id
+  public_subnet_id      = module.servicesvpc.public_subnet_ids[0]
+  security_group_id     = module.security.edge_proxy_security_group_id
+  instance_profile_name = module.iam.edge_proxy_instance_profile_name
+  cluster_name          = module.ecs_shared.cluster_name
+  app_domain_name       = local.app_domain_name
+  domain_name           = var.domain_name
   tags                  = local.tags
 }
 

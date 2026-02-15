@@ -1,5 +1,8 @@
 output "external_dns_records_required" {
-  value = try(module.dns_acm[0].required_dns_records, [])
+  value = concat(
+    try(module.dns_acm[0].required_dns_records, []),
+    try(module.edge_proxy[0].required_dns_records, [])
+  )
 }
 
 output "services_vpc_id" {
@@ -44,6 +47,10 @@ output "postgres_master_secret_arns" {
 
 output "app_alb_dns_name" {
   value = try(module.alb_app[0].alb_dns_name, null)
+}
+
+output "edge_proxy_public_ip" {
+  value = try(module.edge_proxy[0].public_ip, null)
 }
 
 output "env_alb_dns_name" {

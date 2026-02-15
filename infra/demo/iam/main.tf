@@ -108,6 +108,40 @@ resource "aws_iam_instance_profile" "env_instance" {
   role = aws_iam_role.env_instance.name
 }
 
+resource "aws_iam_role" "edge_proxy_instance" {
+  name               = "demo-edge-proxy-instance-role"
+  assume_role_policy = data.aws_iam_policy_document.ec2_assume_role.json
+  tags               = var.tags
+}
+
+resource "aws_iam_role_policy_attachment" "edge_proxy_ssm" {
+  role       = aws_iam_role.edge_proxy_instance.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+data "aws_iam_policy_document" "edge_proxy_ecs_read" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "ecs:ListTasks",
+      "ecs:DescribeTasks",
+      "ecs:DescribeServices"
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_role_policy" "edge_proxy_ecs_read" {
+  name   = "demo-edge-proxy-ecs-read"
+  role   = aws_iam_role.edge_proxy_instance.id
+  policy = data.aws_iam_policy_document.edge_proxy_ecs_read.json
+}
+
+resource "aws_iam_instance_profile" "edge_proxy_instance" {
+  name = "demo-edge-proxy-instance-profile"
+  role = aws_iam_role.edge_proxy_instance.name
+}
+
 output "ecs_execution_role_arn" {
   value = aws_iam_role.ecs_execution.arn
 }
@@ -134,4 +168,8 @@ output "orchestrator_task_role_arn" {
 
 output "env_instance_profile_name" {
   value = aws_iam_instance_profile.env_instance.name
+}
+
+output "edge_proxy_instance_profile_name" {
+  value = aws_iam_instance_profile.edge_proxy_instance.name
 }

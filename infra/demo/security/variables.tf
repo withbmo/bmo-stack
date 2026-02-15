@@ -14,3 +14,8 @@ variable "tags" {
   type    = map(string)
   default = {}
 }
+
+variable "edge_proxy_enabled" {
+  type    = bool
+  default = false
+}

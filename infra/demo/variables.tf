@@ -39,6 +39,11 @@ variable "enable_alb" {
   default = false
 }
 
+variable "enable_edge_proxy_when_no_alb" {
+  type    = bool
+  default = true
+}
+
 variable "enable_dns_acm" {
   type    = bool
   default = false
