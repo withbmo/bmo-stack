@@ -7,6 +7,10 @@ on:
       - main
       - master
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -74,9 +78,9 @@ jobs:
       - name: Terraform validate (no backend)
         run: |
           set -euo pipefail
-          terraform -chdir=infra/demo init -backend=false -input=false
+          terraform -chdir=infra/demo init -backend=false -input=false -lockfile=readonly
           terraform -chdir=infra/demo validate
-          terraform -chdir=infra/bootstrap init -backend=false -input=false
+          terraform -chdir=infra/bootstrap init -backend=false -input=false -lockfile=readonly
           terraform -chdir=infra/bootstrap validate
 
       - name: Setup tflint
