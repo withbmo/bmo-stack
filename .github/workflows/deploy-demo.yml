@@ -84,6 +84,23 @@ jobs:
             exit 1
           fi
 
+      - name: Preflight GoDaddy API auth (optional)
+        env:
+          GODADDY_API_KEY: ${{ secrets.GODADDY_API_KEY }}
+          GODADDY_API_SECRET: ${{ secrets.GODADDY_API_SECRET }}
+        run: |
+          tfvars_file="infra/demo/${{ steps.context.outputs.deploy_env }}.tfvars"
+          if [[ ! -f "$tfvars_file" ]]; then
+            echo "No tfvars file found at $tfvars_file; skipping GoDaddy preflight."
+            exit 0
+          fi
+          domain_name="$(awk -F= '/^domain_name[[:space:]]*=/{gsub(/["[:space:]]/,"",$2); print $2}' "$tfvars_file" | tail -n1)"
+          if [[ -z "$domain_name" ]]; then
+            echo "Could not resolve domain_name from $tfvars_file; skipping GoDaddy preflight."
+            exit 0
+          fi
+          ./scripts/check-godaddy-auth.sh "$domain_name"
+
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
