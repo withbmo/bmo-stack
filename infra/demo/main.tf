@@ -87,6 +87,15 @@ module "edge_proxy" {
   tags                  = local.tags
 }
 
+module "route53_delegated" {
+  count = local.delegated_dns_enabled ? 1 : 0
+
+  source         = "./route53_delegated"
+  zone_name      = local.app_domain_name
+  edge_public_ip = try(module.edge_proxy[0].public_ip, null)
+  tags           = local.tags
+}
+
 module "alb_app" {
   count = var.enable_alb ? 1 : 0
 

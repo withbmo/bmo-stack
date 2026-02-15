@@ -1,7 +1,7 @@
 output "external_dns_records_required" {
   value = concat(
     try(module.dns_acm[0].required_dns_records, []),
-    try(module.edge_proxy[0].required_dns_records, [])
+    local.delegated_dns_enabled ? [] : try(module.edge_proxy[0].required_dns_records, [])
   )
 }
 
@@ -51,6 +51,23 @@ output "app_alb_dns_name" {
 
 output "edge_proxy_public_ip" {
   value = try(module.edge_proxy[0].public_ip, null)
+}
+
+output "delegated_zone_name" {
+  value = try(module.route53_delegated[0].zone_name, null)
+}
+
+output "delegated_zone_name_servers" {
+  value = try(module.route53_delegated[0].name_servers, [])
+}
+
+output "delegation_record_for_godaddy" {
+  value = local.delegated_dns_enabled ? {
+    type   = "NS"
+    host   = local.delegated_dns_host_label
+    values = try(module.route53_delegated[0].name_servers, [])
+    note   = "Create this once in GoDaddy under the parent domain to delegate DNS control to Route53"
+  } : null
 }
 
 output "env_alb_dns_name" {

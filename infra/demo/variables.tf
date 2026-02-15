@@ -44,6 +44,11 @@ variable "enable_edge_proxy_when_no_alb" {
   default = true
 }
 
+variable "manage_delegated_dns" {
+  type    = bool
+  default = true
+}
+
 variable "enable_dns_acm" {
   type    = bool
   default = false
