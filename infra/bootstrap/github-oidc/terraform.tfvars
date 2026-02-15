@@ -1,6 +1,6 @@
-region     = "us-east-1"
-project    = "pytholit"
-github_org = "pytholit"
+region      = "us-east-1"
+project     = "pytholit"
+github_org  = "pytholit"
 github_repo = "pytholit"
 
 # Set false only if OIDC provider already exists in this account.
