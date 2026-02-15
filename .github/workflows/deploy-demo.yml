@@ -186,7 +186,6 @@ jobs:
           terraform apply "${args[@]}"
 
       - name: Sync GoDaddy NS delegation (optional)
-        if: ${{ secrets.GODADDY_API_KEY != '' && secrets.GODADDY_API_SECRET != '' }}
         working-directory: infra/demo
         env:
           GODADDY_API_KEY: ${{ secrets.GODADDY_API_KEY }}

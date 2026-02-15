@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-: "${GODADDY_API_KEY:?GODADDY_API_KEY is required}"
-: "${GODADDY_API_SECRET:?GODADDY_API_SECRET is required}"
+if [[ -z "${GODADDY_API_KEY:-}" || -z "${GODADDY_API_SECRET:-}" ]]; then
+  echo "GoDaddy API secrets are not set; skipping NS delegation sync."
+  exit 0
+fi
 
 api_base="${GODADDY_API_BASE:-https://api.godaddy.com}"
 ttl="${GODADDY_NS_TTL:-600}"
