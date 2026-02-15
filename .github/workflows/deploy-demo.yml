@@ -185,6 +185,15 @@ jobs:
           fi
           terraform apply "${args[@]}"
 
+      - name: Sync GoDaddy NS delegation (optional)
+        if: ${{ secrets.GODADDY_API_KEY != '' && secrets.GODADDY_API_SECRET != '' }}
+        working-directory: infra/demo
+        env:
+          GODADDY_API_KEY: ${{ secrets.GODADDY_API_KEY }}
+          GODADDY_API_SECRET: ${{ secrets.GODADDY_API_SECRET }}
+        run: |
+          ../../scripts/sync-godaddy-delegation.sh
+
       - name: Run Prisma migrations (one-off ECS task)
         run: |
           set -euo pipefail
