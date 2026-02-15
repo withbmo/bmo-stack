@@ -13,28 +13,28 @@ output "name_servers" {
 output "managed_records" {
   value = [
     {
-      type  = "A"
+      type  = "A(ALIAS)"
       name  = var.zone_name
-      value = var.edge_public_ip
-      note  = "App root via edge proxy"
+      value = var.app_alb_dns_name
+      note  = "App root via ALB"
     },
     {
-      type  = "A"
+      type  = "A(ALIAS)"
       name  = "api.${var.zone_name}"
-      value = var.edge_public_ip
-      note  = "API via edge proxy"
+      value = var.app_alb_dns_name
+      note  = "API via ALB"
     },
     {
-      type  = "A"
+      type  = "A(ALIAS)"
       name  = "terminal.${var.zone_name}"
-      value = var.edge_public_ip
-      note  = "Terminal via edge proxy"
+      value = var.app_alb_dns_name
+      note  = "Terminal via ALB"
     },
     {
-      type  = "A"
+      type  = "A(ALIAS)"
       name  = "*.${var.zone_name}"
-      value = var.edge_public_ip
-      note  = "Wildcard env routes via edge proxy"
+      value = var.env_alb_dns_name
+      note  = "Wildcard env routes via ALB"
     }
   ]
 }
