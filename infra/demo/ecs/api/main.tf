@@ -7,7 +7,8 @@ locals {
   base_secrets = [
     for s in [
       { name = "JWT_SECRET", valueFrom = var.jwt_secret_arn },
-      { name = "ENV_SESSION_SECRET", valueFrom = var.env_session_secret_arn }
+      { name = "ENV_SESSION_SECRET", valueFrom = var.env_session_secret_arn },
+      { name = "TURNSTILE_SECRET_KEY", valueFrom = var.turnstile_secret_arn }
     ] : s if s.valueFrom != null && s.valueFrom != ""
   ]
 

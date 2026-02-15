@@ -170,6 +170,7 @@ module "ecs_api" {
   task_role_arn             = module.iam.api_task_role_arn
   jwt_secret_arn            = module.secrets.jwt_secret_arn
   env_session_secret_arn    = module.secrets.env_session_secret_arn
+  turnstile_secret_arn      = var.api_database_env == "prod" ? module.secrets.turnstile_secret_prod_arn : module.secrets.turnstile_secret_dev_arn
   db_host                   = module.postgres.endpoints[var.api_database_env]
   db_port                   = module.postgres.ports[var.api_database_env]
   db_name                   = "pytholit_${var.api_database_env}"

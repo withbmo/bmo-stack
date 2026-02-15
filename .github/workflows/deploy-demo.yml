@@ -117,8 +117,9 @@ jobs:
           set -euo pipefail
           registry="${{ steps.meta.outputs.registry }}"
           tag="${{ steps.meta.outputs.image_tag }}"
+          deploy_env="${{ steps.meta.outputs.deploy_env }}"
 
-          IMAGE_TAG="$tag" ECR_REGISTRY="$registry" AWS_REGION="$AWS_REGION" ./scripts/build-and-push-demo-images.sh
+          DEPLOY_ENV="$deploy_env" IMAGE_TAG="$tag" ECR_REGISTRY="$registry" AWS_REGION="$AWS_REGION" ./scripts/build-and-push-demo-images.sh
 
       - name: Deploy to ECS (register new task defs + update services)
         run: |

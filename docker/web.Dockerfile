@@ -6,6 +6,10 @@ COPY packages ./packages
 RUN corepack enable && pnpm install --frozen-lockfile
 
 FROM deps AS build
+# Accept Turnstile site key as build argument (baked into Next.js client bundle)
+ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY
+ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY
+
 RUN pnpm --filter @pytholit/web... build
 # In some CI/buildkit cases the `public/` dir may not exist (or may be empty).
 # Ensure the path exists so the runtime stage COPY doesn't fail.

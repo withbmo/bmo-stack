@@ -3,6 +3,7 @@ set -euo pipefail
 
 : "${AWS_REGION:=us-east-1}"
 : "${IMAGE_TAG:=demo-$(date +%Y%m%d%H%M%S)}"
+: "${DEPLOY_ENV:=dev}"  # default to dev if not set
 
 services=(
   "web:docker/web.Dockerfile"
@@ -18,6 +19,20 @@ if [[ -z "${ECR_REGISTRY:-}" ]]; then
 fi
 
 echo "Using ECR registry: $ECR_REGISTRY"
+echo "Deploy environment: $DEPLOY_ENV"
+
+# Fetch Turnstile site key from Secrets Manager for web builds
+if [[ "$DEPLOY_ENV" == "prod" ]]; then
+  turnstile_site_key_secret="pytholit-demo/web/turnstile-site-key-prod"
+else
+  turnstile_site_key_secret="pytholit-demo/web/turnstile-site-key-dev"
+fi
+
+echo "Fetching Turnstile site key from $turnstile_site_key_secret..."
+TURNSTILE_SITE_KEY="$(aws secretsmanager get-secret-value \
+  --region "$AWS_REGION" \
+  --secret-id "$turnstile_site_key_secret" \
+  --query SecretString --output text)"
 
 aws ecr get-login-password --region "$AWS_REGION" \
   | docker login --username AWS --password-stdin "$ECR_REGISTRY"
@@ -37,7 +52,17 @@ for entry in "${services[@]}"; do
   fi
 
   echo "Building $name -> $repo:$IMAGE_TAG"
-  docker build -f "$dockerfile" -t "$repo:$IMAGE_TAG" .
+
+  # Build web image with Turnstile site key as build arg
+  if [[ "$name" == "web" ]]; then
+    docker build \
+      -f "$dockerfile" \
+      --build-arg NEXT_PUBLIC_TURNSTILE_SITE_KEY="$TURNSTILE_SITE_KEY" \
+      -t "$repo:$IMAGE_TAG" .
+  else
+    docker build -f "$dockerfile" -t "$repo:$IMAGE_TAG" .
+  fi
+
   docker push "$repo:$IMAGE_TAG"
 
 done

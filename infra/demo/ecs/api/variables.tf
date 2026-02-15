@@ -12,6 +12,11 @@ variable "env_session_secret_arn" {
   type    = string
   default = null
 }
+variable "turnstile_secret_arn" {
+  type        = string
+  default     = null
+  description = "ARN of the Turnstile secret key in Secrets Manager"
+}
 variable "db_host" {
   type    = string
   default = null

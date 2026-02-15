@@ -12,13 +12,15 @@ import type { LoginDto, ResetPasswordDto,SignupDto } from '@pytholit/validation/
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 
+import { TurnstileService } from '../common/services/turnstile.service';
 import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    private readonly turnstileService: TurnstileService
   ) {}
 
   async hashPassword(password: string): Promise<string> {
@@ -36,6 +38,12 @@ export class AuthService {
   }
 
   async signup(dto: SignupDto): Promise<LoginResponse> {
+    // Verify Turnstile token FIRST (fail fast before DB queries)
+    const isValidToken = await this.turnstileService.verifyToken(dto.captchaToken);
+    if (!isValidToken && !this.turnstileService.isDevelopmentMode()) {
+      throw new BadRequestException('Invalid security check. Please try again.');
+    }
+
     const existingUser = await this.prisma.client.user.findFirst({
       where: {
         OR: [{ email: dto.email }, { username: dto.username }],
@@ -78,6 +86,12 @@ export class AuthService {
   }
 
   async login(dto: LoginDto): Promise<LoginResponse> {
+    // Verify Turnstile token FIRST
+    const isValidToken = await this.turnstileService.verifyToken(dto.captchaToken);
+    if (!isValidToken && !this.turnstileService.isDevelopmentMode()) {
+      throw new BadRequestException('Invalid security check. Please try again.');
+    }
+
     const user = await this.prisma.client.user.findUnique({
       where: { email: dto.email },
     });
