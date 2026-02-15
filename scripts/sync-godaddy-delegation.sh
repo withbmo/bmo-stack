@@ -33,10 +33,25 @@ fi
 payload="$(jq -c --argjson ttl "${ttl}" '[.values[] | {data: ., ttl: $ttl}]' <<<"${delegation_json}")"
 
 echo "Syncing GoDaddy NS record: ${host_label}.${parent_domain}"
-curl -fsS -X PUT \
-  -H "Authorization: sso-key ${GODADDY_API_KEY}:${GODADDY_API_SECRET}" \
-  -H "Content-Type: application/json" \
-  "${api_base}/v1/domains/${parent_domain}/records/NS/${host_label}" \
-  -d "${payload}" >/dev/null
+
+tmp_body="$(mktemp)"
+status_code="$(
+  curl -sS -o "${tmp_body}" -w "%{http_code}" -X PUT \
+    -H "Authorization: sso-key ${GODADDY_API_KEY}:${GODADDY_API_SECRET}" \
+    -H "Content-Type: application/json" \
+    "${api_base}/v1/domains/${parent_domain}/records/NS/${host_label}" \
+    -d "${payload}"
+)"
+
+if [[ "${status_code}" -lt 200 || "${status_code}" -ge 300 ]]; then
+  echo "GoDaddy API request failed (HTTP ${status_code})."
+  echo "Endpoint: ${api_base}/v1/domains/${parent_domain}/records/NS/${host_label}"
+  echo "Response body:"
+  cat "${tmp_body}"
+  rm -f "${tmp_body}"
+  exit 1
+fi
+
+rm -f "${tmp_body}"
 
 echo "GoDaddy NS delegation synced successfully."
