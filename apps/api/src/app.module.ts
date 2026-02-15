@@ -7,6 +7,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from './auth/guards/permissions.guard';
+import { AdminModule } from './admin/admin.module';
 import { BillingModule } from './billing/billing.module';
 import { CommonModule } from './common/common.module';
 import { validateEnv } from './config/env';
@@ -36,6 +38,7 @@ import { WizardModule } from './wizard/wizard.module';
     ]),
     CommonModule,
     DatabaseModule,
+    AdminModule,
     AuthModule,
     UsersModule,
     OtpModule,
@@ -54,6 +57,10 @@ import { WizardModule } from './wizard/wizard.module';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionsGuard,
     },
     {
       provide: APP_GUARD,

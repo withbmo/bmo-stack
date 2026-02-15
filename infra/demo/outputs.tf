@@ -1,7 +1,6 @@
 output "external_dns_records_required" {
   value = concat(
-    try(module.dns_acm[0].required_dns_records, []),
-    local.delegated_dns_enabled ? [] : try(module.edge_proxy[0].required_dns_records, [])
+    try(module.dns_acm[0].required_dns_records, [])
   )
 }
 
@@ -47,10 +46,6 @@ output "postgres_master_secret_arns" {
 
 output "app_alb_dns_name" {
   value = try(module.alb_app[0].alb_dns_name, null)
-}
-
-output "edge_proxy_public_ip" {
-  value = try(module.edge_proxy[0].public_ip, null)
 }
 
 output "delegated_zone_name" {

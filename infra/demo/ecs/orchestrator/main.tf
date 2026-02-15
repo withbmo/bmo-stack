@@ -33,6 +33,10 @@ resource "aws_ecs_task_definition" "this" {
   ])
 
   tags = var.tags
+
+  lifecycle {
+    ignore_changes = [container_definitions]
+  }
 }
 
 resource "aws_ecs_service" "this" {
@@ -51,6 +55,10 @@ resource "aws_ecs_service" "this" {
   depends_on = [aws_ecs_task_definition.this]
 
   tags = var.tags
+
+  lifecycle {
+    ignore_changes = [task_definition, desired_count]
+  }
 }
 
 resource "aws_appautoscaling_target" "this" {

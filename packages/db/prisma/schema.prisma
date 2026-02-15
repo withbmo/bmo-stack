@@ -15,6 +15,13 @@ datasource db {
 // User & Authentication
 // ============================================================================
 
+enum UserRole {
+  user
+  admin
+  support
+  billing
+}
+
 model User {
   id                String    @id @default(uuid())
   email             String    @unique
@@ -28,6 +35,11 @@ model User {
   isActive          Boolean   @default(true) @map("is_active")
   isSuperuser       Boolean   @default(false) @map("is_superuser")
   isEmailVerified   Boolean   @default(false) @map("is_email_verified")
+
+  // RBAC
+  role              UserRole  @default(user)
+  /// Fine-grained permissions (e.g. "admin.access", "admin.users.write")
+  permissions       String[]  @default([])
 
   // External service IDs
   stripeCustomerId  String?   @unique @map("stripe_customer_id")
@@ -49,6 +61,7 @@ model User {
   invoices          Invoice[]
   subscriptions     Subscription[]
   usageCounters     UsageCounter[]
+  auditLogs         AuditLog[]
 
   @@map("users")
 }
@@ -282,4 +295,23 @@ model UsageCounter {
 
   @@unique([userId, featureId, periodStart, periodEnd])
   @@map("usage_counters")
+}
+
+// ============================================================================
+// Admin & Audit
+// ============================================================================
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorUserId String   @map("actor_user_id")
+  action      String
+  targetType  String   @map("target_type")
+  targetId    String?  @map("target_id")
+  meta        Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  actor       User     @relation(fields: [actorUserId], references: [id], onDelete: Cascade)
+
+  @@index([actorUserId])
+  @@map("audit_logs")
 }

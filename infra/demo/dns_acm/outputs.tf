@@ -3,11 +3,11 @@ output "app_certificate_arn" {
 }
 
 output "env_certificate_arn" {
-  value = aws_acm_certificate.env.arn
+  value = var.issue_env_wildcard_certificate ? aws_acm_certificate.env[0].arn : null
 }
 
 output "required_dns_records" {
-  value = concat(
+  value = local.use_route53_validation ? [] : concat(
     [
       {
         type  = "CNAME"
@@ -29,16 +29,10 @@ output "required_dns_records" {
       },
       {
         type  = "CNAME"
-        name  = "*.dev.${var.domain_name}"
+        name  = "*.${var.app_domain_name}"
         value = var.env_alb_dns_name
         note  = "Dev wildcard"
       },
-      {
-        type  = "CNAME"
-        name  = "*.prod.${var.domain_name}"
-        value = var.env_alb_dns_name
-        note  = "Prod wildcard"
-      }
     ],
     local.app_validation_records,
     local.env_validation_records

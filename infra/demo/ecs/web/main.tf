@@ -33,6 +33,12 @@ resource "aws_ecs_task_definition" "this" {
   ])
 
   tags = var.tags
+
+  # CI/CD registers new task definition revisions for app releases.
+  # Terraform should manage infra, not the image inside the task definition.
+  lifecycle {
+    ignore_changes = [container_definitions]
+  }
 }
 
 resource "aws_ecs_service" "this" {
@@ -59,6 +65,11 @@ resource "aws_ecs_service" "this" {
   depends_on = [aws_ecs_task_definition.this]
 
   tags = var.tags
+
+  # Allow CI/CD + autoscaling to control task revisions and desired count.
+  lifecycle {
+    ignore_changes = [task_definition, desired_count]
+  }
 }
 
 resource "aws_appautoscaling_target" "this" {

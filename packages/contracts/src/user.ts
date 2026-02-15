@@ -2,7 +2,7 @@
  * User-related types and contracts
  */
 
-export type UserRole = 'user' | 'admin';
+export type UserRole = 'user' | 'admin' | 'support' | 'billing';
 
 export interface User {
   id: string;
@@ -14,6 +14,8 @@ export interface User {
   isEmailVerified: boolean;
   isActive: boolean;
   isSuperuser: boolean;
+  role: UserRole;
+  permissions: string[];
   stripeCustomerId: string | null;
   novuSubscriberId: string | null;
   createdAt: string;
@@ -29,6 +31,9 @@ export interface UserProfile {
   avatarUrl: string | null;
   isEmailVerified: boolean;
   isActive: boolean;
+  isSuperuser: boolean;
+  role: UserRole;
+  permissions: string[];
   createdAt: string;
   updatedAt: string;
   plan: UserPlan | null;
