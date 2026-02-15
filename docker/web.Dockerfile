@@ -11,10 +11,14 @@ RUN pnpm --filter @pytholit/web... build
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=build /app/apps/web/.next ./apps/web/.next
-COPY --from=build /app/apps/web/package.json ./apps/web/package.json
-COPY --from=build /app/apps/web/node_modules ./apps/web/node_modules
+# pnpm workspace layout: per-app node_modules contains symlinks into the root .pnpm store,
+# so we must copy both the root node_modules and the app node_modules.
 COPY --from=build /app/node_modules ./node_modules
-RUN mkdir -p /app/apps/web/public
+COPY --from=build /app/apps/web/node_modules ./apps/web/node_modules
+COPY --from=build /app/apps/web/.next ./apps/web/.next
+COPY --from=build /app/apps/web/public ./apps/web/public
+COPY --from=build /app/apps/web/package.json ./apps/web/package.json
+
+WORKDIR /app/apps/web
 EXPOSE 3000
-CMD ["node", "node_modules/next/dist/bin/next", "start", "apps/web", "-p", "3000"]
+CMD ["node", "node_modules/next/dist/bin/next", "start", "-p", "3000"]

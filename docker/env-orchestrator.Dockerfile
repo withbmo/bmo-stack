@@ -13,6 +13,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /app/apps/env-orchestrator/dist ./apps/env-orchestrator/dist
 COPY --from=build /app/apps/env-orchestrator/package.json ./apps/env-orchestrator/package.json
+# pnpm workspace layout: per-app node_modules contains symlinks into the root .pnpm store,
+# so we must copy both the root node_modules and the app node_modules.
+COPY --from=build /app/apps/env-orchestrator/node_modules ./apps/env-orchestrator/node_modules
 COPY --from=build /app/node_modules ./node_modules
 EXPOSE 3401
 CMD ["node", "apps/env-orchestrator/dist/main.js"]
