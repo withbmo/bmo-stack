@@ -97,11 +97,33 @@ resource "aws_security_group" "ecs_services" {
     security_groups = [aws_security_group.alb_app.id]
   }
 
+  dynamic "ingress" {
+    for_each = var.edge_proxy_enabled ? [1] : []
+    content {
+      from_port       = 3000
+      to_port         = 3000
+      protocol        = "tcp"
+      security_groups = [aws_security_group.edge_proxy.id]
+      description     = "Edge proxy to web"
+    }
+  }
+
   ingress {
     from_port       = 3001
     to_port         = 3001
     protocol        = "tcp"
     security_groups = [aws_security_group.alb_app.id]
+  }
+
+  dynamic "ingress" {
+    for_each = var.edge_proxy_enabled ? [1] : []
+    content {
+      from_port       = 3001
+      to_port         = 3001
+      protocol        = "tcp"
+      security_groups = [aws_security_group.edge_proxy.id]
+      description     = "Edge proxy to api"
+    }
   }
 
   ingress {
@@ -111,11 +133,33 @@ resource "aws_security_group" "ecs_services" {
     security_groups = [aws_security_group.alb_env.id]
   }
 
+  dynamic "ingress" {
+    for_each = var.edge_proxy_enabled ? [1] : []
+    content {
+      from_port       = 3402
+      to_port         = 3402
+      protocol        = "tcp"
+      security_groups = [aws_security_group.edge_proxy.id]
+      description     = "Edge proxy to ingress router"
+    }
+  }
+
   ingress {
     from_port       = 3403
     to_port         = 3403
     protocol        = "tcp"
     security_groups = [aws_security_group.alb_app.id]
+  }
+
+  dynamic "ingress" {
+    for_each = var.edge_proxy_enabled ? [1] : []
+    content {
+      from_port       = 3403
+      to_port         = 3403
+      protocol        = "tcp"
+      security_groups = [aws_security_group.edge_proxy.id]
+      description     = "Edge proxy to terminal gateway"
+    }
   }
 
   ingress {
@@ -133,54 +177,6 @@ resource "aws_security_group" "ecs_services" {
   }
 
   tags = merge(var.tags, { Name = "demo-ecs-services-sg" })
-}
-
-resource "aws_security_group_rule" "ecs_from_edge_web" {
-  count = var.edge_proxy_enabled ? 1 : 0
-
-  type                     = "ingress"
-  from_port                = 3000
-  to_port                  = 3000
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.ecs_services.id
-  source_security_group_id = aws_security_group.edge_proxy.id
-  description              = "Edge proxy to web"
-}
-
-resource "aws_security_group_rule" "ecs_from_edge_api" {
-  count = var.edge_proxy_enabled ? 1 : 0
-
-  type                     = "ingress"
-  from_port                = 3001
-  to_port                  = 3001
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.ecs_services.id
-  source_security_group_id = aws_security_group.edge_proxy.id
-  description              = "Edge proxy to api"
-}
-
-resource "aws_security_group_rule" "ecs_from_edge_ingress" {
-  count = var.edge_proxy_enabled ? 1 : 0
-
-  type                     = "ingress"
-  from_port                = 3402
-  to_port                  = 3402
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.ecs_services.id
-  source_security_group_id = aws_security_group.edge_proxy.id
-  description              = "Edge proxy to ingress router"
-}
-
-resource "aws_security_group_rule" "ecs_from_edge_terminal" {
-  count = var.edge_proxy_enabled ? 1 : 0
-
-  type                     = "ingress"
-  from_port                = 3403
-  to_port                  = 3403
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.ecs_services.id
-  source_security_group_id = aws_security_group.edge_proxy.id
-  description              = "Edge proxy to terminal gateway"
 }
 
 resource "aws_security_group" "env_instance" {
