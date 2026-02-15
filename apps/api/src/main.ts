@@ -13,7 +13,22 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bodyParser: false });
 
   // Security headers
-  app.use(helmet());
+  //
+  // Important: This demo can run behind an HTTP-only edge proxy (no ALB/TLS).
+  // Sending HSTS over HTTP will cause browsers to auto-upgrade to https:// and break access.
+  // Default: HSTS disabled unless explicitly enabled via env.
+  const enableHsts = process.env.ENABLE_HSTS === 'true';
+  app.use(
+    helmet({
+      hsts: enableHsts
+        ? undefined
+        : {
+            maxAge: 0,
+            includeSubDomains: false,
+            preload: false,
+          },
+    })
+  );
 
   // Global validation pipe - uses class-validator DTOs from @pytholit/validation
   app.useGlobalPipes(
