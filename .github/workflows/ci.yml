@@ -46,3 +46,45 @@ jobs:
           severity: CRITICAL
           ignore-unfixed: true
           exit-code: "1"
+
+  infra-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: actionlint
+        uses: rhysd/actionlint@v1
+
+      - name: ShellCheck (scripts/)
+        uses: ludeeus/action-shellcheck@v2
+        with:
+          scandir: scripts
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+          terraform_version: 1.5.7
+
+      - name: Terraform fmt (check)
+        run: |
+          terraform fmt -check -recursive infra/demo infra/bootstrap
+
+      - name: Terraform validate (no backend)
+        run: |
+          set -euo pipefail
+          terraform -chdir=infra/demo init -backend=false -input=false
+          terraform -chdir=infra/demo validate
+          terraform -chdir=infra/bootstrap init -backend=false -input=false
+          terraform -chdir=infra/bootstrap validate
+
+      - name: Setup tflint
+        uses: terraform-linters/setup-tflint@v4
+
+      - name: tflint (infra/demo)
+        run: |
+          set -euo pipefail
+          cd infra/demo
+          tflint --init
+          tflint --recursive

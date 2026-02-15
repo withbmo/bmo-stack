@@ -29,19 +29,14 @@ variable "app_domain_prefix" {
   description = "Optional prefix for app/api/terminal hostnames. Example: dev => dev.pytholit.dev"
 }
 
-variable "public_zone_managed_externally" {
-  type    = bool
-  default = true
-}
-
 variable "enable_alb" {
   type    = bool
-  default = false
-}
-
-variable "enable_edge_proxy_when_no_alb" {
-  type    = bool
   default = true
+
+  validation {
+    condition     = var.enable_alb
+    error_message = "enable_alb=false is no longer supported (the edge-proxy fallback was removed)."
+  }
 }
 
 variable "manage_delegated_dns" {
@@ -51,7 +46,7 @@ variable "manage_delegated_dns" {
 
 variable "enable_dns_acm" {
   type    = bool
-  default = false
+  default = true
 }
 
 variable "postgres_master_username" {

@@ -1,15 +1,33 @@
 module "servicesvpc" {
-  source   = "./servicesvpc"
-  vpc_cidr = var.services_vpc_cidr
-  region   = var.region
-  tags     = local.tags
+  source      = "./vpc_base"
+  name_prefix = "services"
+  vpc_cidr    = var.services_vpc_cidr
+  region      = var.region
+  interface_endpoint_services = [
+    "com.amazonaws.${var.region}.sts",
+    "com.amazonaws.${var.region}.ssm",
+    "com.amazonaws.${var.region}.ssmmessages",
+    "com.amazonaws.${var.region}.ec2messages",
+    "com.amazonaws.${var.region}.ecr.api",
+    "com.amazonaws.${var.region}.ecr.dkr",
+    "com.amazonaws.${var.region}.logs",
+  ]
+  tags = local.tags
 }
 
 module "envsvpc" {
-  source   = "./envsvpc"
-  vpc_cidr = var.envs_vpc_cidr
-  region   = var.region
-  tags     = local.tags
+  source      = "./vpc_base"
+  name_prefix = "envs"
+  vpc_cidr    = var.envs_vpc_cidr
+  region      = var.region
+  interface_endpoint_services = [
+    "com.amazonaws.${var.region}.ssm",
+    "com.amazonaws.${var.region}.ssmmessages",
+    "com.amazonaws.${var.region}.ec2messages",
+    "com.amazonaws.${var.region}.ecr.api",
+    "com.amazonaws.${var.region}.ecr.dkr",
+  ]
+  tags = local.tags
 }
 
 module "tgw" {
@@ -26,12 +44,11 @@ module "tgw" {
 }
 
 module "security" {
-  source             = "./security"
-  services_vpc_id    = module.servicesvpc.vpc_id
-  envs_vpc_id        = module.envsvpc.vpc_id
-  services_vpc_cidr  = var.services_vpc_cidr
-  edge_proxy_enabled = local.edge_proxy_enabled
-  tags               = local.tags
+  source            = "./security"
+  services_vpc_id   = module.servicesvpc.vpc_id
+  envs_vpc_id       = module.envsvpc.vpc_id
+  services_vpc_cidr = var.services_vpc_cidr
+  tags              = local.tags
 }
 
 module "postgres" {
@@ -72,28 +89,17 @@ module "compute" {
   tags                  = local.tags
 }
 
-module "edge_proxy" {
-  count = local.edge_proxy_enabled ? 1 : 0
-
-  source                = "./edge_proxy"
-  region                = var.region
-  vpc_id                = module.servicesvpc.vpc_id
-  public_subnet_id      = module.servicesvpc.public_subnet_ids[0]
-  security_group_id     = module.security.edge_proxy_security_group_id
-  instance_profile_name = module.iam.edge_proxy_instance_profile_name
-  cluster_name          = module.ecs_shared.cluster_name
-  app_domain_name       = local.app_domain_name
-  domain_name           = var.domain_name
-  tags                  = local.tags
-}
-
 module "route53_delegated" {
   count = local.delegated_dns_enabled ? 1 : 0
 
-  source         = "./route53_delegated"
-  zone_name      = local.app_domain_name
-  edge_public_ip = try(module.edge_proxy[0].public_ip, null)
-  tags           = local.tags
+  source             = "./route53_delegated"
+  zone_name          = local.app_domain_name
+  app_alb_dns_name   = var.enable_alb ? module.alb_app[0].alb_dns_name : null
+  app_alb_zone_id    = var.enable_alb ? module.alb_app[0].alb_zone_id : null
+  env_alb_dns_name   = var.enable_alb ? module.alb_env[0].alb_dns_name : null
+  env_alb_zone_id    = var.enable_alb ? module.alb_env[0].alb_zone_id : null
+  enable_alb_records = var.enable_alb
+  tags               = local.tags
 }
 
 module "alb_app" {
@@ -104,7 +110,8 @@ module "alb_app" {
   public_subnet_ids     = module.servicesvpc.public_subnet_ids
   alb_security_group_id = module.security.alb_app_security_group_id
   app_domain_name       = local.app_domain_name
-  certificate_arn       = null
+  certificate_arn       = var.enable_dns_acm ? module.dns_acm[0].app_certificate_arn : null
+  enable_https          = var.enable_dns_acm
   tags                  = local.tags
 }
 
@@ -115,20 +122,20 @@ module "alb_env" {
   vpc_id                = module.servicesvpc.vpc_id
   public_subnet_ids     = module.servicesvpc.public_subnet_ids
   alb_security_group_id = module.security.alb_env_security_group_id
-  certificate_arn       = null
+  certificate_arn       = var.enable_dns_acm ? coalesce(module.dns_acm[0].env_certificate_arn, module.dns_acm[0].app_certificate_arn) : null
+  enable_https          = var.enable_dns_acm
   tags                  = local.tags
 }
 
 module "dns_acm" {
   count = var.enable_dns_acm ? 1 : 0
 
-  source                         = "./dns_acm"
-  domain_name                    = var.domain_name
-  app_domain_name                = local.app_domain_name
-  app_alb_dns_name               = var.enable_alb ? module.alb_app[0].alb_dns_name : ""
-  env_alb_dns_name               = var.enable_alb ? module.alb_env[0].alb_dns_name : ""
-  public_zone_managed_externally = var.public_zone_managed_externally
-  tags                           = local.tags
+  source                     = "./dns_acm"
+  app_domain_name            = local.app_domain_name
+  validation_route53_zone_id = local.delegated_dns_enabled ? module.route53_delegated[0].zone_id : null
+  app_alb_dns_name           = var.enable_alb ? module.alb_app[0].alb_dns_name : ""
+  env_alb_dns_name           = var.enable_alb ? module.alb_env[0].alb_dns_name : ""
+  tags                       = local.tags
 }
 
 module "ecs_shared" {
@@ -148,6 +155,9 @@ module "ecs_web" {
   target_group_arn     = var.enable_alb ? module.alb_app[0].web_target_group_arn : null
   image                = var.images.web
   tags                 = local.tags
+
+  # Ensure the target group is associated with a load balancer before ECS service creation.
+  depends_on = [module.alb_app]
 }
 
 module "ecs_api" {
@@ -168,6 +178,8 @@ module "ecs_api" {
   target_group_arn          = var.enable_alb ? module.alb_app[0].api_target_group_arn : null
   image                     = var.images.api
   tags                      = local.tags
+
+  depends_on = [module.alb_app]
 }
 
 module "ecs_terminal_gateway" {
@@ -183,6 +195,8 @@ module "ecs_terminal_gateway" {
   target_group_arn       = var.enable_alb ? module.alb_app[0].terminal_target_group_arn : null
   image                  = var.images.terminal_gateway
   tags                   = local.tags
+
+  depends_on = [module.alb_app]
 }
 
 module "ecs_ingress_router" {
@@ -198,6 +212,8 @@ module "ecs_ingress_router" {
   target_group_arn       = var.enable_alb ? module.alb_env[0].ingress_target_group_arn : null
   image                  = var.images.ingress_router
   tags                   = local.tags
+
+  depends_on = [module.alb_env]
 }
 
 module "ecs_orchestrator" {

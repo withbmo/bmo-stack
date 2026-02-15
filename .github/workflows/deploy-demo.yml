@@ -11,6 +11,7 @@ on:
       - "docker/**"
       - "infra/demo/**"
       - "scripts/build-and-push-demo-images.sh"
+      - "scripts/ecs-deploy-service-image.sh"
       - ".github/workflows/deploy-demo.yml"
   workflow_dispatch:
     inputs:
@@ -36,7 +37,6 @@ concurrency:
 
 env:
   AWS_REGION: us-east-1
-  TF_IN_AUTOMATION: "true"
 
 jobs:
   deploy:
@@ -72,9 +72,11 @@ jobs:
             image_tag="${GITHUB_SHA::12}"
           fi
 
-          echo "deploy_env=$deploy_env" >> "$GITHUB_OUTPUT"
-          echo "aws_role=$aws_role" >> "$GITHUB_OUTPUT"
-          echo "image_tag=$image_tag" >> "$GITHUB_OUTPUT"
+          {
+            echo "deploy_env=$deploy_env"
+            echo "aws_role=$aws_role"
+            echo "image_tag=$image_tag"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Validate AWS role secret
         run: |
@@ -90,11 +92,6 @@ jobs:
           role-to-assume: ${{ steps.context.outputs.aws_role }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_wrapper: false
-
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -103,25 +100,11 @@ jobs:
         run: |
           account_id="$(aws sts get-caller-identity --query Account --output text)"
           registry="${account_id}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-          echo "deploy_env=${{ steps.context.outputs.deploy_env }}" >> "$GITHUB_OUTPUT"
-          echo "registry=$registry" >> "$GITHUB_OUTPUT"
-          echo "image_tag=${{ steps.context.outputs.image_tag }}" >> "$GITHUB_OUTPUT"
-
-      - name: Login to ECR
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Ensure ECR repositories exist
-        run: |
-          set -euo pipefail
-          repos=(web api ingress-router env-orchestrator terminal-gateway)
-          for repo in "${repos[@]}"; do
-            if ! aws ecr describe-repositories --repository-names "$repo" >/dev/null 2>&1; then
-              aws ecr create-repository \
-                --repository-name "$repo" \
-                --image-tag-mutability IMMUTABLE \
-                --image-scanning-configuration scanOnPush=true >/dev/null
-            fi
-          done
+          {
+            echo "deploy_env=${{ steps.context.outputs.deploy_env }}"
+            echo "registry=$registry"
+            echo "image_tag=${{ steps.context.outputs.image_tag }}"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Build and push images
         run: |
@@ -129,160 +112,22 @@ jobs:
           registry="${{ steps.meta.outputs.registry }}"
           tag="${{ steps.meta.outputs.image_tag }}"
 
-          declare -a services=(
-            "web:docker/web.Dockerfile"
-            "api:docker/api.Dockerfile"
-            "ingress-router:docker/ingress-router.Dockerfile"
-            "env-orchestrator:docker/env-orchestrator.Dockerfile"
-            "terminal-gateway:docker/terminal-gateway.Dockerfile"
-          )
+          IMAGE_TAG="$tag" ECR_REGISTRY="$registry" AWS_REGION="$AWS_REGION" ./scripts/build-and-push-demo-images.sh
 
-          for item in "${services[@]}"; do
-            name="${item%%:*}"
-            dockerfile="${item##*:}"
-            image="${registry}/${name}:${tag}"
-            echo "Building ${image}"
-            docker build -f "${dockerfile}" -t "${image}" .
-            docker push "${image}"
-          done
-
-      - name: Write Terraform image overrides
-        run: |
-          cat > infra/demo/ci-images.auto.tfvars.json <<EOF
-          {
-            "images": {
-              "web": "${{ steps.meta.outputs.registry }}/web:${{ steps.meta.outputs.image_tag }}",
-              "api": "${{ steps.meta.outputs.registry }}/api:${{ steps.meta.outputs.image_tag }}",
-              "terminal_gateway": "${{ steps.meta.outputs.registry }}/terminal-gateway:${{ steps.meta.outputs.image_tag }}",
-              "ingress_router": "${{ steps.meta.outputs.registry }}/ingress-router:${{ steps.meta.outputs.image_tag }}",
-              "orchestrator": "${{ steps.meta.outputs.registry }}/env-orchestrator:${{ steps.meta.outputs.image_tag }}"
-            }
-          }
-          EOF
-
-      - name: Reclaim disk before Terraform
+      - name: Deploy to ECS (register new task defs + update services)
         run: |
           set -euo pipefail
-          docker system df || true
-          docker builder prune -af || true
-          docker system prune -af --volumes || true
-          df -h
+          registry="${{ steps.meta.outputs.registry }}"
+          tag="${{ steps.meta.outputs.image_tag }}"
 
-      - name: Terraform init
-        working-directory: infra/demo
-        run: terraform init -input=false
-
-      - name: Terraform apply
-        working-directory: infra/demo
-        run: |
-          args=(-input=false -auto-approve -var-file=ci-images.auto.tfvars.json)
-          tfvars_file="${{ steps.meta.outputs.deploy_env }}.tfvars"
-          if [[ -f "$tfvars_file" ]]; then
-            echo "Using environment tfvars: $tfvars_file"
-            args+=(-var-file="$tfvars_file")
-          else
-            echo "No environment tfvars file found at infra/demo/$tfvars_file, using defaults."
-          fi
-          terraform apply "${args[@]}"
-
-      - name: Run Prisma migrations (one-off ECS task)
-        run: |
-          set -euo pipefail
-
+          # NOTE: For now dev and prod share the same demo cluster name.
           cluster_name="demo-services-cluster"
-          service_name="demo-api"
-          task_def="$(aws ecs describe-services \
-            --cluster "$cluster_name" \
-            --services "$service_name" \
-            --query 'services[0].taskDefinition' \
-            --output text)"
 
-          subnet_csv="$(aws ecs describe-services \
-            --cluster "$cluster_name" \
-            --services "$service_name" \
-            --query 'services[0].networkConfiguration.awsvpcConfiguration.subnets' \
-            --output text | tr '\t' ',')"
-          sg_csv="$(aws ecs describe-services \
-            --cluster "$cluster_name" \
-            --services "$service_name" \
-            --query 'services[0].networkConfiguration.awsvpcConfiguration.securityGroups' \
-            --output text | tr '\t' ',')"
-
-          if [[ -z "$task_def" || "$task_def" == "None" ]]; then
-            echo "Could not resolve API task definition."
-            exit 1
-          fi
-
-          if [[ -z "$subnet_csv" || "$subnet_csv" == "None" ]]; then
-            echo "Could not resolve API subnets."
-            exit 1
-          fi
-
-          if [[ -z "$sg_csv" || "$sg_csv" == "None" ]]; then
-            echo "Could not resolve API security groups."
-            exit 1
-          fi
-
-          migration_cmd='const { execSync } = require("node:child_process"); const enc = encodeURIComponent; const required = ["DB_HOST","DB_PORT","DB_NAME","DB_USER","DB_PASSWORD"]; const missing = required.filter((k) => !process.env[k]); if (missing.length) { console.error("Missing DB env vars:", missing.join(", ")); process.exit(1); } const sslmode = process.env.DB_SSLMODE || "require"; const databaseUrl = `postgresql://${enc(process.env.DB_USER)}:${enc(process.env.DB_PASSWORD)}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}?schema=public&sslmode=${sslmode}`; execSync("packages/db/node_modules/.bin/prisma migrate deploy --schema packages/db/prisma/schema.prisma", { stdio: "inherit", env: { ...process.env, DATABASE_URL: databaseUrl } });'
-          overrides_json="$(jq -n --arg cmd "$migration_cmd" '{
-            containerOverrides: [
-              {
-                name: "api",
-                command: ["node", "-e", $cmd]
-              }
-            ]
-          }')"
-
-          run_arn=""
-          for attempt in 1 2; do
-            run_output="$(aws ecs run-task \
-              --cluster "$cluster_name" \
-              --launch-type FARGATE \
-              --task-definition "$task_def" \
-              --count 1 \
-              --network-configuration "awsvpcConfiguration={subnets=[$subnet_csv],securityGroups=[$sg_csv],assignPublicIp=DISABLED}" \
-              --overrides "$overrides_json" \
-              --output json)"
-
-            run_arn="$(echo "$run_output" | jq -r '.tasks[0].taskArn // empty')"
-            failure_count="$(echo "$run_output" | jq '.failures | length')"
-            failure_text="$(echo "$run_output" | jq -r '.failures[]? | "\(.reason // "unknown reason") \(.detail // "")"' | tr '\n' ' ')"
-
-            if [[ "$failure_count" -eq 0 && -n "$run_arn" ]]; then
-              break
-            fi
-
-            echo "Failed to start migration task (attempt $attempt)."
-            echo "$run_output" | jq -r '.failures[]? | "- \(.arn // "unknown"): \(.reason // "unknown reason") \(.detail // "")"'
-
-            if [[ "$attempt" -eq 1 && "$failure_text" == *"limit on the number of vCPUs"* ]]; then
-              echo "Quota pressure detected; scaling demo services down to desired=1 and retrying..."
-              for svc in demo-web demo-api demo-ingress-router demo-terminal-gateway demo-orchestrator; do
-                aws ecs update-service --cluster "$cluster_name" --service "$svc" --desired-count 1 >/dev/null || true
-              done
-              sleep 15
-              continue
-            fi
-
-            exit 1
-          done
-
-          echo "Migration task started: $run_arn"
-          aws ecs wait tasks-stopped --cluster "$cluster_name" --tasks "$run_arn"
-
-          exit_code="$(aws ecs describe-tasks \
-            --cluster "$cluster_name" \
-            --tasks "$run_arn" \
-            --query 'tasks[0].containers[0].exitCode' \
-            --output text)"
-
-          if [[ "$exit_code" != "0" ]]; then
-            echo "Migration task failed with exit code: $exit_code"
-            aws logs tail /ecs/demo-api --since 15m || true
-            exit 1
-          fi
-
-          echo "Prisma migrations applied successfully."
+          ./scripts/ecs-deploy-service-image.sh "$cluster_name" demo-web web "${registry}/web:${tag}"
+          ./scripts/ecs-deploy-service-image.sh "$cluster_name" demo-api api "${registry}/api:${tag}"
+          ./scripts/ecs-deploy-service-image.sh "$cluster_name" demo-ingress-router ingress-router "${registry}/ingress-router:${tag}"
+          ./scripts/ecs-deploy-service-image.sh "$cluster_name" demo-terminal-gateway terminal-gateway "${registry}/terminal-gateway:${tag}"
+          ./scripts/ecs-deploy-service-image.sh "$cluster_name" demo-orchestrator orchestrator "${registry}/env-orchestrator:${tag}"
 
       - name: Deploy summary
         run: |
