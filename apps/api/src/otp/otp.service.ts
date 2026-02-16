@@ -119,16 +119,28 @@ export class OtpService {
         purpose,
         expiryMinutes: this.otpExpiryMinutes,
       });
-    } catch (error) {
-      // Log error but don't fail the request
-      // OTP is already saved in database
-      console.error('Failed to send OTP email:', error instanceof Error ? error.message : error);
-    }
 
-    return {
-      message: 'OTP sent successfully',
-      expiresIn: this.otpExpiryMinutes * 60,
-    };
+      // Email sent successfully
+      return {
+        message: 'OTP sent successfully to your email',
+        expiresIn: this.otpExpiryMinutes * 60,
+      };
+    } catch (error) {
+      // Email failed but OTP is saved - user can resend
+      // Following best practices: save OTP first, allow retry
+      console.error('Failed to send OTP email but OTP was created', {
+        userId: user.id,
+        email,
+        purpose,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+
+      // Return helpful error message
+      return {
+        message: 'OTP created but email delivery failed. You can request a resend in 60 seconds.',
+        expiresIn: this.otpExpiryMinutes * 60,
+      };
+    }
   }
 
   /**

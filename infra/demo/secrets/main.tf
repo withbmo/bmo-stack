@@ -55,3 +55,20 @@ resource "aws_secretsmanager_secret" "turnstile_site_key_prod" {
   recovery_window_in_days = 0
   tags                    = merge(var.tags, { Name = "demo-turnstile-site-key-prod" })
 }
+
+# ==============================================================================
+# ZeptoMail API Secret
+# ==============================================================================
+# Note: Secret value must be populated manually via AWS CLI after creation
+# Command: aws secretsmanager put-secret-value --secret-id demo/api/zeptomail-api-key --secret-string "your-api-key"
+
+resource "aws_secretsmanager_secret" "zeptomail_api_key" {
+  name                    = "${var.project_name}/api/zeptomail-api-key"
+  recovery_window_in_days = 0
+
+  tags = merge(var.tags, {
+    Name      = "${var.project_name}-zeptomail-api-key"
+    Service   = "email"
+    ManagedBy = "terraform"
+  })
+}

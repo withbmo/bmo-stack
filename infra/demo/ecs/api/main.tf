@@ -8,7 +8,8 @@ locals {
     for s in [
       { name = "JWT_SECRET", valueFrom = var.jwt_secret_arn },
       { name = "ENV_SESSION_SECRET", valueFrom = var.env_session_secret_arn },
-      { name = "TURNSTILE_SECRET_KEY", valueFrom = var.turnstile_secret_arn }
+      { name = "TURNSTILE_SECRET_KEY", valueFrom = var.turnstile_secret_arn },
+      { name = "ZEPTOMAIL_API_KEY", valueFrom = var.zeptomail_api_key_arn }
     ] : s if s.valueFrom != null && s.valueFrom != ""
   ]
 
@@ -50,7 +51,10 @@ resource "aws_ecs_task_definition" "this" {
         { name = "DB_HOST", value = var.db_host != null ? var.db_host : "" },
         { name = "DB_PORT", value = tostring(var.db_port) },
         { name = "DB_NAME", value = var.db_name != null ? var.db_name : "" },
-        { name = "DB_SSLMODE", value = "require" }
+        { name = "DB_SSLMODE", value = "require" },
+        { name = "ZEPTOMAIL_BASE_URL", value = "https://api.zeptomail.com" },
+        { name = "ZEPTOMAIL_FROM_EMAIL", value = "noreply@pytholit.dev" },
+        { name = "ZEPTOMAIL_FROM_NAME", value = "Pytholit" }
       ]
       secrets = local.container_secrets
     }

@@ -72,7 +72,12 @@ module "iam" {
   source = "./iam"
   tags   = local.tags
   secret_arns = concat(
-    [module.secrets.jwt_secret_arn, module.secrets.env_session_secret_arn],
+    [
+      module.secrets.jwt_secret_arn,
+      module.secrets.env_session_secret_arn,
+      module.secrets.zeptomail_api_key_arn,
+      var.api_database_env == "prod" ? module.secrets.turnstile_secret_prod_arn : module.secrets.turnstile_secret_dev_arn
+    ],
     values(module.postgres.master_secret_arns)
   )
 }
@@ -171,6 +176,7 @@ module "ecs_api" {
   jwt_secret_arn            = module.secrets.jwt_secret_arn
   env_session_secret_arn    = module.secrets.env_session_secret_arn
   turnstile_secret_arn      = var.api_database_env == "prod" ? module.secrets.turnstile_secret_prod_arn : module.secrets.turnstile_secret_dev_arn
+  zeptomail_api_key_arn     = module.secrets.zeptomail_api_key_arn
   db_host                   = module.postgres.endpoints[var.api_database_env]
   db_port                   = module.postgres.ports[var.api_database_env]
   db_name                   = "pytholit_${var.api_database_env}"

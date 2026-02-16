@@ -1,7 +1,6 @@
-import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { firstValueFrom } from 'rxjs';
+import { SendMailClient } from 'zeptomail';
 
 import {
   EmailVerifiedData,
@@ -9,31 +8,6 @@ import {
   getOtpEmailTemplate,
   OtpEmailData,
 } from './templates';
-
-interface ZeptoMailRecipient {
-  email_address: {
-    address: string;
-    name: string;
-  };
-}
-
-interface ZeptoMailRequest {
-  from: {
-    address: string;
-    name: string;
-  };
-  to: ZeptoMailRecipient[];
-  subject: string;
-  htmlbody: string;
-  textbody: string;
-  track_opens?: boolean;
-  track_clicks?: boolean;
-}
-
-interface ZeptoMailResponse {
-  message_id?: string;
-  data?: any;
-}
 
 @Injectable()
 export class EmailService {
@@ -43,27 +17,143 @@ export class EmailService {
   private readonly fromEmail: string;
   private readonly fromName: string;
   private readonly enabled: boolean;
+  private readonly client?: SendMailClient;
 
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly httpService: HttpService,
-  ) {
+  constructor(private readonly configService: ConfigService) {
     this.apiKey = this.configService.get<string>('ZEPTOMAIL_API_KEY') || '';
     this.baseUrl =
       this.configService.get<string>('ZEPTOMAIL_BASE_URL') ||
       'https://api.zeptomail.com';
     this.fromEmail =
       this.configService.get<string>('ZEPTOMAIL_FROM_EMAIL') ||
-      'noreply@pytholit.com';
+      'noreply@pytholit.dev';
     this.fromName =
       this.configService.get<string>('ZEPTOMAIL_FROM_NAME') || 'Pytholit';
-    this.enabled = !!this.apiKey;
+    this.enabled = this.apiKey.length > 0;
+
+    if (this.enabled) {
+      this.client = new SendMailClient({ url: this.baseUrl, token: this.apiKey });
+    }
 
     if (!this.enabled) {
       this.logger.warn(
         'ZeptoMail API key not configured. Email sending will be logged to console only.',
       );
     }
+  }
+
+  /**
+   * Validate email parameters before sending
+   */
+  private validateEmailParams(
+    toEmail: string,
+    subject: string,
+    htmlBody: string,
+    _textBody: string,
+  ): void {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(toEmail)) {
+      throw new Error(`Invalid email address: ${toEmail}`);
+    }
+
+    if (!subject || subject.trim().length === 0) {
+      throw new Error('Email subject cannot be empty');
+    }
+
+    if (!htmlBody || htmlBody.trim().length === 0) {
+      throw new Error('Email body cannot be empty');
+    }
+  }
+
+  /**
+   * Check if an error is permanent (don't retry) or transient (can retry)
+   */
+  private isPermanentError(error: any): boolean {
+    // Classify errors from ZeptoMail SDK
+    const permanentCodes = [
+      'invalid_email',
+      'auth_failed',
+      'forbidden',
+      'invalid_request',
+    ];
+    const permanentMessages = [
+      'invalid email',
+      'unauthorized',
+      'forbidden',
+      'bad request',
+    ];
+
+    if (error.code && permanentCodes.includes(error.code)) {
+      return true;
+    }
+
+    if (error.message) {
+      const lowerMessage = error.message.toLowerCase();
+      return permanentMessages.some((msg) => lowerMessage.includes(msg));
+    }
+
+    return false;
+  }
+
+  /**
+   * Retry an operation with exponential backoff
+   */
+  private async retryWithBackoff<T>(
+    operation: () => Promise<T>,
+    maxRetries = 3,
+    baseDelay = 1000,
+  ): Promise<T> {
+    let lastError: Error | undefined;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const startTime = Date.now();
+        const result = await operation();
+        const duration = Date.now() - startTime;
+
+        this.logger.log('Email operation successful', {
+          attempt,
+          duration,
+          timestamp: new Date().toISOString(),
+        });
+
+        return result;
+      } catch (error) {
+        lastError = error;
+
+        // Enhanced logging
+        this.logger.error('Email operation failed', {
+          attempt,
+          maxRetries,
+          error: error.message,
+          stack: error.stack,
+          isPermanent: this.isPermanentError(error),
+          timestamp: new Date().toISOString(),
+        });
+
+        // Don't retry on permanent errors
+        if (this.isPermanentError(error)) {
+          throw error;
+        }
+
+        // Retry with exponential backoff
+        if (attempt < maxRetries) {
+          const delay = baseDelay * Math.pow(2, attempt - 1);
+          this.logger.warn(
+            `Retrying in ${delay}ms (attempt ${attempt}/${maxRetries})`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+      }
+    }
+
+    // All retries exhausted
+    this.logger.error('All retry attempts exhausted', {
+      maxRetries,
+      finalError: lastError?.message || 'Unknown error',
+    });
+    throw lastError || new Error('All retry attempts failed');
   }
 
   /**
@@ -77,60 +167,41 @@ export class EmailService {
     textBody: string,
     trackOpens = true,
     trackClicks = false,
-  ): Promise<ZeptoMailResponse> {
+  ): Promise<void> {
+    // Validate inputs
+    this.validateEmailParams(toEmail, subject, htmlBody, textBody);
+
+    // Development mode
     if (!this.enabled) {
       this.logger.log(
         `[DEV MODE] Email would be sent to: ${toEmail}\nSubject: ${subject}\n`,
       );
-      return { message_id: 'dev-mode-no-send' };
+      return;
     }
 
-    try {
-      const payload: ZeptoMailRequest = {
-        from: {
-          address: this.fromEmail,
-          name: this.fromName,
-        },
-        to: [
-          {
-            email_address: {
-              address: toEmail,
-              name: toName || '',
-            },
-          },
-        ],
+    // Prepare payload
+    const payload = {
+      from: { address: this.fromEmail, name: this.fromName },
+      to: [{ email_address: { address: toEmail, name: toName } }],
+      subject,
+      htmlbody: htmlBody,
+      textbody: textBody,
+      track_opens: trackOpens,
+      track_clicks: trackClicks,
+    };
+
+    // Send with retry logic
+    await this.retryWithBackoff(async () => {
+      if (!this.client) {
+        throw new Error('Email client not initialized');
+      }
+      const response = await this.client.sendMail(payload);
+      this.logger.log('Email sent successfully', {
+        to: toEmail,
         subject,
-        htmlbody: htmlBody,
-        textbody: textBody,
-        track_opens: trackOpens,
-        track_clicks: trackClicks,
-      };
-
-      const response = await firstValueFrom(
-        this.httpService.post<ZeptoMailResponse>(
-          `${this.baseUrl}/v1.1/email`,
-          payload,
-          {
-            headers: {
-              Authorization: this.apiKey,
-              'Content-Type': 'application/json',
-            },
-          },
-        ),
-      );
-
-      this.logger.log(
-        `Email sent successfully to ${toEmail} (Message ID: ${response.data.message_id})`,
-      );
-
-      return response.data;
-    } catch (error) {
-      this.logger.error(
-        `Failed to send email to ${toEmail}: ${error.message}`,
-        error.stack,
-      );
-      throw error;
-    }
+        messageId: response.message,
+      });
+    });
   }
 
   /**
@@ -150,17 +221,20 @@ export class EmailService {
         false,
       );
 
-      this.logger.log(`OTP email sent to ${data.toEmail} for ${data.purpose}`);
+      this.logger.log('OTP email sent successfully', {
+        email: data.toEmail,
+        purpose: data.purpose,
+      });
     } catch (error) {
-      this.logger.error(
-        `Failed to send OTP email to ${data.toEmail}: ${error.message}`,
-        {
-          purpose: data.purpose,
-          error: error.message,
-        },
+      this.logger.error('Failed to send OTP email', {
+        email: data.toEmail,
+        purpose: data.purpose,
+        error: error.message,
+        stack: error.stack,
+      });
+      throw new Error(
+        `Failed to send verification email. Please try again or contact support.`,
       );
-      // Re-throw to let the caller handle it
-      throw error;
     }
   }
 
@@ -183,14 +257,15 @@ export class EmailService {
         false,
       );
 
-      this.logger.log(`Email verified notification sent to ${data.toEmail}`);
+      this.logger.log('Email verified notification sent', {
+        email: data.toEmail,
+      });
     } catch (error) {
-      this.logger.error(
-        `Failed to send email verified notification to ${data.toEmail}: ${error.message}`,
-        error.stack,
-      );
-      // Don't throw - verification notification is not critical
-      // User already verified, email is just a courtesy
+      // Non-critical notification - log but don't throw
+      this.logger.warn('Failed to send email verified notification', {
+        email: data.toEmail,
+        error: error.message,
+      });
     }
   }
 }

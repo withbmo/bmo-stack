@@ -25,3 +25,8 @@ output "turnstile_site_key_prod_arn" {
   value       = aws_secretsmanager_secret.turnstile_site_key_prod.arn
   description = "ARN of Turnstile site key for prod"
 }
+
+output "zeptomail_api_key_arn" {
+  value       = aws_secretsmanager_secret.zeptomail_api_key.arn
+  description = "ARN of ZeptoMail API key secret"
+}

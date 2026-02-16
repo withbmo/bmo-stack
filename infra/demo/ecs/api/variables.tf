@@ -17,6 +17,11 @@ variable "turnstile_secret_arn" {
   default     = null
   description = "ARN of the Turnstile secret key in Secrets Manager"
 }
+variable "zeptomail_api_key_arn" {
+  type        = string
+  default     = null
+  description = "ARN of the ZeptoMail API key in AWS Secrets Manager"
+}
 variable "db_host" {
   type    = string
   default = null
