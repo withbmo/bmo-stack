@@ -1,9 +1,10 @@
-import { apiRequest, API_V1, snakeToCamel } from './client';
-import type { DeployJob as ViewDeployJob, DeployJobStep as ViewDeployJobStep } from '../types';
 import type {
   DeployJob as ContractDeployJob,
   DeployJobStep as ContractDeployJobStep,
 } from '@pytholit/contracts';
+
+import type { DeployJob as ViewDeployJob, DeployJobStep as ViewDeployJobStep } from '../types';
+import { API_V1, apiRequest, snakeToCamel } from './client';
 
 // API responses are mapped into UI-friendly types in src/types.
 // Prefer @pytholit/contracts when API shapes match.

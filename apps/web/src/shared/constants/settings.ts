@@ -1,4 +1,4 @@
-import { User, CreditCard } from "lucide-react";
+import { CreditCard,User } from "lucide-react";
 
 // Tab definitions
 export const SETTINGS_TABS = [

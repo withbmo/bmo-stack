@@ -1,4 +1,5 @@
 import { FileCode, X } from "lucide-react";
+
 import { useIdeStore } from "../stores/ide-store";
 import { getFileIcon } from "../utils/get-file-icon";
 

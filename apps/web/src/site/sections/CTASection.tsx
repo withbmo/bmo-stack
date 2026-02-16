@@ -1,7 +1,8 @@
 'use client';
 
-import { Play, ArrowUpRight, CheckCircle2 } from 'lucide-react';
 import { Button } from '@pytholit/ui';
+import { ArrowUpRight, CheckCircle2,Play } from 'lucide-react';
+
 import { HERO_PYTHON_CODE } from '@/site/data/home';
 
 const CTAItem = ({ text }: { text: string }) => (

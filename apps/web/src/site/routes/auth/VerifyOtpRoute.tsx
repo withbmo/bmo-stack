@@ -1,21 +1,22 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowRight } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+
 import { useAuth } from '@/shared/auth';
 import { useOtpFlow } from '@/shared/auth/hooks/useOtpFlow';
+import { applyOtpResponse } from '@/shared/auth/utils/otp';
 import {
   getApiErrorMessage,
   sendPublicSignupVerification,
   verifyPublicSignupOtp,
 } from '@/shared/lib/auth';
-import { applyOtpResponse } from '@/shared/auth/utils/otp';
-import { AuthPageLayout } from '@/site/components/auth/AuthPageLayout';
 import { AuthCard } from '@/site/components/auth/AuthCard';
 import { AuthHeader } from '@/site/components/auth/AuthHeader';
+import { AuthPageLayout } from '@/site/components/auth/AuthPageLayout';
 import { AuthSubmitButton } from '@/site/components/auth/AuthSubmitButton';
 import { EmailField, OtpField } from '@/site/components/auth/FormFields';
 

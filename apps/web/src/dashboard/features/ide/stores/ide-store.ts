@@ -1,5 +1,7 @@
 import { create } from 'zustand';
+
 import type { FileMetadata } from '@/shared/types';
+
 import { INITIAL_FILES } from '../data/initial-files';
 import { normalizeFileTree } from '../utils/file-normalization';
 

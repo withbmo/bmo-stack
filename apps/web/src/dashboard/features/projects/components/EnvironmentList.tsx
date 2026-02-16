@@ -1,4 +1,5 @@
 import type { Environment } from '@/shared/types';
+
 import { EnvironmentCard } from './EnvironmentCard';
 
 interface EnvironmentListProps {

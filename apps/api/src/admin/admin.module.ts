@@ -5,8 +5,8 @@ import { AdminDeployJobsController } from './controllers/admin-deploy-jobs.contr
 import { AdminEnvironmentsController } from './controllers/admin-environments.controller';
 import { AdminOverviewController } from './controllers/admin-overview.controller';
 import { AdminUsersController } from './controllers/admin-users.controller';
-import { AdminBillingService } from './services/admin-billing.service';
 import { AdminAuditService } from './services/admin-audit.service';
+import { AdminBillingService } from './services/admin-billing.service';
 import { AdminDeployJobsService } from './services/admin-deploy-jobs.service';
 import { AdminEnvironmentsService } from './services/admin-environments.service';
 import { AdminOverviewService } from './services/admin-overview.service';

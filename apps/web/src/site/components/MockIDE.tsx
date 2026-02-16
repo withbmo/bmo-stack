@@ -1,16 +1,17 @@
 'use client';
 
 import {
+  Activity,
+  Bot,
   Code2,
   Database,
-  Play,
-  Folder,
   FileCode,
+  Folder,
   MessageSquare,
-  Bot,
   MoreVertical,
-  Activity,
+  Play,
 } from 'lucide-react';
+
 import type { HeroPhase } from '@/shared/hooks/useHeroAnimation';
 
 interface MockIDEProps {

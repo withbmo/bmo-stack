@@ -1,6 +1,6 @@
 import {
-  parseGoogleOAuthProfile,
   parseGithubPassportProfile,
+  parseGoogleOAuthProfile,
   pickVerifiedGithubEmail,
 } from '@pytholit/validation/zod';
 

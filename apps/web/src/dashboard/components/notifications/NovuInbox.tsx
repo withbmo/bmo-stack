@@ -1,10 +1,10 @@
 import { NovuProvider, useCounts, useNotifications } from '@novu/react';
 import { Bell, X } from 'lucide-react';
-import { useEffect, useRef, useState, type RefObject } from 'react';
-import { getNovuToken, type NovuTokenResponse } from '@/shared/lib/notifications';
-import { useAuth } from '@/shared/auth';
+import { type RefObject,useEffect, useRef, useState } from 'react';
 
 import { env } from '@/env';
+import { useAuth } from '@/shared/auth';
+import { getNovuToken, type NovuTokenResponse } from '@/shared/lib/notifications';
 
 const NOVU_APP_ID = env.NEXT_PUBLIC_NOVU_APP_ID ?? '';
 const NOVU_API_URL = env.NEXT_PUBLIC_NOVU_API_URL ?? '';

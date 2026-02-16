@@ -1,4 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { useAuth } from '@/shared/auth';
 import {
   cancelDeployJob,
   createDeployJob,
@@ -6,7 +8,6 @@ import {
   listDeployJobs,
 } from '@/shared/lib/deploy-jobs';
 import { queryKeys } from '@/shared/lib/query-keys';
-import { useAuth } from '@/shared/auth';
 
 export const useDeployJobs = (params: { projectId?: string; envId?: string }, poll = true) => {
   const { user, hydrated } = useAuth();

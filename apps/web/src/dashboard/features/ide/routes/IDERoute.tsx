@@ -1,40 +1,43 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import SwaggerUI from 'swagger-ui-react';
 import 'swagger-ui-react/swagger-ui.css';
+
 import {
+  Activity,
+  AlertTriangle,
   Bot,
   ChevronDown,
   Code2,
+  Database,
+  Globe,
   MessageSquare,
   Play,
+  Plus,
   Save,
   Send,
   Settings,
-  X,
-  Globe,
   Trash2,
-  Plus,
-  AlertTriangle,
+  X,
   Zap,
-  Database,
-  Activity,
 } from 'lucide-react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useRef,useState } from 'react';
+import SwaggerUI from 'swagger-ui-react';
+
+import { useAuth } from '@/shared/auth';
+
 import {
-  useIdeState,
-  FileTree,
-  EditorArea,
-  TerminalPanel,
-  SystemMonitor,
-  CHAT_MIN,
   CHAT_MAX,
+  CHAT_MIN,
   EDITOR_MIN,
+  EditorArea,
+  FileTree,
+  SystemMonitor,
+  TerminalPanel,
+  useIdeState,
 } from '..';
 import { fetchWizardManifest } from '../api/wizard-manifest';
 import { buildFileTreeFromManifest } from '../utils/manifest-file-tree';
-import { useAuth } from '@/shared/auth';
 
 function pathToId(path: string): string {
   return path.replace(/\//g, '-').replace(/^\./, '');

@@ -1,12 +1,13 @@
 'use client';
 
+import { Button } from '@pytholit/ui';
+import { ChevronRight, Terminal } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ChevronRight, Terminal } from 'lucide-react';
-import { Button } from '@pytholit/ui';
-import { NAV_ITEMS } from '@/site/data/navigation';
+import { type ReactNode,useEffect, useMemo, useState } from 'react';
+
 import { useAuth } from '@/shared/auth';
+import { NAV_ITEMS } from '@/site/data/navigation';
 
 const AUTH_PATHS = [
   '/auth/login',

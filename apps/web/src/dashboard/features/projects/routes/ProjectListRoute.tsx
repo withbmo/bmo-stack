@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
 import { Terminal } from 'lucide-react';
-import { PageLayout, DashboardPageHeader } from '@/shared/components/layout';
+import { useEffect,useState } from 'react';
+
+import { DashboardPageHeader,PageLayout } from '@/shared/components/layout';
 import { ACTIVITY_LOGS } from '@/shared/data/activity';
 import type { ActivityLog } from '@/shared/types';
+
 import { ProjectList } from '../components/ProjectList';
 
 const ResourceTicker = ({

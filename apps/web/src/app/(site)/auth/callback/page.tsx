@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
+
 import { CallbackRoute } from '@/site/routes/auth';
 
 export default function AuthCallbackPage() {

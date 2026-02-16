@@ -1,5 +1,5 @@
-import { Check } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 interface OptionCardProps {
   selected: boolean;

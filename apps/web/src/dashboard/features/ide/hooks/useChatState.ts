@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useEffect,useRef, useState } from 'react';
+
 import type { ChatMessage, FileNode } from '@/shared/types';
 
 export function useChatState(activeFile: FileNode | null) {

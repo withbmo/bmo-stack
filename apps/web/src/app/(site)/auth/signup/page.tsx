@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
+
 import { SignupRoute } from '@/site/routes/auth';
 
 export default function SignupPage() {

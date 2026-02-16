@@ -1,5 +1,6 @@
 import type { FileNode } from '@/shared/types';
 import type { FileMetadata } from '@/shared/types';
+
 import { useIdeStore } from '../stores/ide-store';
 
 /**

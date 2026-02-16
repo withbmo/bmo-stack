@@ -1,5 +1,6 @@
-import { API_BASE } from '../lib/client';
 import { env } from '@/env';
+
+import { API_BASE } from '../lib/client';
 
 function getUploadsBase(): string {
   if (API_BASE) return API_BASE;

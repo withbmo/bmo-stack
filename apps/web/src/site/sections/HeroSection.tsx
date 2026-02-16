@@ -1,11 +1,12 @@
 'use client';
 
+import { BackgroundLayers, Badge, Button,GlitchText } from '@pytholit/ui';
+import { Box, Globe, ShieldCheck, Terminal, Zap } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { Terminal, Box, ShieldCheck, Globe, Zap } from 'lucide-react';
-import { BackgroundLayers, GlitchText, Badge, Button } from '@pytholit/ui';
+
 import { useHeroAnimation } from '@/shared/hooks/useHeroAnimation';
-import { HERO_PYTHON_CODE, TRUSTED_STACK } from '@/site/data/home';
 import { MockIDE } from '@/site/components/MockIDE';
+import { HERO_PYTHON_CODE, TRUSTED_STACK } from '@/site/data/home';
 
 // Animation content
 const USER_PROMPT = 'Build a FastAPI health check';

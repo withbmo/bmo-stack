@@ -1,35 +1,35 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
-import { ArrowRight } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { toast } from 'sonner';
-import { Turnstile } from '@marsidev/react-turnstile';
 import type { TurnstileInstance } from '@marsidev/react-turnstile';
-import { useAuth } from '@/shared/auth';
-import { useAuthForm } from '@/shared/auth/hooks/useAuthForm';
-import {
-  signup,
-  sendPublicSignupVerification,
-  getApiErrorMessage,
-  getApiFieldErrors,
-} from '@/shared/lib/auth';
-import type { ApiError } from '@/shared/lib/auth';
-import { getOtpMeta } from '@/shared/auth/utils/otp';
-import { AuthPageLayout } from '@/site/components/auth/AuthPageLayout';
-import { AuthCard } from '@/site/components/auth/AuthCard';
-import { AuthHeader } from '@/site/components/auth/AuthHeader';
-import {
-  EmailField,
-  UsernameField,
-  FullNameField,
-  PasswordField,
-} from '@/site/components/auth/FormFields';
-import { AuthSubmitButton } from '@/site/components/auth/AuthSubmitButton';
-import { SocialAuthButtons } from '@/site/components/auth/SocialAuthButtons';
+import { Turnstile } from '@marsidev/react-turnstile';
+import { ArrowRight } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useCallback,useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 import { env } from '@/env';
+import { useAuth } from '@/shared/auth';
+import { useAuthForm } from '@/shared/auth/hooks/useAuthForm';
+import { getOtpMeta } from '@/shared/auth/utils/otp';
+import type { ApiError } from '@/shared/lib/auth';
+import {
+  getApiErrorMessage,
+  getApiFieldErrors,
+  sendPublicSignupVerification,
+  signup,
+} from '@/shared/lib/auth';
+import { AuthCard } from '@/site/components/auth/AuthCard';
+import { AuthHeader } from '@/site/components/auth/AuthHeader';
+import { AuthPageLayout } from '@/site/components/auth/AuthPageLayout';
+import { AuthSubmitButton } from '@/site/components/auth/AuthSubmitButton';
+import {
+  EmailField,
+  FullNameField,
+  PasswordField,
+  UsernameField,
+} from '@/site/components/auth/FormFields';
+import { SocialAuthButtons } from '@/site/components/auth/SocialAuthButtons';
 
 const TURNSTILE_SITE_KEY = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
 const IS_DEV = process.env.NODE_ENV === 'development';

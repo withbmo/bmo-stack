@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { FileNode, ContextMenuState } from '@/shared/types';
+
+import type { ContextMenuState,FileNode } from '@/shared/types';
 
 interface FileManagerApi {
   files: FileNode[];

@@ -1,17 +1,19 @@
 'use client';
 
-import { useRouter, useParams } from 'next/navigation';
-import { Rocket } from 'lucide-react';
-import { Button, DeployJobStatusBadge, EmptyState } from '@/dashboard/components';
-import { PageLayout, DashboardPageHeader } from '@/shared/components/layout';
-import { AsyncState } from '@/dashboard/shared/state/AsyncState';
-import { useDeployJob, useCancelDeployJob } from '../hooks/useDeployJobs';
-import { DeployJobStepper } from '../components/DeployJobStepper';
-import { useAuth } from '@/shared/auth';
 import { useQuery } from '@tanstack/react-query';
+import { Rocket } from 'lucide-react';
+import { useParams,useRouter } from 'next/navigation';
+
+import { Button, DeployJobStatusBadge, EmptyState } from '@/dashboard/components';
+import { AsyncState } from '@/dashboard/shared/state/AsyncState';
+import { useAuth } from '@/shared/auth';
+import { DashboardPageHeader,PageLayout } from '@/shared/components/layout';
+import { formatTimestamp } from '@/shared/lib/date';
 import { getEnvironment } from '@/shared/lib/environments';
 import { queryKeys } from '@/shared/lib/query-keys';
-import { formatTimestamp } from '@/shared/lib/date';
+
+import { DeployJobStepper } from '../components/DeployJobStepper';
+import { useCancelDeployJob,useDeployJob } from '../hooks/useDeployJobs';
 
 export const DeployJobDetailsRoute = () => {
   const params = useParams();

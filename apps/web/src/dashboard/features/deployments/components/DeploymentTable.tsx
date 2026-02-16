@@ -1,5 +1,6 @@
-import { DeploymentRow } from './DeploymentRow';
 import type { Deployment } from '@/shared/types';
+
+import { DeploymentRow } from './DeploymentRow';
 
 interface DeploymentTableProps {
   deployments: Deployment[];

@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
 import { BackgroundLayers, cn } from '@pytholit/ui';
+import type { ReactNode } from 'react';
 
 export interface PageLayoutProps {
   children: ReactNode;

@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { ArrowLeft, Plug, PlugZap } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
+
 import { Button } from '@/dashboard/components';
-import { PageLayout, DashboardPageHeader } from '@/shared/components/layout';
 import { useAuth } from '@/shared/auth';
+import { DashboardPageHeader,PageLayout } from '@/shared/components/layout';
 import { createTerminalSession } from '@/shared/lib/environments';
 
 interface EnvironmentTerminalRouteProps {

@@ -1,6 +1,7 @@
-import { apiRequest, API_V1, snakeToCamel } from './client';
-import type { Project as ViewProject } from '../types';
 import type { Project as ContractProject } from '@pytholit/contracts';
+
+import type { Project as ViewProject } from '../types';
+import { API_V1, apiRequest, snakeToCamel } from './client';
 
 // API responses are mapped into UI-friendly types in src/types.
 // Prefer @pytholit/contracts when API shapes match.

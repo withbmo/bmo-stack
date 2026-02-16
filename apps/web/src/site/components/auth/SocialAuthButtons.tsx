@@ -1,4 +1,5 @@
-import { Github, Chrome } from 'lucide-react';
+import { Chrome,Github } from 'lucide-react';
+
 import { getOAuthLoginUrl } from '@/shared/lib/auth';
 
 /**

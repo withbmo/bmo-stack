@@ -1,4 +1,5 @@
 import { Terminal } from 'lucide-react';
+
 import { Button } from '@/dashboard/components';
 import type { ProjectWizardConfig } from '@/shared/constants/project-wizard';
 

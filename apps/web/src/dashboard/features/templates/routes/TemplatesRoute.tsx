@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { Search, LayoutTemplate, ShieldCheck, Box } from 'lucide-react';
-import { TemplateCard, Input, FilterTabButton } from '@/dashboard/components';
-import { PageLayout, DashboardPageHeader } from '@/shared/components/layout';
 import type { Template } from '@pytholit/ui';
+import { Box,LayoutTemplate, Search, ShieldCheck } from 'lucide-react';
+import { useState } from 'react';
+
+import { FilterTabButton,Input, TemplateCard } from '@/dashboard/components';
 import { MOCK_TEMPLATES } from '@/dashboard/features/projects/data/mock-projects';
+import { DashboardPageHeader,PageLayout } from '@/shared/components/layout';
 
 function toUICemplate(t: {
   id: string;

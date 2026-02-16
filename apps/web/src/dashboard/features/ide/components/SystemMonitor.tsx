@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Server, Clock, Activity } from 'lucide-react';
+import { Activity,Clock, Server } from 'lucide-react';
+import { useEffect,useState } from 'react';
 
 export const SystemMonitor = () => {
   const [stats, setStats] = useState({

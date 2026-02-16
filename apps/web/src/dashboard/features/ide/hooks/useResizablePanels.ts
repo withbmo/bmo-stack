@@ -1,4 +1,5 @@
 import { useState } from 'react';
+
 import type { ViewType } from '@/shared/types';
 
 export const CHAT_MIN = 200;

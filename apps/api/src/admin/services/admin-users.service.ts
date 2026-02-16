@@ -2,8 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '@pytholit/db';
 
 import { PrismaService } from '../../database/prisma.service';
-import { AdminAuditService } from './admin-audit.service';
 import type { PageResult } from '../types/page-result';
+import { AdminAuditService } from './admin-audit.service';
 
 export type AdminUserRow = {
   id: string;

@@ -1,18 +1,20 @@
-import { type ChangeEvent, useMemo, useState } from 'react';
 import { ArrowRight, Box, Plus, Settings2, Trash2 } from 'lucide-react';
+import { type ChangeEvent, useMemo, useState } from 'react';
+
 import { Input } from '@/dashboard/components';
 import {
-  FRAMEWORKS,
   DATABASES,
-  FASTAPI_STRUCTURES,
   DJANGO_STRUCTURES,
-  TOOLING_OPTIONS,
+  FASTAPI_STRUCTURES,
+  FRAMEWORKS,
   type ProjectWizardConfig,
-  type TechStackOption,
   type StructureOption,
+  type TechStackOption,
+  TOOLING_OPTIONS,
   type ToolingOption,
 } from '@/shared/constants/project-wizard';
 import type { WizardField, WizardSchema } from '@/shared/types';
+
 import { OptionCard, ToolingCheckbox } from './components';
 
 interface StepConfigProps {

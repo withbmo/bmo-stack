@@ -1,5 +1,6 @@
-import { Lock, Globe, Rocket, Play, Square, Trash2, Terminal } from 'lucide-react';
-import { Card, Button } from '@/dashboard/components';
+import { Globe, Lock, Play, Rocket, Square, Terminal,Trash2 } from 'lucide-react';
+
+import { Button,Card } from '@/dashboard/components';
 import type {
   Environment,
   EnvironmentOrchestratorInfo,

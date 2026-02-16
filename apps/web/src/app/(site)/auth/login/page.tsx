@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
+
 import { LoginRoute } from '@/site/routes/auth';
 
 export default function LoginPage() {

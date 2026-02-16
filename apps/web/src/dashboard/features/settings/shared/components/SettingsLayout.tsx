@@ -1,8 +1,9 @@
 'use client';
 
+import { LogOut,Settings } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Settings, LogOut } from 'lucide-react';
+
 import { useAuth } from '@/shared/auth';
 import { SETTINGS_TABS } from '@/shared/constants/settings';
 

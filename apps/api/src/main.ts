@@ -1,8 +1,8 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import cookieParser from 'cookie-parser';
 import type { NextFunction,Request, Response } from 'express';
 import * as express from 'express';
-import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import * as path from 'path';
 

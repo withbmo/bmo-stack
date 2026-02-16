@@ -1,16 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
 import { User } from 'lucide-react';
 import Image from 'next/image';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Input, DashboardPageHeader, ProfileSkeleton } from '@/dashboard/components';
+
+import { DashboardPageHeader, Input, ProfileSkeleton } from '@/dashboard/components';
+import { useAuth } from '@/shared/auth';
+import { resolveAvatarUrl } from '@/shared/lib/avatar';
 import {
   deleteAvatar,
   updateCurrentUser,
   uploadAvatar,
   type UserProfile,
 } from '@/shared/lib/user';
-import { useAuth } from '@/shared/auth';
-import { resolveAvatarUrl } from '@/shared/lib/avatar';
 
 export const ProfileTab = () => {
   const { user, hydrated, refreshSession } = useAuth();

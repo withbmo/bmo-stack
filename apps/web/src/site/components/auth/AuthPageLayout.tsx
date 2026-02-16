@@ -1,5 +1,5 @@
-import type { CSSProperties, ReactNode } from 'react';
 import { BackgroundLayers, cn } from '@pytholit/ui';
+import type { CSSProperties, ReactNode } from 'react';
 
 interface AuthPageLayoutProps {
   children: ReactNode;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
+
 import { EnvironmentTerminalRoute } from '@/dashboard/features/environments/routes/EnvironmentTerminalRoute';
 
 export default function EnvironmentTerminalPage() {

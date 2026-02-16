@@ -1,17 +1,16 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import type { TurnstileInstance } from '@marsidev/react-turnstile';
+import { Turnstile } from '@marsidev/react-turnstile';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Turnstile } from '@marsidev/react-turnstile';
-import type { TurnstileInstance } from '@marsidev/react-turnstile';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { ArrowRight, Loader2 } from 'lucide-react';
-import { AuthPageLayout } from '@/site/components/auth/AuthPageLayout';
-import { AuthCard } from '@/site/components/auth/AuthCard';
-import { AuthHeader } from '@/site/components/auth/AuthHeader';
-import { AuthSubmitButton } from '@/site/components/auth/AuthSubmitButton';
-import { EmailField, OtpField, PasswordField } from '@/site/components/auth/FormFields';
+
+import { env } from '@/env';
+import { OTP_CONFIG } from '@/shared/constants';
+import { useServerTimer } from '@/shared/hooks/useServerTimer';
 import {
   getApiErrorMessage,
   resendOtp,
@@ -19,10 +18,11 @@ import {
   sendOtp,
   verifyOtp,
 } from '@/shared/lib/auth';
-import { OTP_CONFIG } from '@/shared/constants';
-import { useServerTimer } from '@/shared/hooks/useServerTimer';
-
-import { env } from '@/env';
+import { AuthCard } from '@/site/components/auth/AuthCard';
+import { AuthHeader } from '@/site/components/auth/AuthHeader';
+import { AuthPageLayout } from '@/site/components/auth/AuthPageLayout';
+import { AuthSubmitButton } from '@/site/components/auth/AuthSubmitButton';
+import { EmailField, OtpField, PasswordField } from '@/site/components/auth/FormFields';
 
 const TURNSTILE_SITE_KEY = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
 const IS_DEV = process.env.NODE_ENV === 'development';

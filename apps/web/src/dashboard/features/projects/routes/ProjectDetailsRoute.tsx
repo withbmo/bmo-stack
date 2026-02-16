@@ -1,22 +1,24 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
 import { Rocket, Terminal } from 'lucide-react';
-import { Button, DashboardTabs, LoadingState, EmptyState } from '@/dashboard/components';
-import { PageLayout, DashboardPageHeader } from '@/shared/components/layout';
+import { useParams,useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
+
+import { Button, DashboardTabs, EmptyState,LoadingState } from '@/dashboard/components';
+import { DashboardPageHeader,PageLayout } from '@/shared/components/layout';
 import type { Environment } from '@/shared/types';
-import { useDeployJobs, useCreateDeployJob } from '../../deployments/hooks/useDeployJobs';
-import { EnvironmentList } from '../components/EnvironmentList';
+
 import { DeployJobTable } from '../../deployments/components/DeployJobTable';
-import { useProject } from '../hooks/useProject';
+import { useCreateDeployJob,useDeployJobs } from '../../deployments/hooks/useDeployJobs';
+import { EnvironmentCreateModal } from '../components/EnvironmentCreateModal';
+import { EnvironmentList } from '../components/EnvironmentList';
 import {
   useCreateEnvironment,
   useEnvironments,
   useUpdateEnvironment,
 } from '../hooks/useEnvironments';
-import { toast } from 'sonner';
-import { EnvironmentCreateModal } from '../components/EnvironmentCreateModal';
+import { useProject } from '../hooks/useProject';
 
 const tabs = ['environments', 'deployments'] as const;
 

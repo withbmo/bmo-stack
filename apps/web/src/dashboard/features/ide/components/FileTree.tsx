@@ -1,17 +1,19 @@
 import {
-  ChevronRight,
   ChevronDown,
-  MoreVertical,
+  ChevronRight,
+  Edit2,
   FilePlus,
   FolderPlus,
-  Edit2,
+  MoreVertical,
   Trash2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+
 import type { ContextMenuState } from '@/shared/types';
+
+import { useIdeStore } from '../stores/ide-store';
 import { getRootIds } from '../utils/file-normalization';
 import { getFileIcon } from '../utils/get-file-icon';
-import { useIdeStore } from '../stores/ide-store';
 
 interface FileTreeItemProps {
   id: string;

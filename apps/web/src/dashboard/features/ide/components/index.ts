@@ -1,4 +1,4 @@
+export { CodeEditor,EditorArea } from "./EditorArea";
 export { FileTree } from "./FileTree";
-export { EditorArea, CodeEditor } from "./EditorArea";
-export { TerminalPanel } from "./TerminalPanel";
 export { SystemMonitor } from "./SystemMonitor";
+export { TerminalPanel } from "./TerminalPanel";

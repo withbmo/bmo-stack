@@ -1,15 +1,16 @@
-import {
-  apiRequest,
-  API_BASE,
-  API_V1,
-  getApiErrorMessage,
-  getApiFieldErrors,
-} from "./client";
-import type { ApiError } from "./client";
 import type {
   OTPPurpose as ContractOTPPurpose,
   OTPVerifyResponse as ContractOTPVerifyResponse,
 } from "@pytholit/contracts";
+
+import type { ApiError } from "./client";
+import {
+  API_BASE,
+  API_V1,
+  apiRequest,
+  getApiErrorMessage,
+  getApiFieldErrors,
+} from "./client";
 
 /**
  * Get OAuth login URL for redirect.

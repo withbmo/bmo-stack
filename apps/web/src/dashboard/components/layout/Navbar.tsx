@@ -1,15 +1,16 @@
 'use client';
 
-import Link from 'next/link';
+import { LogOut, Terminal, User } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Terminal, LogOut, User } from 'lucide-react';
-import { useAuth } from '@/shared/auth';
 import { useEffect, useMemo, useState } from 'react';
-import type { UserProfile } from '@/shared/lib/user';
-import { resolveAvatarUrl } from '@/shared/lib/avatar';
-import { getSubscription, getPlans } from '@/shared/lib/billing';
+
 import { NovuInbox } from '@/dashboard/components/notifications/NovuInbox';
+import { useAuth } from '@/shared/auth';
+import { resolveAvatarUrl } from '@/shared/lib/avatar';
+import { getPlans,getSubscription } from '@/shared/lib/billing';
+import type { UserProfile } from '@/shared/lib/user';
 
 const DASH_LINKS = [
   { to: '/dashboard', label: 'PROJECTS' },

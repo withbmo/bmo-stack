@@ -1,7 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
+import Link from 'next/link';
+
 import { SettingsLayout } from '../../shared/components/SettingsLayout';
 import { BillingTab } from '../components/BillingTab';
 

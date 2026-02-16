@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
+
 import { queryKeys } from '@/shared/lib/query-keys';
 import type { Deployment } from '@/shared/types';
+
 import { MOCK_DEPLOYMENTS } from './mock-deployments';
 
 const fetchMockDeployments = async (): Promise<Deployment[]> => {

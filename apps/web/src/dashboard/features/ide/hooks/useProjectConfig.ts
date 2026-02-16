@@ -1,4 +1,5 @@
 import { useState } from 'react';
+
 import type { ProjectConfig } from '@/shared/types';
 
 export function useProjectConfig(projectId: string | undefined) {

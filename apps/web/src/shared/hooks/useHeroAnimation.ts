@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback,useEffect, useState } from 'react';
+
 import { HERO_ANIMATION } from '../constants';
 
 export type HeroPhase = 'chat' | 'agent' | 'code' | 'deploy';

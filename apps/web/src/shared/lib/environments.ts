@@ -1,6 +1,7 @@
-import { apiRequest, API_V1, snakeToCamel } from './client';
-import type { Environment } from '../types';
 import type { Environment as ContractEnvironment } from '@pytholit/contracts';
+
+import type { Environment } from '../types';
+import { API_V1, apiRequest, snakeToCamel } from './client';
 
 // API responses are mapped into UI-friendly types in src/types.
 // Prefer @pytholit/contracts when API shapes match.

@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import type { Environment } from '@/shared/types';
 import { Modal } from '@pytholit/ui';
+import { useState } from 'react';
+
+import type { Environment } from '@/shared/types';
 
 interface EnvironmentCreateModalProps {
   isOpen: boolean;

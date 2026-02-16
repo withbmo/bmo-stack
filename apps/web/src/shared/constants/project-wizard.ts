@@ -1,6 +1,6 @@
-import React from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { Server, Layers, Database } from 'lucide-react';
+import { Database,Layers, Server } from 'lucide-react';
+import React from 'react';
 
 export interface TechStackOption {
   id: string;

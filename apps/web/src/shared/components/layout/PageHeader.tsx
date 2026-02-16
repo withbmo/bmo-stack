@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
-import type { LucideIcon } from 'lucide-react';
 import { cn } from '@pytholit/ui';
+import type { LucideIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 export interface DashboardPageHeaderProps {
   /** Badge with icon and label (e.g. { icon: Terminal, label: "DEPLOYMENTS" }) */

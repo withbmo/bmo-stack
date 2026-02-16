@@ -1,10 +1,12 @@
 'use client';
 
+import { Box, Globe, MoreVertical, Play, Settings,Square } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Box, MoreVertical, Globe, Square, Play, Settings } from 'lucide-react';
-import { Card, StatusBadge, Button } from '@/dashboard/components';
-import type { Project } from '../types';
+
+import { Button,Card, StatusBadge } from '@/dashboard/components';
 import { formatTimestamp } from '@/shared/lib/date';
+
+import type { Project } from '../types';
 
 interface ProjectCardProps {
   project: Project;

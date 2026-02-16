@@ -1,2 +1,2 @@
 export { useHubResources } from "./hooks/useHubResources";
-export { HubRoute, ContributeRoute } from "./routes";
+export { ContributeRoute,HubRoute } from "./routes";

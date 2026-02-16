@@ -2,9 +2,11 @@
 
 import { Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { ProjectCard } from './ProjectCard';
+
+import { Button,Skeleton } from '@/dashboard/components';
+
 import { useProjects } from '../hooks/useProjects';
-import { Skeleton, Button } from '@/dashboard/components';
+import { ProjectCard } from './ProjectCard';
 
 export const ProjectList = () => {
   const router = useRouter();

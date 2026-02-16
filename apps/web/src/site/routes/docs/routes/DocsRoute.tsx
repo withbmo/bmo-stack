@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { BackgroundLayers } from '@pytholit/ui';
+import { BookOpen, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { BookOpen, FileText } from 'lucide-react';
-import { BackgroundLayers } from '@pytholit/ui';
 
 type DocEntry = { slug: string; title: string };
 

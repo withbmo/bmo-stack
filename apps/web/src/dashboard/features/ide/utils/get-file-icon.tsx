@@ -1,10 +1,10 @@
 import {
+  File,
   FileCode,
-  Folder,
-  FolderOpen,
   FileJson,
   FileText,
-  File,
+  Folder,
+  FolderOpen,
 } from 'lucide-react';
 
 export function getFileIcon(

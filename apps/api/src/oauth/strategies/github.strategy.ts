@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
-import { Profile,Strategy } from 'passport-github2';
-
 import { parseGithubPassportProfile, pickVerifiedGithubEmail } from '@pytholit/validation/zod';
+import { Profile,Strategy } from 'passport-github2';
 
 async function fetchGithubEmails(accessToken: string): Promise<unknown> {
   const controller = new AbortController();

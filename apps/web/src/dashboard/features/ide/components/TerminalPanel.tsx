@@ -1,4 +1,5 @@
 import { useState } from 'react';
+
 import { useAuth } from '@/shared/auth';
 import { createTerminalSession } from '@/shared/lib/environments';
 

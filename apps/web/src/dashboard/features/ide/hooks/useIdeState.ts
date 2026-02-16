@@ -1,14 +1,14 @@
-import { useFileManager } from "./useFileManager";
 import { useChatState } from "./useChatState";
-import { useResizablePanels } from "./useResizablePanels";
+import { useFileManager } from "./useFileManager";
 import { useProjectConfig } from "./useProjectConfig";
+import { useResizablePanels } from "./useResizablePanels";
 
 export {
-  CHAT_MIN,
   CHAT_MAX,
-  FILES_MIN,
-  FILES_MAX,
+  CHAT_MIN,
   EDITOR_MIN,
+  FILES_MAX,
+  FILES_MIN,
 } from "./useResizablePanels";
 
 export function useIdeState(projectId: string | undefined) {

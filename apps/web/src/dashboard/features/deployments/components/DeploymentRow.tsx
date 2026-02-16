@@ -1,6 +1,8 @@
-import { ExternalLink, Globe, Clock, RefreshCw, Square, MoreVertical } from 'lucide-react';
-import { DeploymentStatusBadge } from './DeploymentStatusBadge';
+import { Clock, ExternalLink, Globe, MoreVertical,RefreshCw, Square } from 'lucide-react';
+
 import type { Deployment } from '@/shared/types';
+
+import { DeploymentStatusBadge } from './DeploymentStatusBadge';
 
 interface DeploymentRowProps {
   deployment: Deployment;

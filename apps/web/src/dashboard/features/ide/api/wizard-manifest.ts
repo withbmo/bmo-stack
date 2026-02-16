@@ -1,5 +1,5 @@
-import type { WizardManifest } from "@/shared/types";
 import { apiRequest } from "@/shared/lib/client";
+import type { WizardManifest } from "@/shared/types";
 
 export async function fetchWizardManifest(
   token: string | undefined,

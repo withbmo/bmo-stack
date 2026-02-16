@@ -1,15 +1,19 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { TurnstileInstance } from '@marsidev/react-turnstile';
+import { Turnstile } from '@marsidev/react-turnstile';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowRight, Loader2 } from 'lucide-react';
-import { Turnstile } from '@marsidev/react-turnstile';
-import type { TurnstileInstance } from '@marsidev/react-turnstile';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+
+import { env } from '@/env';
 import { useAuth } from '@/shared/auth';
 import { useAuthForm } from '@/shared/auth/hooks/useAuthForm';
 import { useOtpFlow } from '@/shared/auth/hooks/useOtpFlow';
+import { applyOtpResponse, getOtpMeta } from '@/shared/auth/utils/otp';
+import type { ApiError } from '@/shared/lib/auth';
 import {
   getApiErrorMessage,
   login,
@@ -17,20 +21,16 @@ import {
   requestLoginOtp,
   sendPublicSignupVerification,
 } from '@/shared/lib/auth';
-import type { ApiError } from '@/shared/lib/auth';
-import { applyOtpResponse, getOtpMeta } from '@/shared/auth/utils/otp';
-import { SocialAuthButtons } from '@/site/components/auth/SocialAuthButtons';
-import { AuthPageLayout } from '@/site/components/auth/AuthPageLayout';
 import { AuthCard } from '@/site/components/auth/AuthCard';
 import { AuthHeader } from '@/site/components/auth/AuthHeader';
+import { AuthPageLayout } from '@/site/components/auth/AuthPageLayout';
+import { AuthSubmitButton } from '@/site/components/auth/AuthSubmitButton';
 import {
   EmailField,
-  PasswordField,
   OtpField,
+  PasswordField,
 } from '@/site/components/auth/FormFields';
-import { AuthSubmitButton } from '@/site/components/auth/AuthSubmitButton';
-
-import { env } from '@/env';
+import { SocialAuthButtons } from '@/site/components/auth/SocialAuthButtons';
 
 const TURNSTILE_SITE_KEY = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
 const IS_DEV = process.env.NODE_ENV === 'development';

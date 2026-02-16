@@ -1,6 +1,7 @@
-import { Rocket, RefreshCw } from 'lucide-react';
-import type { Project } from '@/shared/types';
 import { Modal } from '@pytholit/ui';
+import { RefreshCw,Rocket } from 'lucide-react';
+
+import type { Project } from '@/shared/types';
 
 interface DeployModalProps {
   isOpen: boolean;

@@ -2,8 +2,8 @@ import { Body, Controller, HttpCode, HttpStatus,Post, Res } from '@nestjs/common
 import type { OTPVerifyResponse } from '@pytholit/contracts';
 import type { Response } from 'express';
 
-import { Public } from '../auth/decorators/public.decorator';
 import { setAuthCookie } from '../auth/auth.cookies';
+import { Public } from '../auth/decorators/public.decorator';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { OtpService } from './otp.service';

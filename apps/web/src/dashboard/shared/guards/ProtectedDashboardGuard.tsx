@@ -1,11 +1,12 @@
 'use client';
 
+import { usePathname,useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+
 import { useAuth } from '@/shared/auth';
+import { getOtpMeta } from '@/shared/auth/utils/otp';
 import { FullScreenLoader } from '@/shared/components/FullScreenLoader';
 import { sendPublicSignupVerification } from '@/shared/lib/auth';
-import { getOtpMeta } from '@/shared/auth/utils/otp';
 
 export const PageLoader = () => <FullScreenLoader label="Loading..." />;
 
@@ -13,7 +14,7 @@ export const PageLoader = () => <FullScreenLoader label="Loading..." />;
  * Protects dashboard routes: requires auth, validates token, redirects to login if invalid.
  */
 export function ProtectedDashboardGuard({ children }: { children: React.ReactNode }) {
-  const { user, logout, hydrated } = useAuth();
+  const { user, hydrated } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [status, setStatus] = useState<'checking' | 'ok' | 'fail' | 'unverified'>('checking');

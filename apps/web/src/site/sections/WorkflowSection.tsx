@@ -1,7 +1,8 @@
 'use client';
 
-import { MessageSquare, Zap, Rocket, ArrowUpRight } from 'lucide-react';
 import { SectionHeader } from '@pytholit/ui';
+import { ArrowUpRight,MessageSquare, Rocket, Zap } from 'lucide-react';
+
 import { WORKFLOW_STEPS } from '@/site/data/home';
 
 const ICONS: Record<string, typeof MessageSquare> = {

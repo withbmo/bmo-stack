@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Toaster } from 'sonner';
+
 import { AuthProvider } from '@/shared/auth/stores/auth-context';
 
 export function Providers({ children }: { children: React.ReactNode }) {

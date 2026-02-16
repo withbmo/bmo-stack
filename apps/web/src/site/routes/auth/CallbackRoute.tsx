@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+
 import { useAuth } from '@/shared/auth';
 import { getApiErrorMessage } from '@/shared/lib';
-import { toast } from 'sonner';
 
 export function CallbackRoute() {
   const router = useRouter();

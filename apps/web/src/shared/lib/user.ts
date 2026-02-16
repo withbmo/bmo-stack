@@ -1,5 +1,6 @@
-import { apiRequest, API_V1 } from "./client";
 import type { UserProfile } from "@pytholit/contracts";
+
+import { API_V1,apiRequest } from "./client";
 
 export type { UserProfile };
 

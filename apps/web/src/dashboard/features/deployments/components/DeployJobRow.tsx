@@ -1,6 +1,6 @@
-import type { DeployJob, Environment } from '@/shared/types';
-import { DeployJobStatusBadge, Button } from '@/dashboard/components';
+import { Button,DeployJobStatusBadge } from '@/dashboard/components';
 import { formatTimestamp } from '@/shared/lib/date';
+import type { DeployJob, Environment } from '@/shared/types';
 
 interface DeployJobRowProps {
   job: DeployJob;

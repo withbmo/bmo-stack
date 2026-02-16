@@ -1,19 +1,20 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { BackgroundLayers, Input } from '@pytholit/ui';
 import {
-  Upload,
-  FileText,
+  ArrowRight,
   Brain,
   Check,
-  ArrowRight,
+  FileText,
   Github,
   Link as LinkIcon,
   Terminal,
+  Upload,
 } from 'lucide-react';
-import { BackgroundLayers, Input } from '@pytholit/ui';
-import { PageLayout, DashboardPageHeader } from '@/shared/components/layout';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+
+import { DashboardPageHeader,PageLayout } from '@/shared/components/layout';
 
 export const ContributeRoute = () => {
   const router = useRouter();

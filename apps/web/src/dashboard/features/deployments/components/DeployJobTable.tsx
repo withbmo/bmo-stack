@@ -1,4 +1,5 @@
 import type { DeployJob, Environment } from '@/shared/types';
+
 import { DeployJobRow } from './DeployJobRow';
 
 interface DeployJobTableProps {

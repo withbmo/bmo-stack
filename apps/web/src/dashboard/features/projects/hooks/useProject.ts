@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
+
+import { useAuth } from '@/shared/auth';
 import { getProject } from '@/shared/lib/projects';
 import { queryKeys } from '@/shared/lib/query-keys';
-import { useAuth } from '@/shared/auth';
 
 export const useProject = (projectId?: string) => {
   const { user, hydrated } = useAuth();

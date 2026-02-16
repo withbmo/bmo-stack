@@ -1,17 +1,19 @@
+import type { PublicPlan } from '@pytholit/contracts';
 import {
   BarChart2,
+  CircleDollarSign,
+  CreditCard,
   Download,
   ShieldCheck,
-  CircleDollarSign,
   Wallet,
-  CreditCard,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+
 import { BillingSkeleton } from '@/dashboard/components';
-import { DashboardPageHeader } from '@/shared/components/layout';
-import { USAGE_METRICS, PLAN_FEATURES } from '@/shared/constants/settings';
 import { useAuth } from '@/shared/auth';
+import { DashboardPageHeader } from '@/shared/components/layout';
+import { PLAN_FEATURES,USAGE_METRICS } from '@/shared/constants/settings';
 import {
   createCheckoutSession,
   createPortalSession,
@@ -19,11 +21,10 @@ import {
   getPaymentMethods,
   getPlans,
   getSubscription,
-  type SubscriptionResponse,
   type InvoiceResponse,
   type PaymentMethodResponse,
+  type SubscriptionResponse,
 } from '@/shared/lib/billing';
-import type { PublicPlan } from '@pytholit/contracts';
 
 const formatCurrency = (amount: number, currency: string) =>
   new Intl.NumberFormat('en-US', {

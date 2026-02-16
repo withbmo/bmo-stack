@@ -1,18 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useMutation } from '@tanstack/react-query';
 import { Terminal } from 'lucide-react';
-import { PageLayout, DashboardPageHeader } from '@/shared/components/layout';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+
+import { env } from '@/env';
+import { useAuth } from '@/shared/auth';
+import { DashboardPageHeader,PageLayout } from '@/shared/components/layout';
 import { DEFAULT_PROJECT_CONFIG, type ProjectWizardConfig } from '@/shared/constants/project-wizard';
+import { createProject } from '@/shared/lib/projects';
 import { fetchWizardSchema, generateWizard } from '@/shared/lib/wizard';
 import type { WizardSchema } from '@/shared/types';
+
 import { StepConfig, StepReview } from './new';
-import { useMutation } from '@tanstack/react-query';
-import { useAuth } from '@/shared/auth';
-import { createProject } from '@/shared/lib/projects';
-import { toast } from 'sonner';
-import { env } from '@/env';
 
 export const NewProjectRoute = () => {
   const router = useRouter();

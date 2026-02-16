@@ -1,4 +1,4 @@
-import { HeroSection, WorkflowSection, StatsSection, CTASection } from '@/site/sections';
+import { CTASection,HeroSection, StatsSection, WorkflowSection } from '@/site/sections';
 
 export default function HomePage() {
   return (

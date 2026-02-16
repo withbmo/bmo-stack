@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { useAuth } from '@/shared/auth';
 import { createEnvironment, listEnvironments, updateEnvironment } from '@/shared/lib/environments';
 import { queryKeys } from '@/shared/lib/query-keys';
 import type { Environment } from '@/shared/types';
-import { useAuth } from '@/shared/auth';
 
 export const useEnvironments = () => {
   const { user, hydrated } = useAuth();

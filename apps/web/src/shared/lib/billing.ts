@@ -1,5 +1,6 @@
-import { apiRequest, API_V1, snakeToCamel } from "./client";
-import type { BillingInterval, PublicPlan, Plan } from "@pytholit/contracts";
+import type { BillingInterval, Plan,PublicPlan } from "@pytholit/contracts";
+
+import { API_V1, apiRequest, snakeToCamel } from "./client";
 
 export interface SubscriptionResponse {
   id: string;

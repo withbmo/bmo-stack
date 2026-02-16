@@ -1,5 +1,5 @@
-import type { ButtonHTMLAttributes } from 'react';
 import { cn } from '@pytholit/ui';
+import type { ButtonHTMLAttributes } from 'react';
 
 interface AuthSubmitButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: 'sm' | 'md';

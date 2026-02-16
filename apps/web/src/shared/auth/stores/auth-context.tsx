@@ -1,15 +1,15 @@
 'use client';
 
+import type { UserProfile } from '@pytholit/contracts';
 import {
   createContext,
+  type ReactNode,
   useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
-  type ReactNode,
 } from 'react';
-import type { UserProfile } from '@pytholit/contracts';
 
 import { logout as apiLogout } from '@/shared/lib/auth';
 import { getCurrentUser } from '@/shared/lib/user';
