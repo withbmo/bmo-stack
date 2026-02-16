@@ -74,7 +74,7 @@ locals {
 }
 
 resource "aws_route53_record" "acm_validation" {
-  for_each = local.use_route53_validation ? local.validation_records_by_key : {}
+  for_each = var.validation_route53_zone_id != null ? try(local.validation_records_by_key, {}) : {}
 
   zone_id = var.validation_route53_zone_id
   name    = each.value.name
@@ -86,14 +86,14 @@ resource "aws_route53_record" "acm_validation" {
 }
 
 resource "aws_acm_certificate_validation" "app" {
-  count = local.use_route53_validation ? 1 : 0
+  count = var.validation_route53_zone_id != null ? 1 : 0
 
   certificate_arn         = aws_acm_certificate.app.arn
   validation_record_fqdns = [for k in local.app_validation_keys : aws_route53_record.acm_validation[k].fqdn]
 }
 
 resource "aws_acm_certificate_validation" "env" {
-  count = local.use_route53_validation && var.issue_env_wildcard_certificate ? 1 : 0
+  count = var.validation_route53_zone_id != null && var.issue_env_wildcard_certificate ? 1 : 0
 
   certificate_arn         = aws_acm_certificate.env[0].arn
   validation_record_fqdns = [for k in local.env_validation_keys : aws_route53_record.acm_validation[k].fqdn]

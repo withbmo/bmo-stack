@@ -20,7 +20,7 @@ const mapProject = (project: ApiProject): ViewProject => ({
 
 const PROJECTS_PREFIX = `${API_V1}/projects`;
 
-export async function listProjects(token: string): Promise<ViewProject[]> {
+export async function listProjects(token?: string): Promise<ViewProject[]> {
   const projects = snakeToCamel(
     await apiRequest<ApiProject[]>(PROJECTS_PREFIX, {
       method: 'GET',
@@ -31,7 +31,7 @@ export async function listProjects(token: string): Promise<ViewProject[]> {
 }
 
 export async function getProject(
-  token: string,
+  token: string | undefined,
   projectId: string
 ): Promise<ViewProject> {
   const project = snakeToCamel(
@@ -44,7 +44,7 @@ export async function getProject(
 }
 
 export async function createProject(
-  token: string,
+  token: string | undefined,
   payload: { name: string; slug?: string; repo_export_enabled?: boolean }
 ): Promise<ViewProject> {
   const project = snakeToCamel(
@@ -58,7 +58,7 @@ export async function createProject(
 }
 
 export async function updateProject(
-  token: string,
+  token: string | undefined,
   projectId: string,
   payload: { name?: string; slug?: string; repo_export_enabled?: boolean }
 ): Promise<ViewProject> {

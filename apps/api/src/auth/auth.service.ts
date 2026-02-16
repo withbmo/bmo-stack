@@ -80,6 +80,8 @@ export class AuthService {
         email: user.email,
         username: user.username,
         fullName: user.fullName,
+        firstName: user.firstName ?? null,
+        lastName: user.lastName ?? null,
         isEmailVerified: user.isEmailVerified,
       },
     };
@@ -97,6 +99,10 @@ export class AuthService {
     });
 
     if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (!user.hashedPassword) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -125,6 +131,8 @@ export class AuthService {
         email: user.email,
         username: user.username,
         fullName: user.fullName,
+        firstName: user.firstName ?? null,
+        lastName: user.lastName ?? null,
         isEmailVerified: user.isEmailVerified,
       },
     };

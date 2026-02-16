@@ -2,7 +2,7 @@ import type { WizardSchema } from "../types";
 import { apiRequest } from "./client";
 
 export async function fetchWizardSchema(
-  token: string,
+  token: string | undefined,
   version: string
 ): Promise<WizardSchema> {
   return apiRequest<WizardSchema>(`/api/v1/wizard/${version}/schema.json`, {
@@ -16,7 +16,7 @@ export interface WizardGenerateResponse {
 }
 
 export async function generateWizard(
-  token: string,
+  token: string | undefined,
   version: string,
   projectId: string,
   payload: Record<string, unknown>

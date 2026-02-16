@@ -9,39 +9,39 @@ import { queryKeys } from '@/shared/lib/query-keys';
 import { useAuth } from '@/shared/auth';
 
 export const useDeployJobs = (params: { projectId?: string; envId?: string }, poll = true) => {
-  const { token } = useAuth();
+  const { user, hydrated } = useAuth();
   return useQuery({
     queryKey: queryKeys.deployJobs(params),
     queryFn: async () => {
-      if (!token) return [];
-      return listDeployJobs(token, params);
+      if (!hydrated || !user) return [];
+      return listDeployJobs(undefined, params);
     },
-    enabled: !!token,
+    enabled: hydrated && !!user,
     refetchInterval: poll ? 1500 : false,
   });
 };
 
 export const useDeployJob = (jobId?: string, poll = true) => {
-  const { token } = useAuth();
+  const { user, hydrated } = useAuth();
   return useQuery({
     queryKey: jobId ? queryKeys.deployJob(jobId) : ['deploy-job', undefined],
     queryFn: async () => {
-      if (!token || !jobId) return null;
-      return getDeployJob(token, jobId);
+      if (!hydrated || !user || !jobId) return null;
+      return getDeployJob(undefined, jobId);
     },
-    enabled: !!token && !!jobId,
+    enabled: hydrated && !!user && !!jobId,
     refetchInterval: poll ? 1500 : false,
   });
 };
 
 export const useCreateDeployJob = (projectId?: string) => {
-  const { token } = useAuth();
+  const { user, hydrated } = useAuth();
   const client = useQueryClient();
   return useMutation({
     mutationFn: async (envId: string) => {
-      if (!token) throw new Error('Missing token');
+      if (!hydrated || !user) throw new Error('Not authenticated');
       if (!projectId) throw new Error('Missing project');
-      return createDeployJob(token, {
+      return createDeployJob(undefined, {
         projectId,
         environmentId: envId,
         source: { origin: 'dashboard', ref: 'main' },
@@ -54,12 +54,12 @@ export const useCreateDeployJob = (projectId?: string) => {
 };
 
 export const useCancelDeployJob = (projectId?: string) => {
-  const { token } = useAuth();
+  const { user, hydrated } = useAuth();
   const client = useQueryClient();
   return useMutation({
     mutationFn: async (jobId: string) => {
-      if (!token) throw new Error('Missing token');
-      return cancelDeployJob(token, jobId);
+      if (!hydrated || !user) throw new Error('Not authenticated');
+      return cancelDeployJob(undefined, jobId);
     },
     onSuccess: () => {
       client.invalidateQueries({ queryKey: queryKeys.deployJobs({ projectId }) });

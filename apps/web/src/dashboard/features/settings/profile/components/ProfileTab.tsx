@@ -5,7 +5,6 @@ import { toast } from 'sonner';
 import { Input, DashboardPageHeader, ProfileSkeleton } from '@/dashboard/components';
 import {
   deleteAvatar,
-  getCurrentUser,
   updateCurrentUser,
   uploadAvatar,
   type UserProfile,
@@ -14,7 +13,7 @@ import { useAuth } from '@/shared/auth';
 import { resolveAvatarUrl } from '@/shared/lib/avatar';
 
 export const ProfileTab = () => {
-  const { token } = useAuth();
+  const { user, hydrated, refreshSession } = useAuth();
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,13 +25,14 @@ export const ProfileTab = () => {
   const avatarUrl = useMemo(() => resolveAvatarUrl(profile?.avatarUrl), [profile?.avatarUrl]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!hydrated) return;
     let cancelled = false;
     (async () => {
       setIsLoading(true);
       try {
-        const data = await getCurrentUser(token);
+        const data = await refreshSession();
         if (cancelled) return;
+        if (!data) return;
         setProfile(data);
         setDisplayName(data.fullName || '');
         setEmail(data.email || '');
@@ -46,18 +46,19 @@ export const ProfileTab = () => {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [hydrated, refreshSession]);
 
   const handleSave = async () => {
-    if (!token || !profile) return;
+    if (!hydrated || !user || !profile) return;
     setIsSaving(true);
     try {
-      const updated = await updateCurrentUser(token, {
+      const updated = await updateCurrentUser(undefined, {
         fullName: displayName.trim(),
         email: email.trim(),
         bio: bio.trim() || null,
       });
       setProfile(updated);
+      await refreshSession();
       toast.success('Profile updated');
     } catch (err: any) {
       toast.error(err?.detail || 'Failed to update profile');
@@ -69,14 +70,15 @@ export const ProfileTab = () => {
   const handleUploadClick = () => fileRef.current?.click();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!token || !e.target.files || e.target.files.length === 0) return;
+    if (!hydrated || !user || !e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
     if (!file) return;
     e.target.value = '';
     setIsSaving(true);
     try {
-      const updated = await uploadAvatar(token, file);
+      const updated = await uploadAvatar(undefined, file);
       setProfile(updated);
+      await refreshSession();
       toast.success('Avatar updated');
     } catch (err: any) {
       toast.error(err?.detail || 'Failed to upload avatar');
@@ -86,11 +88,12 @@ export const ProfileTab = () => {
   };
 
   const handleRemoveAvatar = async () => {
-    if (!token) return;
+    if (!hydrated || !user) return;
     setIsSaving(true);
     try {
-      const updated = await deleteAvatar(token);
+      const updated = await deleteAvatar(undefined);
       setProfile(updated);
+      await refreshSession();
       toast.success('Avatar removed');
     } catch (err: any) {
       toast.error(err?.detail || 'Failed to remove avatar');

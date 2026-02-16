@@ -3,6 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 
+import { parseGoogleOAuthProfile } from '@pytholit/validation/zod';
+
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(configService: ConfigService) {
@@ -23,21 +25,25 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   async validate(
     accessToken: string,
     refreshToken: string,
-    profile: any,
+    profile: unknown,
     done: VerifyCallback
   ): Promise<any> {
-    const { id, emails, displayName, photos } = profile;
-
-    const user = {
-      provider: 'google' as const,
-      providerId: id,
-      email: emails[0].value,
-      name: displayName,
-      avatarUrl: photos?.[0]?.value,
-      accessToken,
-      refreshToken,
-    };
-
-    done(null, user);
+    try {
+      const parsed = parseGoogleOAuthProfile(profile);
+      done(null, {
+        provider: 'google' as const,
+        providerId: parsed.id,
+        email: parsed.email,
+        emailVerified: parsed.emailVerified,
+        firstName: parsed.firstName,
+        lastName: parsed.lastName,
+        name: parsed.name,
+        avatarUrl: parsed.avatarUrl,
+        accessToken,
+        refreshToken,
+      });
+    } catch {
+      done(new Error('oauth_profile_invalid'));
+    }
   }
 }

@@ -39,7 +39,7 @@ export function LoginRoute() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextParam = searchParams.get('next');
-  const { setToken, isAuthenticated } = useAuth();
+  const { refreshSession, isAuthenticated } = useAuth();
 
   const {
     email,
@@ -91,12 +91,12 @@ export function LoginRoute() {
   }, []);
 
   const handleAuthSuccess = useCallback(
-    (accessToken: string) => {
+    async (_accessToken: string) => {
       clearOtpFlow();
-      setToken(accessToken);
+      await refreshSession();
       router.replace(redirectTarget);
     },
-    [clearOtpFlow, redirectTarget, router, setToken]
+    [clearOtpFlow, redirectTarget, router, refreshSession]
   );
 
   const goToOtpVerification = useCallback(
@@ -277,7 +277,7 @@ export function LoginRoute() {
           </AuthSubmitButton>
         </form>
 
-        <SocialAuthButtons />
+        <SocialAuthButtons next={redirectTarget} />
       </AuthCard>
 
       <div className="mt-6 text-center space-y-2">

@@ -19,16 +19,16 @@ export const DeployJobDetailsRoute = () => {
   const router = useRouter();
   const { data: job, isLoading, error, refetch } = useDeployJob(jobId, true);
   const cancelJob = useCancelDeployJob(job?.projectId);
-  const { token } = useAuth();
+  const { user, hydrated } = useAuth();
   const { data: environment } = useQuery({
     queryKey: job?.environmentId
       ? queryKeys.environment(job.environmentId)
       : ['environment', undefined],
     queryFn: async () => {
-      if (!token || !job?.environmentId) return null;
-      return getEnvironment(token, job.environmentId);
+      if (!hydrated || !user || !job?.environmentId) return null;
+      return getEnvironment(undefined, job.environmentId);
     },
-    enabled: !!token && !!job?.environmentId,
+    enabled: hydrated && !!user && !!job?.environmentId,
   });
 
   if (isLoading || error) {

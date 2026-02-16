@@ -50,7 +50,7 @@ const formatPeriod = (start: string, end: string) =>
   })}`;
 
 export const BillingTab = () => {
-  const { token } = useAuth();
+  const { user, hydrated } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [plans, setPlans] = useState<PublicPlan[]>([]);
   const [subscription, setSubscription] = useState<SubscriptionResponse | null>(null);
@@ -59,16 +59,16 @@ export const BillingTab = () => {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodResponse[]>([]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!hydrated || !user) return;
     let cancelled = false;
     (async () => {
       setIsLoading(true);
       try {
         const [sub, inv, planData, pms] = await Promise.all([
-          getSubscription(token),
-          getInvoices(token),
+          getSubscription(undefined),
+          getInvoices(undefined),
           getPlans(),
-          getPaymentMethods(token),
+          getPaymentMethods(undefined),
         ]);
         if (cancelled) return;
         setSubscription(sub);
@@ -84,7 +84,7 @@ export const BillingTab = () => {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [hydrated, user]);
 
   const activePlan = useMemo(() => {
     if (subscription?.planId) {
@@ -117,13 +117,13 @@ export const BillingTab = () => {
   }, [invoices]);
 
   const handleCheckout = async () => {
-    if (!token) return;
+    if (!hydrated || !user) return;
     if (!activePlan) {
       toast.error('Missing active plan');
       return;
     }
     try {
-      const { url } = await createCheckoutSession(token, activePlan.id, billingInterval);
+      const { url } = await createCheckoutSession(undefined, activePlan.id, billingInterval);
       window.location.href = url;
     } catch (err: any) {
       toast.error(err?.detail || 'Failed to start checkout');
@@ -131,9 +131,9 @@ export const BillingTab = () => {
   };
 
   const handlePortal = async () => {
-    if (!token) return;
+    if (!hydrated || !user) return;
     try {
-      const { url } = await createPortalSession(token);
+      const { url } = await createPortalSession(undefined);
       window.location.href = url;
     } catch (err: any) {
       toast.error(err?.detail || 'Failed to open billing portal');

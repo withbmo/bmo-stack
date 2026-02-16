@@ -25,6 +25,8 @@ export interface LoginResponse {
     email: string;
     username: string;
     fullName: string | null;
+    firstName: string | null;
+    lastName: string | null;
     isEmailVerified: boolean;
   };
 }
@@ -72,6 +74,8 @@ export interface UserProfile {
   email: string;
   username: string;
   fullName: string | null;
+  firstName: string | null;
+  lastName: string | null;
   bio: string | null;
   avatarUrl: string | null;
   isEmailVerified: boolean;

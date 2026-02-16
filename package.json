@@ -15,6 +15,7 @@
     "db:migrate": "pnpm --filter @pytholit/db db:migrate",
     "db:studio": "pnpm --filter @pytholit/db prisma studio",
     "validate:plans": "node scripts/validate-plans.mjs",
+    "export:apps": "node scripts/export-apps-to-txt.mjs",
     "cleanup:subscriptions": "node scripts/cleanup-subscriptions.mjs",
     "demo:build-images": "./scripts/build-and-push-demo-images.sh"
   },

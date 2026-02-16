@@ -5,7 +5,7 @@ import { getOAuthLoginUrl } from '@/shared/lib/auth';
  * Social authentication buttons (GitHub, Google)
  * Redirects to backend OAuth flow - use full page navigation (not fetch)
  */
-export const SocialAuthButtons = () => (
+export const SocialAuthButtons = ({ next }: { next?: string }) => (
   <>
     <div className="my-8 flex items-center gap-4">
       <div className="h-[1px] bg-nexus-gray flex-1" />
@@ -14,8 +14,16 @@ export const SocialAuthButtons = () => (
     </div>
 
     <div className="grid grid-cols-2 gap-4">
-      <SocialButton icon={<Github size={16} />} label="GITHUB" href={getOAuthLoginUrl('github')} />
-      <SocialButton icon={<Chrome size={16} />} label="GOOGLE" href={getOAuthLoginUrl('google')} />
+      <SocialButton
+        icon={<Github size={16} />}
+        label="GITHUB"
+        href={getOAuthLoginUrl('github', next)}
+      />
+      <SocialButton
+        icon={<Chrome size={16} />}
+        label="GOOGLE"
+        href={getOAuthLoginUrl('google', next)}
+      />
     </div>
   </>
 );

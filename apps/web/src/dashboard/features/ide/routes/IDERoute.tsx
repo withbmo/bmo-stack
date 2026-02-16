@@ -142,7 +142,7 @@ export const IDERoute = () => {
   const projectId = useProjectIdParam();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { token } = useAuth();
+  const { user, hydrated } = useAuth();
   const environmentId = searchParams?.get('envId') ?? undefined;
 
   const {
@@ -171,11 +171,11 @@ export const IDERoute = () => {
   useEffect(() => {
     const manifestId = searchParams?.get('manifestId');
     if (!manifestId) return;
-    if (!token) return;
+    if (!hydrated || !user) return;
     let cancelled = false;
     (async () => {
       try {
-        const manifest = await fetchWizardManifest(token, manifestId);
+        const manifest = await fetchWizardManifest(undefined, manifestId);
         if (cancelled) return;
         const tree = buildFileTreeFromManifest(manifest);
         const entryId = manifest.entryFile ? pathToId(manifest.entryFile) : undefined;
@@ -187,7 +187,7 @@ export const IDERoute = () => {
     return () => {
       cancelled = true;
     };
-  }, [searchParams, replaceFileTree, token]);
+  }, [searchParams, replaceFileTree, hydrated, user]);
 
   return (
     <div className="h-screen w-full bg-[#050505] text-white flex flex-col overflow-hidden font-sans">

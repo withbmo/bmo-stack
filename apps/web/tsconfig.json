@@ -1,7 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ES2022"
+    ],
     "jsx": "preserve",
     "plugins": [
       {
@@ -9,20 +13,18 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@/site/*": ["./src/site/*"],
-      "@/dashboard/*": ["./src/dashboard/*"],
-      "@/shared/*": ["./src/shared/*"],
-      "@/common/*": ["./src/shared/*"],
-      "@/common/auth/*": ["./src/site/components/auth/*"],
-      "@/common/features/auth/*": ["./src/shared/auth/*"],
-      "@/common/data/*": ["./src/shared/data/*"],
-      "@/common/lib/*": ["./src/shared/lib/*"],
-      "@/common/types": ["./src/shared/types/index.ts"],
-      "@/common/types/*": ["./src/shared/types/*"],
-      "@/common/constants": ["./src/shared/constants/index.ts"],
-      "@/common/constants/*": ["./src/shared/constants/*"],
-      "@/dashboard/shared/layout/*": ["./src/shared/components/layout/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@/site/*": [
+        "./src/site/*"
+      ],
+      "@/dashboard/*": [
+        "./src/dashboard/*"
+      ],
+      "@/shared/*": [
+        "./src/shared/*"
+      ]
     },
     "noEmit": true,
     "incremental": true
@@ -34,5 +36,7 @@
     "src/**/*.tsx",
     ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules"
+  ]
 }

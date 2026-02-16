@@ -2,6 +2,7 @@ import { NovuProvider, useCounts, useNotifications } from '@novu/react';
 import { Bell, X } from 'lucide-react';
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { getNovuToken, type NovuTokenResponse } from '@/shared/lib/notifications';
+import { useAuth } from '@/shared/auth';
 
 import { env } from '@/env';
 
@@ -22,11 +23,8 @@ const toAbsoluteUrl = (value: string) => {
   return new URL(value, window.location.origin).toString();
 };
 
-type NovuInboxProps = {
-  token: string | null;
-};
-
-export const NovuInbox = ({ token }: NovuInboxProps) => {
+export const NovuInbox = () => {
+  const { user, hydrated } = useAuth();
   const [auth, setAuth] = useState<NovuTokenResponse | null>(null);
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -43,14 +41,14 @@ export const NovuInbox = ({ token }: NovuInboxProps) => {
   }, []);
 
   useEffect(() => {
-    if (!token) {
+    if (!hydrated || !user) {
       setAuth(null);
       return;
     }
     let mounted = true;
     (async () => {
       try {
-        const res = await getNovuToken(token);
+        const res = await getNovuToken(undefined);
         if (mounted) setAuth(res);
       } catch {
         if (mounted) setAuth(null);
@@ -59,7 +57,7 @@ export const NovuInbox = ({ token }: NovuInboxProps) => {
     return () => {
       mounted = false;
     };
-  }, [token]);
+  }, [hydrated, user]);
 
   const formatTime = (iso?: string) => {
     if (!iso) return '';
@@ -122,7 +120,7 @@ export const NovuInbox = ({ token }: NovuInboxProps) => {
     );
   };
 
-  if (!token || !NOVU_APP_ID || !auth?.subscriber_id) return null;
+  if (!hydrated || !user || !NOVU_APP_ID || !auth?.subscriber_id) return null;
 
   return (
     <NovuProvider

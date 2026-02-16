@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/shared/auth';
-import { getCurrentUser } from '@/shared/lib/user';
 import { FullScreenLoader } from '@/shared/components/FullScreenLoader';
 import { sendPublicSignupVerification } from '@/shared/lib/auth';
 import { getOtpMeta } from '@/shared/auth/utils/otp';
@@ -14,58 +13,44 @@ export const PageLoader = () => <FullScreenLoader label="Loading..." />;
  * Protects dashboard routes: requires auth, validates token, redirects to login if invalid.
  */
 export function ProtectedDashboardGuard({ children }: { children: React.ReactNode }) {
-  const { token, logout, hydrated } = useAuth();
+  const { user, logout, hydrated } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [status, setStatus] = useState<'checking' | 'ok' | 'fail' | 'unverified'>('checking');
-  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+
+  const next = useMemo(
+    () => `${pathname}${typeof window !== 'undefined' ? window.location.search : ''}`,
+    [pathname]
+  );
 
   useEffect(() => {
     if (!hydrated) return;
-    if (!token) {
+    if (!user) {
       setStatus('fail');
       return;
     }
-    let cancelled = false;
-    (async () => {
-      setStatus('checking');
-      try {
-        const me = await getCurrentUser(token);
-        if (cancelled) return;
-        if (!me.isEmailVerified) {
-          setUnverifiedEmail(me.email);
-          setStatus('unverified');
-          return;
-        }
-        setStatus('ok');
-      } catch {
-        if (cancelled) return;
-        logout();
-        setStatus('fail');
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [token, logout, hydrated]);
+    if (!user.isEmailVerified) {
+      setStatus('unverified');
+      return;
+    }
+    setStatus('ok');
+  }, [user, hydrated]);
 
   useEffect(() => {
     if (status === 'fail') {
-      const next = `${pathname}${typeof window !== 'undefined' ? window.location.search : ''}`;
       router.replace(`/auth/login?next=${encodeURIComponent(next)}`);
     }
-  }, [status, router, pathname]);
+  }, [status, router, next]);
 
   useEffect(() => {
-    if (status !== 'unverified' || !unverifiedEmail) return;
-    const next = `${pathname}${typeof window !== 'undefined' ? window.location.search : ''}`;
+    if (status !== 'unverified' || !user?.email) return;
     (async () => {
       try {
-        const resp = await sendPublicSignupVerification(unverifiedEmail);
+        const resp = await sendPublicSignupVerification(user.email);
         const meta = getOtpMeta(resp);
         const params = new URLSearchParams({
           type: 'email-verification',
-          email: unverifiedEmail,
+          email: user.email,
           next,
           expiresAt: meta.expiresAt || '',
           nextRequestAt: meta.nextRequestAt || '',
@@ -74,14 +59,14 @@ export function ProtectedDashboardGuard({ children }: { children: React.ReactNod
       } catch {
         const params = new URLSearchParams({
           type: 'email-verification',
-          email: unverifiedEmail,
+          email: user.email,
           next,
           sendFailed: '1',
         });
         router.replace(`/auth/verify-otp?${params.toString()}`);
       }
     })();
-  }, [pathname, router, status, unverifiedEmail]);
+  }, [router, status, user, next]);
 
   if (!hydrated) return <PageLoader />;
   if (status === 'checking') return <PageLoader />;

@@ -1,7 +1,9 @@
-import { Body, Controller, HttpCode, HttpStatus,Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus,Post, Res } from '@nestjs/common';
 import type { OTPVerifyResponse } from '@pytholit/contracts';
+import type { Response } from 'express';
 
 import { Public } from '../auth/decorators/public.decorator';
+import { setAuthCookie } from '../auth/auth.cookies';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { OtpService } from './otp.service';
@@ -30,12 +32,19 @@ export class OtpController {
   @Public()
   @Post('verify')
   @HttpCode(HttpStatus.OK)
-  async verify(@Body() verifyOtpDto: VerifyOtpDto): Promise<OTPVerifyResponse> {
-    return this.otpService.verifyOtp(
+  async verify(
+    @Body() verifyOtpDto: VerifyOtpDto,
+    @Res({ passthrough: true }) res: Response
+  ): Promise<OTPVerifyResponse> {
+    const result = await this.otpService.verifyOtp(
       verifyOtpDto.email,
       verifyOtpDto.code,
       verifyOtpDto.purpose
     );
+    if (result.success && result.token) {
+      setAuthCookie(res, result.token);
+    }
+    return result;
   }
 
   @Public()

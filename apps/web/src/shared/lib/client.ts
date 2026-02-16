@@ -104,7 +104,11 @@ export async function apiRequest<T>(
   ) {
     headers.set("Content-Type", "application/json");
   }
-  const res = await fetch(url, { ...init, headers });
+  const res = await fetch(url, {
+    ...init,
+    headers,
+    credentials: init.credentials ?? "include",
+  });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let data: any = {};
   try {

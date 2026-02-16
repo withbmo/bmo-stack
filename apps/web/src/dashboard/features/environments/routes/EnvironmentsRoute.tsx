@@ -21,14 +21,14 @@ export const EnvironmentsRoute = () => {
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('environments');
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
 
-  const { token } = useAuth();
+  const { user, hydrated } = useAuth();
   const { data: environments = [], isLoading: envLoading } = useEnvironments();
   const updateEnv = useUpdateEnvironment();
 
   const startMutation = useMutation({
     mutationFn: async (envId: string) => {
-      if (!token) throw new Error('Missing auth token');
-      return startEnvironment(token, envId);
+      if (!hydrated || !user) throw new Error('Not authenticated');
+      return startEnvironment(undefined, envId);
     },
     onError: err => {
       const msg =
@@ -40,8 +40,8 @@ export const EnvironmentsRoute = () => {
 
   const stopMutation = useMutation({
     mutationFn: async (envId: string) => {
-      if (!token) throw new Error('Missing auth token');
-      return stopEnvironment(token, envId);
+      if (!hydrated || !user) throw new Error('Not authenticated');
+      return stopEnvironment(undefined, envId);
     },
     onError: err => {
       const msg =
@@ -53,8 +53,8 @@ export const EnvironmentsRoute = () => {
 
   const terminateMutation = useMutation({
     mutationFn: async (envId: string) => {
-      if (!token) throw new Error('Missing auth token');
-      return terminateEnvironment(token, envId);
+      if (!hydrated || !user) throw new Error('Not authenticated');
+      return terminateEnvironment(undefined, envId);
     },
     onError: err => {
       const msg =

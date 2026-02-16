@@ -1,4 +1,4 @@
-import type { HubResource } from '@/common/types';
+import type { HubResource } from '@/shared/types';
 
 export const HUB_RESOURCES: HubResource[] = [
   {

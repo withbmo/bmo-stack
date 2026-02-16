@@ -62,7 +62,7 @@ const SERVER_PRESETS: ServerPreset[] = [
 export const NewEnvironmentRoute = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { token } = useAuth();
+  const { user, hydrated } = useAuth();
   const { data: projects = [] } = useProjects();
   const [activeTab, setActiveTab] = useState<'basic' | 'advanced'>('basic');
   const [envName, setEnvName] = useState<EnvironmentName>('dev');
@@ -112,7 +112,7 @@ export const NewEnvironmentRoute = () => {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      if (!token) throw new Error('Missing auth token');
+      if (!hydrated || !user) throw new Error('Not authenticated');
       if (configMode === 'preset' && !serverId) {
         throw new Error('Please choose a server preset');
       }
@@ -121,7 +121,7 @@ export const NewEnvironmentRoute = () => {
         .map(v => ({ key: v.key.trim(), value: v.value }))
         .filter(v => v.key.length > 0);
 
-      return createEnvironment(token, {
+      return createEnvironment(undefined, {
         name: envName,
         displayName: displayName.trim() || envName.toUpperCase(),
         executionMode: executionMode,

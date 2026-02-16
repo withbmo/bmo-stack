@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Terminal, LogOut, User } from 'lucide-react';
 import { useAuth } from '@/shared/auth';
 import { useEffect, useMemo, useState } from 'react';
-import { getCurrentUser, type UserProfile } from '@/shared/lib/user';
+import type { UserProfile } from '@/shared/lib/user';
 import { resolveAvatarUrl } from '@/shared/lib/avatar';
 import { getSubscription, getPlans } from '@/shared/lib/billing';
 import { NovuInbox } from '@/dashboard/components/notifications/NovuInbox';
@@ -23,32 +23,21 @@ const DASH_LINKS = [
 export const Navbar = () => {
   const pathname = usePathname();
   const router = useRouter();
-  const { logout, token } = useAuth();
+  const { logout, user, hydrated } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [planLabel, setPlanLabel] = useState<string>('FREE TIER');
 
   useEffect(() => {
-    if (!token) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const data = await getCurrentUser(token);
-        if (!cancelled) setProfile(data);
-      } catch {
-        /* ignore */
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [token]);
+    if (!hydrated) return;
+    setProfile(user);
+  }, [hydrated, user]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!hydrated || !user) return;
     let cancelled = false;
     (async () => {
       try {
-        const [sub, plans] = await Promise.all([getSubscription(token), getPlans()]);
+        const [sub, plans] = await Promise.all([getSubscription(undefined), getPlans()]);
         if (cancelled) return;
         const active = sub?.planId ? plans.find(p => p.id === sub.planId) : plans[0] || null;
         setPlanLabel((active?.name || 'FREE TIER').toUpperCase().replace(/_/g, ' '));
@@ -59,7 +48,7 @@ export const Navbar = () => {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [hydrated, user]);
 
   const avatarUrl = useMemo(() => resolveAvatarUrl(profile?.avatarUrl), [profile?.avatarUrl]);
 
@@ -109,7 +98,7 @@ export const Navbar = () => {
           <div className="h-6 w-[1px] bg-nexus-gray hidden md:block"></div>
 
           <div className="flex items-center gap-3 relative">
-            <NovuInbox token={token} />
+            <NovuInbox />
 
             <Link
               href="/dashboard/settings"
@@ -138,7 +127,7 @@ export const Navbar = () => {
             </Link>
             <button
               onClick={() => {
-                logout();
+                void logout();
                 router.push('/auth/login');
               }}
               className="text-nexus-muted hover:text-red-500 transition-colors ml-2"

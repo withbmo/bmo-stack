@@ -1,3 +1,5 @@
+'use client';
+
 import {
   createContext,
   useCallback,
@@ -7,73 +9,61 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { AUTH_STORAGE } from '@/shared/constants';
+import type { UserProfile } from '@pytholit/contracts';
+
+import { logout as apiLogout } from '@/shared/lib/auth';
+import { getCurrentUser } from '@/shared/lib/user';
 
 type AuthContextValue = {
-  token: string | null;
-  setToken: (t: string | null) => void;
-  isAuthenticated: boolean;
-  logout: () => void;
+  user: UserProfile | null;
   hydrated: boolean;
+  isAuthenticated: boolean;
+  refreshSession: () => Promise<UserProfile | null>;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function readStoredToken(): string | null {
-  try {
-    return localStorage.getItem(AUTH_STORAGE.ACCESS_TOKEN_KEY);
-  } catch {
-    return null;
-  }
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Important for Next.js hydration:
-  // - Server render cannot read localStorage (token is always null on the server)
-  // - If we read localStorage during the initial client render, the first client tree can differ
-  //   from the server HTML, triggering a hydration mismatch.
-  // So: initialize as null and hydrate from storage after mount.
-  const [token, setTokenState] = useState<string | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
-  const setToken = useCallback((t: string | null) => {
-    setTokenState(t);
+  const refreshSession = useCallback(async (): Promise<UserProfile | null> => {
     try {
-      if (t) localStorage.setItem(AUTH_STORAGE.ACCESS_TOKEN_KEY, t);
-      else localStorage.removeItem(AUTH_STORAGE.ACCESS_TOKEN_KEY);
+      const me = await getCurrentUser();
+      setUser(me);
+      return me;
     } catch {
-      /* ignore */
+      setUser(null);
+      return null;
+    } finally {
+      setHydrated(true);
     }
   }, []);
 
-  // Initial client-side hydration from localStorage
-  useEffect(() => {
-    setTokenState(readStoredToken());
-    setHydrated(true);
+  const logout = useCallback(async () => {
+    try {
+      await apiLogout();
+    } catch {
+      // ignore
+    } finally {
+      setUser(null);
+    }
   }, []);
 
-  // Sync auth state when another tab logs in/out (e.g. logout in another tab)
   useEffect(() => {
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === AUTH_STORAGE.ACCESS_TOKEN_KEY) {
-        setTokenState(e.newValue);
-      }
-    };
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
-  }, []);
-
-  const logout = useCallback(() => setToken(null), [setToken]);
+    refreshSession();
+  }, [refreshSession]);
 
   const value = useMemo(
     () => ({
-      token,
-      setToken,
-      isAuthenticated: !!token,
-      logout,
+      user,
       hydrated,
+      isAuthenticated: !!user,
+      refreshSession,
+      logout,
     }),
-    [token, setToken, logout, hydrated]
+    [user, hydrated, refreshSession, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -84,3 +74,4 @@ export function useAuth(): AuthContextValue {
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 }
+

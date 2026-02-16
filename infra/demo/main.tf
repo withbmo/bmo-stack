@@ -59,27 +59,39 @@ module "postgres" {
   ecs_security_group_id = module.security.ecs_services_security_group_id
   master_username       = var.postgres_master_username
   instances             = var.postgres_instances
-  tags                  = local.tags
+  db_passwords = {
+    dev  = module.secrets.db_dev_password
+    prod = module.secrets.db_prod_password
+  }
+  tags = local.tags
+
+  depends_on = [module.secrets]
 }
 
 module "secrets" {
-  source       = "./secrets"
-  project_name = var.project_name
-  tags         = local.tags
+  source             = "./secrets"
+  project_name       = var.project_name
+  db_master_username = var.postgres_master_username
+  tags               = local.tags
 }
 
 module "iam" {
   source = "./iam"
   tags   = local.tags
-  secret_arns = concat(
-    [
-      module.secrets.jwt_secret_arn,
-      module.secrets.env_session_secret_arn,
-      module.secrets.zeptomail_api_key_arn,
-      var.api_database_env == "prod" ? module.secrets.turnstile_secret_prod_arn : module.secrets.turnstile_secret_dev_arn
-    ],
-    values(module.postgres.master_secret_arns)
-  )
+  secret_arns = [
+    module.secrets.jwt_secret_arn,
+    module.secrets.env_session_secret_arn,
+    module.secrets.zeptomail_api_key_arn,
+    var.api_database_env == "prod" ? module.secrets.turnstile_secret_prod_arn : module.secrets.turnstile_secret_dev_arn,
+    module.secrets.db_dev_secret_arn,
+    module.secrets.db_prod_secret_arn,
+    module.secrets.github_client_id_dev_arn,
+    module.secrets.github_client_secret_dev_arn,
+    module.secrets.github_client_id_prod_arn,
+    module.secrets.github_client_secret_prod_arn,
+    module.secrets.google_client_id_arn,
+    module.secrets.google_client_secret_arn,
+  ]
 }
 
 module "dynamodb" {
@@ -92,6 +104,17 @@ module "compute" {
   instance_profile_name = module.iam.env_instance_profile_name
   security_group_ids    = [module.security.env_instance_security_group_id]
   tags                  = local.tags
+}
+
+module "elasticache" {
+  source             = "./elasticache"
+  project_name       = var.project_name
+  private_subnet_ids = module.servicesvpc.private_subnet_ids
+  security_group_id  = module.security.elasticache_redis_security_group_id
+  node_type          = "cache.t3.micro" # 0.5 GB RAM - good for OAuth state/code storage
+  num_cache_nodes    = 1                # Single node for demo; use 2+ for production
+  multi_az_enabled   = false            # Enable for production
+  tags               = local.tags
 }
 
 module "route53_delegated" {
@@ -173,20 +196,29 @@ module "ecs_api" {
   security_group_id         = module.security.ecs_services_security_group_id
   execution_role_arn        = module.iam.ecs_execution_role_arn
   task_role_arn             = module.iam.api_task_role_arn
+  frontend_url              = "https://${local.app_domain_name}"
+  cookie_domain             = ".${var.domain_name}"
+  upload_dir                = "uploads"
+  node_env                  = "production"
+  redis_url                 = module.elasticache.redis_url
   jwt_secret_arn            = module.secrets.jwt_secret_arn
   env_session_secret_arn    = module.secrets.env_session_secret_arn
   turnstile_secret_arn      = var.api_database_env == "prod" ? module.secrets.turnstile_secret_prod_arn : module.secrets.turnstile_secret_dev_arn
   zeptomail_api_key_arn     = module.secrets.zeptomail_api_key_arn
+  github_client_id_arn      = var.api_database_env == "prod" ? module.secrets.github_client_id_prod_arn : module.secrets.github_client_id_dev_arn
+  github_client_secret_arn  = var.api_database_env == "prod" ? module.secrets.github_client_secret_prod_arn : module.secrets.github_client_secret_dev_arn
+  google_client_id_arn      = module.secrets.google_client_id_arn
+  google_client_secret_arn  = module.secrets.google_client_secret_arn
   db_host                   = module.postgres.endpoints[var.api_database_env]
   db_port                   = module.postgres.ports[var.api_database_env]
   db_name                   = "pytholit_${var.api_database_env}"
-  db_credentials_secret_arn = module.postgres.master_secret_arns[var.api_database_env]
+  db_credentials_secret_arn = var.api_database_env == "prod" ? module.secrets.db_prod_secret_arn : module.secrets.db_dev_secret_arn
   enable_load_balancer      = var.enable_alb
   target_group_arn          = var.enable_alb ? module.alb_app[0].api_target_group_arn : null
   image                     = var.images.api
   tags                      = local.tags
 
-  depends_on = [module.alb_app]
+  depends_on = [module.alb_app, module.elasticache]
 }
 
 module "ecs_terminal_gateway" {

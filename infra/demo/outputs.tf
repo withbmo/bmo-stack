@@ -41,7 +41,21 @@ output "postgres_ports" {
 }
 
 output "postgres_master_secret_arns" {
-  value = module.postgres.master_secret_arns
+  value = {
+    dev  = module.secrets.db_dev_secret_arn
+    prod = module.secrets.db_prod_secret_arn
+  }
+  description = "ARNs of PostgreSQL master credential secrets"
+}
+
+output "redis_endpoint" {
+  value       = module.elasticache.redis_endpoint
+  description = "ElastiCache Redis primary endpoint"
+}
+
+output "redis_url" {
+  value       = module.elasticache.redis_url
+  description = "Full Redis connection URL"
 }
 
 output "app_alb_dns_name" {

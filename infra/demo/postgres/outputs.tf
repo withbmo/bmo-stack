@@ -13,9 +13,3 @@ output "ports" {
     for env, db in aws_db_instance.this : env => db.port
   }
 }
-
-output "master_secret_arns" {
-  value = {
-    for env, db in aws_db_instance.this : env => db.master_user_secret[0].secret_arn
-  }
-}

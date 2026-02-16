@@ -52,12 +52,12 @@ export class UsersController {
       })
     )
     file: Express.Multer.File
-  ): Promise<{ avatarUrl: string }> {
+  ): Promise<UserProfile> {
     return this.usersService.uploadAvatar(user.id, file);
   }
 
   @Delete('me/avatar')
-  async deleteAvatar(@CurrentUser() user: any): Promise<{ message: string }> {
+  async deleteAvatar(@CurrentUser() user: any): Promise<UserProfile> {
     return this.usersService.deleteAvatar(user.id);
   }
 }

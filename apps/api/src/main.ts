@@ -2,7 +2,9 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NextFunction,Request, Response } from 'express';
 import * as express from 'express';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import * as path from 'path';
 
 import { AppModule } from './app.module';
 
@@ -27,8 +29,14 @@ async function bootstrap() {
             includeSubDomains: false,
             preload: false,
           },
+      // Avatars are served from the API host and rendered by the web app.
+      // Allow cross-origin embedding of these static images.
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
     })
   );
+
+  // Cookies (OAuth state + auth session)
+  app.use(cookieParser());
 
   // Global validation pipe - uses class-validator DTOs from @pytholit/validation
   app.useGlobalPipes(
@@ -46,6 +54,11 @@ async function bootstrap() {
     origin: isDev ? true : frontendUrl.split(',').map((o) => o.trim()),
     credentials: true,
   });
+
+  // Static uploads (avatars)
+  const uploadDirRaw = process.env.UPLOAD_DIR || '';
+  const uploadDir = uploadDirRaw.trim() !== '' ? uploadDirRaw.trim() : 'uploads';
+  app.use(`/${uploadDir}`, express.static(path.join(process.cwd(), uploadDir)));
 
   // API prefix
   const globalPrefix = 'api/v1';

@@ -48,9 +48,9 @@ resource "aws_db_instance" "this" {
   auto_minor_version_upgrade = true
   apply_immediately          = true
 
-  db_name                     = "pytholit_${each.key}"
-  username                    = var.master_username
-  manage_master_user_password = true
+  db_name         = "pytholit_${each.key}"
+  username        = var.master_username
+  password        = var.db_passwords[each.key]
 
   tags = merge(var.tags, { Name = "${var.project_name}-${each.key}-postgres" })
 }

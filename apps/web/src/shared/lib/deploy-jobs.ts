@@ -32,7 +32,7 @@ const mapDeployJob = (job: ApiDeployJob): ViewDeployJob => ({
 });
 
 export async function listDeployJobs(
-  token: string,
+  token: string | undefined,
   params: { projectId?: string; envId?: string }
 ): Promise<ViewDeployJob[]> {
   const query = new URLSearchParams();
@@ -43,7 +43,7 @@ export async function listDeployJobs(
   return jobs.map(mapDeployJob);
 }
 
-export async function getDeployJob(token: string, jobId: string): Promise<ViewDeployJob> {
+export async function getDeployJob(token: string | undefined, jobId: string): Promise<ViewDeployJob> {
   const job = snakeToCamel(
     await apiRequest<ApiDeployJob>(`${API_V1}/deploy-jobs/${jobId}`, {
       method: 'GET',
@@ -54,7 +54,7 @@ export async function getDeployJob(token: string, jobId: string): Promise<ViewDe
 }
 
 export async function createDeployJob(
-  token: string,
+  token: string | undefined,
   payload: {
     projectId: string;
     environmentId: string;
@@ -71,7 +71,7 @@ export async function createDeployJob(
   return mapDeployJob(job);
 }
 
-export async function cancelDeployJob(token: string, jobId: string): Promise<ViewDeployJob> {
+export async function cancelDeployJob(token: string | undefined, jobId: string): Promise<ViewDeployJob> {
   const job = snakeToCamel(
     await apiRequest<ApiDeployJob>(`${API_V1}/deploy-jobs/${jobId}/cancel`, {
       method: 'POST',

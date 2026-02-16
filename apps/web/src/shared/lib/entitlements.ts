@@ -2,7 +2,7 @@ import { apiRequest, API_V1 } from './client';
 import type { EntitlementLimitsResponse, RecordEntitlementUsageInput } from '@pytholit/contracts';
 
 export async function getEntitlementLimits(
-  token: string
+  token: string | undefined
 ): Promise<EntitlementLimitsResponse> {
   return apiRequest<EntitlementLimitsResponse>(`${API_V1}/entitlements/limits`, {
     method: 'GET',
@@ -11,7 +11,7 @@ export async function getEntitlementLimits(
 }
 
 export async function recordEntitlementUsage(
-  token: string,
+  token: string | undefined,
   input: RecordEntitlementUsageInput
 ) {
   return apiRequest(`${API_V1}/entitlements/usage`, {

@@ -9,17 +9,22 @@ import {
   Post,
   Req,
   Res,
-  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AuthGuard } from '@nestjs/passport';
 import type { Request, Response } from 'express';
 
+import {
+  clearOauthNextCookie,
+  clearOauthStateCookie,
+  setAuthCookie,
+} from '../auth/auth.cookies';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { ExchangeCodeDto } from './dto/exchange-code.dto';
+import { GithubOauthCallbackGuard } from './guards/github-oauth-callback.guard';
 import { GithubOauthStateGuard } from './guards/github-oauth-state.guard';
+import { GoogleOauthCallbackGuard } from './guards/google-oauth-callback.guard';
 import { GoogleOauthStateGuard } from './guards/google-oauth-state.guard';
 import { OAuthProfile,OauthService } from './oauth.service';
 import { OauthCodeService } from './oauth-code.service';
@@ -43,6 +48,18 @@ export class OauthController {
     this.frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
   }
 
+  private redirectError(res: Response, code: string) {
+    const qs = new URLSearchParams({ error: code });
+    res.redirect(`${this.frontendUrl}/auth/login?${qs.toString()}`);
+  }
+
+  private async validateAndConsumeState(req: Request): Promise<boolean> {
+    const state = typeof req.query?.state === 'string' ? req.query.state : '';
+    const cookieState = (req as any).cookies?.oauth_state;
+    if (!state || !cookieState || state !== cookieState) return false;
+    return this.oauthStateService.consumeState(state);
+  }
+
   // Google OAuth
   @Public()
   @Get('google')
@@ -53,17 +70,29 @@ export class OauthController {
 
   @Public()
   @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
+  @UseGuards(GoogleOauthCallbackGuard)
   async googleCallback(@Req() req: Request, @Res() res: Response) {
-    const state = typeof req.query?.state === 'string' ? req.query.state : '';
-    if (!state || !(await this.oauthStateService.consumeState(state))) {
-      throw new UnauthorizedException('Invalid OAuth state');
+    clearOauthStateCookie(res);
+    clearOauthNextCookie(res);
+
+    const ok = await this.validateAndConsumeState(req);
+    if (!ok) return this.redirectError(res, 'oauth_state_invalid');
+
+    if (!req.user) return this.redirectError(res, 'oauth_failed');
+
+    try {
+      const profile = req.user as OAuthProfile;
+      const result = await this.oauthService.handleOAuthLogin(profile);
+      setAuthCookie(res, result.accessToken);
+      const next = (req as any).cookies?.oauth_next;
+      const target =
+        typeof next === 'string' && next.startsWith('/') && !next.startsWith('//')
+          ? next
+          : '/dashboard';
+      return res.redirect(`${this.frontendUrl}${target}`);
+    } catch {
+      return this.redirectError(res, 'oauth_login_failed');
     }
-    const profile = req.user as OAuthProfile;
-    const result = await this.oauthService.handleOAuthLogin(profile);
-    const code = this.oauthCodeService.createCode(result);
-    const redirectUrl = `${this.frontendUrl}/auth/callback?code=${code}`;
-    res.redirect(redirectUrl);
   }
 
   // GitHub OAuth
@@ -76,17 +105,33 @@ export class OauthController {
 
   @Public()
   @Get('github/callback')
-  @UseGuards(AuthGuard('github'))
+  @UseGuards(GithubOauthCallbackGuard)
   async githubCallback(@Req() req: Request, @Res() res: Response) {
-    const state = typeof req.query?.state === 'string' ? req.query.state : '';
-    if (!state || !(await this.oauthStateService.consumeState(state))) {
-      throw new UnauthorizedException('Invalid OAuth state');
+    clearOauthStateCookie(res);
+    clearOauthNextCookie(res);
+
+    const ok = await this.validateAndConsumeState(req);
+    if (!ok) return this.redirectError(res, 'oauth_state_invalid');
+
+    if (!req.user) {
+      const err = (req as any).oauthError;
+      const code = err?.message === 'github_email_required' ? 'github_email_required' : 'oauth_failed';
+      return this.redirectError(res, code);
     }
-    const profile = req.user as OAuthProfile;
-    const result = await this.oauthService.handleOAuthLogin(profile);
-    const code = this.oauthCodeService.createCode(result);
-    const redirectUrl = `${this.frontendUrl}/auth/callback?code=${code}`;
-    res.redirect(redirectUrl);
+
+    try {
+      const profile = req.user as OAuthProfile;
+      const result = await this.oauthService.handleOAuthLogin(profile);
+      setAuthCookie(res, result.accessToken);
+      const next = (req as any).cookies?.oauth_next;
+      const target =
+        typeof next === 'string' && next.startsWith('/') && !next.startsWith('//')
+          ? next
+          : '/dashboard';
+      return res.redirect(`${this.frontendUrl}${target}`);
+    } catch {
+      return this.redirectError(res, 'oauth_login_failed');
+    }
   }
 
   /**
@@ -96,8 +141,10 @@ export class OauthController {
   @Public()
   @Post('exchange')
   @HttpCode(HttpStatus.OK)
-  async exchangeCode(@Body() dto: ExchangeCodeDto) {
-    return this.oauthCodeService.exchangeCode(dto.code);
+  async exchangeCode(@Body() dto: ExchangeCodeDto, @Res({ passthrough: true }) res: Response) {
+    const result = await this.oauthCodeService.exchangeCode(dto.code);
+    setAuthCookie(res, result.accessToken);
+    return result;
   }
 
   // Unlink OAuth account

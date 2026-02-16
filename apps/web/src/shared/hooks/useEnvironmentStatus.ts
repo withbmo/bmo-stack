@@ -26,14 +26,13 @@ interface UseEnvironmentStatusOptions {
  *
  * Usage:
  * ```tsx
- * const { status, loading, error, refetch } = useEnvironmentStatus(token, envId, {
+ * const { status, loading, error, refetch } = useEnvironmentStatus(envId, {
  *   pollInterval: 5000, // Poll every 5 seconds
  *   stopOnStatus: ['running', 'stopped', 'terminated'], // Stop polling when reached
  * });
  * ```
  */
 export function useEnvironmentStatus(
-  token: string | null,
   environmentId: string | null,
   options: UseEnvironmentStatusOptions = {}
 ) {
@@ -48,13 +47,13 @@ export function useEnvironmentStatus(
   const [error, setError] = useState<Error | null>(null);
 
   const fetchStatus = useCallback(async () => {
-    if (!token || !environmentId || !enabled) return;
+    if (!environmentId || !enabled) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const result = await getEnvironmentStatus(token, environmentId);
+      const result = await getEnvironmentStatus(undefined, environmentId);
       setStatus(result);
       return result;
     } catch (err) {
@@ -63,10 +62,10 @@ export function useEnvironmentStatus(
     } finally {
       setLoading(false);
     }
-  }, [token, environmentId, enabled]);
+  }, [environmentId, enabled]);
 
   useEffect(() => {
-    if (!token || !environmentId || !enabled) return;
+    if (!environmentId || !enabled) return;
 
     // Fetch immediately on mount
     fetchStatus();
@@ -84,7 +83,7 @@ export function useEnvironmentStatus(
     }, pollInterval);
 
     return () => clearInterval(interval);
-  }, [token, environmentId, enabled, pollInterval, stopOnStatus, fetchStatus]);
+  }, [environmentId, enabled, pollInterval, stopOnStatus, fetchStatus]);
 
   return {
     status,

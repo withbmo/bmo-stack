@@ -39,7 +39,7 @@ export interface PaymentMethodResponse {
 }
 
 export async function createCheckoutSession(
-  token: string,
+  token: string | undefined,
   planId: string,
   interval: BillingInterval = "month"
 ): Promise<{ url: string }> {
@@ -51,7 +51,7 @@ export async function createCheckoutSession(
 }
 
 export async function createPortalSession(
-  token: string
+  token: string | undefined
 ): Promise<{ url: string }> {
   return apiRequest<{ url: string }>(`${API_V1}/billing/portal`, {
     method: "POST",
@@ -60,7 +60,7 @@ export async function createPortalSession(
 }
 
 export async function getSubscription(
-  token: string
+  token: string | undefined
 ): Promise<SubscriptionResponse | null> {
   const sub = await apiRequest<SubscriptionResponse | null>(
     `${API_V1}/billing/subscription`,
@@ -70,7 +70,7 @@ export async function getSubscription(
 }
 
 export async function getInvoices(
-  token: string
+  token: string | undefined
 ): Promise<InvoiceResponse[]> {
   const invoices = await apiRequest<InvoiceResponse[]>(`${API_V1}/billing/invoices`, {
     method: "GET",
@@ -87,7 +87,7 @@ export async function getPlans(): Promise<PublicPlan[]> {
 }
 
 export async function getPaymentMethods(
-  token: string
+  token: string | undefined
 ): Promise<PaymentMethodResponse[]> {
   const methods = await apiRequest<PaymentMethodResponse[]>(
     `${API_V1}/billing/payment-methods`,

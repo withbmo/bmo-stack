@@ -5,6 +5,7 @@ export function validateEnv() {
     NODE_ENV: str({ default: 'development' }),
     PORT: num({ default: 3001 }),
     FRONTEND_URL: str({ default: 'http://localhost:3000' }),
+    COOKIE_DOMAIN: str({ default: '' }),
     DATABASE_URL: str({ default: '' }),
     STRIPE_SECRET_KEY: str({ default: '' }),
     STRIPE_WEBHOOK_SECRET: str({ default: '' }),

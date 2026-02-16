@@ -6,7 +6,7 @@ export type NovuTokenResponse = {
 };
 
 export async function getNovuToken(
-  token: string
+  token: string | undefined
 ): Promise<NovuTokenResponse> {
   return apiRequest(`${API_V1}/notifications/token`, { token });
 }

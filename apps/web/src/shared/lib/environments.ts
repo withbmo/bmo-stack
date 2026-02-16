@@ -16,7 +16,7 @@ const mapEnvironment = (env: ContractEnvironment): Environment => ({
   updatedAt: env.updatedAt,
 });
 
-export async function listEnvironments(token: string): Promise<Environment[]> {
+export async function listEnvironments(token?: string): Promise<Environment[]> {
   const environments = snakeToCamel(
     await apiRequest<ContractEnvironment[]>(`${API_V1}/environments`, {
       method: 'GET',
@@ -26,7 +26,7 @@ export async function listEnvironments(token: string): Promise<Environment[]> {
   return environments.map(mapEnvironment);
 }
 
-export async function getEnvironment(token: string, envId: string): Promise<Environment> {
+export async function getEnvironment(token: string | undefined, envId: string): Promise<Environment> {
   const env = snakeToCamel(
     await apiRequest<ContractEnvironment>(`${API_V1}/environments/${envId}`, {
       method: 'GET',
@@ -37,7 +37,7 @@ export async function getEnvironment(token: string, envId: string): Promise<Envi
 }
 
 export async function createEnvironment(
-  token: string,
+  token: string | undefined,
   payload: {
     name: Environment['name'];
     displayName: string;
@@ -59,7 +59,7 @@ export async function createEnvironment(
 }
 
 export async function updateEnvironment(
-  token: string,
+  token: string | undefined,
   envId: string,
   payload: {
     displayName?: string;
@@ -79,14 +79,14 @@ export async function updateEnvironment(
   return mapEnvironment(env);
 }
 
-export async function startEnvironment(token: string, envId: string): Promise<{ message: string }> {
+export async function startEnvironment(token: string | undefined, envId: string): Promise<{ message: string }> {
   return apiRequest(`${API_V1}/environments/${envId}/start`, {
     method: 'POST',
     token,
   });
 }
 
-export async function stopEnvironment(token: string, envId: string): Promise<{ message: string }> {
+export async function stopEnvironment(token: string | undefined, envId: string): Promise<{ message: string }> {
   return apiRequest(`${API_V1}/environments/${envId}/stop`, {
     method: 'POST',
     token,
@@ -94,7 +94,7 @@ export async function stopEnvironment(token: string, envId: string): Promise<{ m
 }
 
 export async function terminateEnvironment(
-  token: string,
+  token: string | undefined,
   envId: string
 ): Promise<{ message: string }> {
   return apiRequest(`${API_V1}/environments/${envId}/terminate`, {
@@ -104,7 +104,7 @@ export async function terminateEnvironment(
 }
 
 export async function getEnvironmentStatus(
-  token: string,
+  token: string | undefined,
   envId: string
 ): Promise<{
   environmentId: string;
@@ -123,7 +123,7 @@ export async function getEnvironmentStatus(
 }
 
 export async function createTerminalSession(
-  token: string,
+  token: string | undefined,
   envId: string
 ): Promise<{ token: string; expiresAt: string; wsUrl: string }> {
   return apiRequest(`${API_V1}/environments/${envId}/terminal/session`, {
@@ -133,7 +133,7 @@ export async function createTerminalSession(
 }
 
 export async function createProxySession(
-  token: string,
+  token: string | undefined,
   envId: string,
   serviceKey?: string
 ): Promise<{ token: string; expiresAt: string }> {
@@ -145,7 +145,7 @@ export async function createProxySession(
 }
 
 export async function listEnvironmentServices(
-  token: string,
+  token: string | undefined,
   envId: string
 ): Promise<{ key: string; path: string; description?: string }[]> {
   return apiRequest(`${API_V1}/environments/${envId}/services`, {
@@ -155,7 +155,7 @@ export async function listEnvironmentServices(
 }
 
 export async function setEnvironmentAccessMode(
-  token: string,
+  token: string | undefined,
   envId: string,
   mode: 'site_only' | 'api_key_enabled'
 ): Promise<Environment> {
@@ -171,7 +171,7 @@ export async function setEnvironmentAccessMode(
 }
 
 export async function rotateProdApiKey(
-  token: string,
+  token: string | undefined,
   envId: string
 ): Promise<{ apiKey: string; rotatedAt: string }> {
   return apiRequest(`${API_V1}/environments/${envId}/prod-api-key/rotate`, {

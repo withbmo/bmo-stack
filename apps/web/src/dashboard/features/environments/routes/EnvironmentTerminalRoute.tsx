@@ -14,7 +14,7 @@ interface EnvironmentTerminalRouteProps {
 
 export const EnvironmentTerminalRoute = ({ envId }: EnvironmentTerminalRouteProps) => {
   const router = useRouter();
-  const { token } = useAuth();
+  const { user, hydrated } = useAuth();
   const [logs, setLogs] = useState<string[]>(['> Terminal ready']);
   const [input, setInput] = useState('');
   const [connecting, setConnecting] = useState(false);
@@ -28,11 +28,11 @@ export const EnvironmentTerminalRoute = ({ envId }: EnvironmentTerminalRouteProp
   };
 
   const connect = async () => {
-    if (!token || connecting || connected) return;
+    if (!hydrated || !user || connecting || connected) return;
     setConnecting(true);
 
     try {
-      const session = await createTerminalSession(token, envId);
+      const session = await createTerminalSession(undefined, envId);
       const ws = new WebSocket(`${session.wsUrl}?token=${encodeURIComponent(session.token)}`);
 
       ws.onopen = () => {

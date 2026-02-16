@@ -34,6 +34,61 @@ variable "db_name" {
   type    = string
   default = null
 }
+
+variable "frontend_url" {
+  type        = string
+  default     = null
+  description = "Frontend base URL for OAuth redirects (e.g. https://pytholit.dev)"
+}
+
+variable "cookie_domain" {
+  type        = string
+  default     = null
+  description = "Cookie domain for cross-subdomain sessions (e.g. .pytholit.dev). Leave null for localhost."
+}
+
+variable "upload_dir" {
+  type        = string
+  default     = "uploads"
+  description = "Local upload directory used for avatars and other uploads."
+}
+
+variable "node_env" {
+  type        = string
+  default     = "production"
+  description = "NODE_ENV for the API container."
+}
+
+variable "redis_url" {
+  type        = string
+  default     = null
+  description = "Optional Redis URL for OAuth state storage."
+}
+
+variable "github_client_id_arn" {
+  type        = string
+  default     = null
+  description = "ARN of GitHub OAuth Client ID secret in AWS Secrets Manager"
+}
+
+variable "github_client_secret_arn" {
+  type        = string
+  default     = null
+  description = "ARN of GitHub OAuth Client Secret in AWS Secrets Manager"
+}
+
+variable "google_client_id_arn" {
+  type        = string
+  default     = null
+  description = "ARN of Google OAuth Client ID secret in AWS Secrets Manager"
+}
+
+variable "google_client_secret_arn" {
+  type        = string
+  default     = null
+  description = "ARN of Google OAuth Client Secret in AWS Secrets Manager"
+}
+
 variable "db_credentials_secret_arn" {
   type    = string
   default = null

@@ -20,9 +20,15 @@ import type {
  * @example
  * window.location.href = getOAuthLoginUrl("google");
  */
-export function getOAuthLoginUrl(provider: "google" | "github"): string {
+export function getOAuthLoginUrl(provider: "google" | "github", next?: string): string {
   const base = API_BASE ? `${API_BASE}${API_V1}` : API_V1;
-  return `${base}/oauth/${provider}`;
+  const url = new URL(`${base}/oauth/${provider}`, typeof window !== "undefined" ? window.location.origin : "http://localhost");
+  if (next && next.startsWith("/") && !next.startsWith("//") && !next.includes("://")) {
+    url.searchParams.set("next", next);
+  }
+  // URL() will include origin for relative base; convert back to path+query when API_BASE is empty.
+  if (!API_BASE) return `${API_V1}/oauth/${provider}${url.search}`;
+  return url.toString();
 }
 
 const OAUTH_PREFIX = `${API_V1}/oauth`;
@@ -191,6 +197,13 @@ export async function resetPassword(
   return apiRequest<{ message: string }>(`${AUTH_PREFIX}/reset-password`, {
     method: "POST",
     body: JSON.stringify({ token, newPassword }),
+  });
+}
+
+/** Logout: clears server session cookie. */
+export async function logout(): Promise<{ message: string }> {
+  return apiRequest<{ message: string }>(`${AUTH_PREFIX}/logout`, {
+    method: "POST",
   });
 }
 

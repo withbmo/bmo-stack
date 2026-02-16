@@ -9,7 +9,7 @@ interface TerminalPanelProps {
 const initialLogs = ['> Terminal initialized. Connect to start VM shell session.'];
 
 export const TerminalPanel = ({ environmentId }: TerminalPanelProps) => {
-  const { token } = useAuth();
+  const { user, hydrated } = useAuth();
   const [terminalLogs, setTerminalLogs] = useState<string[]>(initialLogs);
   const [terminalInput, setTerminalInput] = useState('');
   const [socket, setSocket] = useState<WebSocket | null>(null);
@@ -21,11 +21,11 @@ export const TerminalPanel = ({ environmentId }: TerminalPanelProps) => {
   };
 
   const connect = async () => {
-    if (!token || !environmentId || connecting || connected) return;
+    if (!hydrated || !user || !environmentId || connecting || connected) return;
 
     setConnecting(true);
     try {
-      const session = await createTerminalSession(token, environmentId);
+      const session = await createTerminalSession(undefined, environmentId);
       const ws = new WebSocket(`${session.wsUrl}?token=${encodeURIComponent(session.token)}`);
       ws.onopen = () => {
         setConnected(true);

@@ -22,7 +22,7 @@ import { EmailField, OtpField } from '@/site/components/auth/FormFields';
 export function VerifyOtpRoute() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { setToken } = useAuth();
+  const { refreshSession } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
 
@@ -57,8 +57,8 @@ export function VerifyOtpRoute() {
 
     setSubmitting(true);
     try {
-      const { access_token } = await verifyPublicSignupOtp(email, otpCode);
-      setToken(access_token);
+      await verifyPublicSignupOtp(email, otpCode);
+      await refreshSession();
       toast.success('Email verified. Redirecting...');
       router.replace(nextTarget);
     } catch (err) {

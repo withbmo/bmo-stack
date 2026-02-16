@@ -5,24 +5,24 @@ import type { Environment } from '@/shared/types';
 import { useAuth } from '@/shared/auth';
 
 export const useEnvironments = () => {
-  const { token } = useAuth();
+  const { user, hydrated } = useAuth();
   return useQuery({
     queryKey: queryKeys.environments(),
     queryFn: async () => {
-      if (!token) return [] as Environment[];
-      return listEnvironments(token);
+      if (!hydrated || !user) return [] as Environment[];
+      return listEnvironments(undefined);
     },
-    enabled: !!token,
+    enabled: hydrated && !!user,
   });
 };
 
 export const useCreateEnvironment = () => {
-  const { token } = useAuth();
+  const { user, hydrated } = useAuth();
   const client = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Parameters<typeof createEnvironment>[1]) => {
-      if (!token) throw new Error('Missing token');
-      return createEnvironment(token, payload);
+      if (!hydrated || !user) throw new Error('Not authenticated');
+      return createEnvironment(undefined, payload);
     },
     onSuccess: () => {
       client.invalidateQueries({ queryKey: queryKeys.environments() });
@@ -31,15 +31,15 @@ export const useCreateEnvironment = () => {
 };
 
 export const useUpdateEnvironment = () => {
-  const { token } = useAuth();
+  const { user, hydrated } = useAuth();
   const client = useQueryClient();
   return useMutation({
     mutationFn: async (args: {
       envId: string;
       payload: Parameters<typeof updateEnvironment>[2];
     }) => {
-      if (!token) throw new Error('Missing token');
-      return updateEnvironment(token, args.envId, args.payload);
+      if (!hydrated || !user) throw new Error('Not authenticated');
+      return updateEnvironment(undefined, args.envId, args.payload);
     },
     onSuccess: () => {
       client.invalidateQueries({ queryKey: queryKeys.environments() });

@@ -44,6 +44,8 @@ export class UsersService {
       email: userWithoutPassword.email,
       username: userWithoutPassword.username,
       fullName: userWithoutPassword.fullName,
+      firstName: userWithoutPassword.firstName ?? null,
+      lastName: userWithoutPassword.lastName ?? null,
       bio: userWithoutPassword.bio,
       avatarUrl: userWithoutPassword.avatarUrl,
       isEmailVerified: userWithoutPassword.isEmailVerified,
@@ -91,7 +93,7 @@ export class UsersService {
     return this.getUserProfile(userId);
   }
 
-  async uploadAvatar(userId: string, file: Express.Multer.File): Promise<{ avatarUrl: string }> {
+  async uploadAvatar(userId: string, file: Express.Multer.File): Promise<UserProfile> {
     const user = await this.prisma.client.user.findUnique({
       where: { id: userId },
     });
@@ -103,7 +105,8 @@ export class UsersService {
     // Delete old avatar if exists
     if (user.avatarUrl) {
       try {
-        const oldPath = path.join(process.cwd(), user.avatarUrl);
+        const relative = user.avatarUrl.replace(/^\/+/, '');
+        const oldPath = path.join(process.cwd(), relative);
         await fs.unlink(oldPath);
       } catch (error) {
         // Ignore if file doesn't exist
@@ -130,10 +133,10 @@ export class UsersService {
       data: { avatarUrl },
     });
 
-    return { avatarUrl };
+    return this.getUserProfile(userId);
   }
 
-  async deleteAvatar(userId: string): Promise<{ message: string }> {
+  async deleteAvatar(userId: string): Promise<UserProfile> {
     const user = await this.prisma.client.user.findUnique({
       where: { id: userId },
     });
@@ -148,7 +151,8 @@ export class UsersService {
 
     // Delete file
     try {
-      const filepath = path.join(process.cwd(), user.avatarUrl);
+      const relative = user.avatarUrl.replace(/^\/+/, '');
+      const filepath = path.join(process.cwd(), relative);
       await fs.unlink(filepath);
     } catch (error) {
       // Ignore if file doesn't exist
@@ -160,6 +164,6 @@ export class UsersService {
       data: { avatarUrl: null },
     });
 
-    return { message: 'Avatar deleted successfully' };
+    return this.getUserProfile(userId);
   }
 }

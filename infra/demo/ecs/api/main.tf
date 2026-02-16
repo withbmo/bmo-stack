@@ -9,7 +9,11 @@ locals {
       { name = "JWT_SECRET", valueFrom = var.jwt_secret_arn },
       { name = "ENV_SESSION_SECRET", valueFrom = var.env_session_secret_arn },
       { name = "TURNSTILE_SECRET_KEY", valueFrom = var.turnstile_secret_arn },
-      { name = "ZEPTOMAIL_API_KEY", valueFrom = var.zeptomail_api_key_arn }
+      { name = "ZEPTOMAIL_API_KEY", valueFrom = var.zeptomail_api_key_arn },
+      { name = "GITHUB_CLIENT_ID", valueFrom = var.github_client_id_arn },
+      { name = "GITHUB_CLIENT_SECRET", valueFrom = var.github_client_secret_arn },
+      { name = "GOOGLE_CLIENT_ID", valueFrom = var.google_client_id_arn },
+      { name = "GOOGLE_CLIENT_SECRET", valueFrom = var.google_client_secret_arn }
     ] : s if s.valueFrom != null && s.valueFrom != ""
   ]
 
@@ -48,6 +52,13 @@ resource "aws_ecs_task_definition" "this" {
         }
       }
       environment = [
+        { name = "NODE_ENV", value = var.node_env },
+        { name = "FRONTEND_URL", value = var.frontend_url != null ? var.frontend_url : "" },
+        { name = "COOKIE_DOMAIN", value = var.cookie_domain != null ? var.cookie_domain : "" },
+        { name = "UPLOAD_DIR", value = var.upload_dir },
+        { name = "REDIS_URL", value = var.redis_url != null ? var.redis_url : "" },
+        { name = "GITHUB_CALLBACK_URL", value = var.frontend_url != null ? "https://api.${trimsuffix(var.frontend_url, "https://")}/api/v1/oauth/github/callback" : "" },
+        { name = "GOOGLE_CALLBACK_URL", value = var.frontend_url != null ? "https://api.${trimsuffix(var.frontend_url, "https://")}/api/v1/oauth/google/callback" : "" },
         { name = "DB_HOST", value = var.db_host != null ? var.db_host : "" },
         { name = "DB_PORT", value = tostring(var.db_port) },
         { name = "DB_NAME", value = var.db_name != null ? var.db_name : "" },

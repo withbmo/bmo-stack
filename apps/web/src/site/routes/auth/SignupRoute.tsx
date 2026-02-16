@@ -37,7 +37,7 @@ const IS_DEV = process.env.NODE_ENV === 'development';
 export function SignupRoute() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { setToken } = useAuth();
+  const { refreshSession } = useAuth();
   const nextParam = searchParams.get('next');
 
   // Form state
@@ -91,14 +91,14 @@ export function SignupRoute() {
 
     try {
       // Create the account and sign in
-      const { access_token } = await signup(
+      await signup(
         email,
         password,
         username.trim(),
         fullName.trim(),
         turnstileToken
       );
-      setToken(access_token);
+      await refreshSession();
       // Email verification is required before accessing the app.
       try {
         const otpResp = await sendPublicSignupVerification(email, turnstileToken);
@@ -232,7 +232,7 @@ export function SignupRoute() {
           </AuthSubmitButton>
         </form>
 
-        <SocialAuthButtons />
+        <SocialAuthButtons next={nextParam || '/dashboard'} />
       </AuthCard>
 
       {/* Footer Navigation */}

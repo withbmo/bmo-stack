@@ -9,20 +9,20 @@ This document defines how `app/` pages and feature folders should be structured 
 **App pages are thin routing wrappers.** They map URLs to route components. All UI and business logic live in feature folders or domain folders.
 
 ```
-app/(site)/hub/page.tsx          →  imports HubRoute from common/features/hub
-app/(dashboard)/dashboard/hub/   →  imports HubRoute from common/features/hub
+app/(site)/hub/page.tsx          →  imports HubRoute from shared/routes/hub
+app/(dashboard)/dashboard/hub/   →  imports HubRoute from shared/routes/hub
 ```
 
 ---
 
 ## Folder Roles
 
-| Folder | Purpose | Contains |
-|--------|---------|----------|
-| `app/` | **Routing only** | `page.tsx`, `layout.tsx`, `error.tsx` – URL → component mapping |
-| `common/features/*` | Shared features (site + dashboard) | Routes, hooks, components, data |
-| `dashboard/features/*` | Dashboard-only features | Routes, hooks, components, data |
-| `site/` | Site-only (landing, marketing) | Sections, components, data |
+| Folder                 | Purpose                            | Contains                                                        |
+| ---------------------- | ---------------------------------- | --------------------------------------------------------------- |
+| `app/`                 | **Routing only**                   | `page.tsx`, `layout.tsx`, `error.tsx` – URL → component mapping |
+| `common/features/*`    | Shared features (site + dashboard) | Routes, hooks, components, data                                 |
+| `dashboard/features/*` | Dashboard-only features            | Routes, hooks, components, data                                 |
+| `site/`                | Site-only (landing, marketing)     | Sections, components, data                                      |
 
 ---
 
@@ -54,12 +54,12 @@ export default function DeploymentsPage() {
 
 ### 2. Where route components live
 
-| Route type | Feature folder | Example |
-|------------|----------------|---------|
-| Shared (site + dashboard) | `common/features/<name>/routes/` | HubRoute, ContributeRoute |
-| Dashboard-only | `dashboard/features/<name>/routes/` | DeploymentsRoute, NewEnvironmentRoute |
-| Site-only (marketing) | `site/sections/` | HeroSection, PricingSection |
-| Auth | `common/features/auth/routes/` | LoginRoute, SignupRoute, ForgotPasswordRoute, VerifyOtpRoute, CallbackRoute |
+| Route type                | Feature folder                      | Example                                                                     |
+| ------------------------- | ----------------------------------- | --------------------------------------------------------------------------- |
+| Shared (site + dashboard) | `common/features/<name>/routes/`    | HubRoute, ContributeRoute                                                   |
+| Dashboard-only            | `dashboard/features/<name>/routes/` | DeploymentsRoute, NewEnvironmentRoute                                       |
+| Site-only (marketing)     | `site/sections/`                    | HeroSection, PricingSection                                                 |
+| Auth                      | `common/features/auth/routes/`      | LoginRoute, SignupRoute, ForgotPasswordRoute, VerifyOtpRoute, CallbackRoute |
 
 ### 3. Naming convention
 
@@ -106,8 +106,8 @@ Pages already following the plan:
 
 ## Summary
 
-| Question | Answer |
-|----------|--------|
-| Where does UI go? | Feature folders (`common/features/*`, `dashboard/features/*`, `site/sections`) |
-| What goes in app? | Thin `page.tsx` that imports and renders a route component |
-| When to use common vs dashboard vs site? | Common = shared; Dashboard = app-only; Site = landing/marketing |
+| Question                                 | Answer                                                                         |
+| ---------------------------------------- | ------------------------------------------------------------------------------ |
+| Where does UI go?                        | Feature folders (`common/features/*`, `dashboard/features/*`, `site/sections`) |
+| What goes in app?                        | Thin `page.tsx` that imports and renders a route component                     |
+| When to use common vs dashboard vs site? | Common = shared; Dashboard = app-only; Site = landing/marketing                |

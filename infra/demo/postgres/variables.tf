@@ -30,6 +30,12 @@ variable "instances" {
   }))
 }
 
+variable "db_passwords" {
+  type        = map(string)
+  description = "Map of database passwords for each instance (dev, prod)"
+  sensitive   = true
+}
+
 variable "tags" {
   type    = map(string)
   default = {}

@@ -4,13 +4,13 @@ import { queryKeys } from '@/shared/lib/query-keys';
 import { useAuth } from '@/shared/auth';
 
 export const useProject = (projectId?: string) => {
-  const { token } = useAuth();
+  const { user, hydrated } = useAuth();
   return useQuery({
     queryKey: projectId ? queryKeys.project(projectId) : ['project', undefined],
     queryFn: async () => {
-      if (!token || !projectId) return null;
-      return getProject(token, projectId);
+      if (!hydrated || !user || !projectId) return null;
+      return getProject(undefined, projectId);
     },
-    enabled: !!token && !!projectId,
+    enabled: hydrated && !!user && !!projectId,
   });
 };

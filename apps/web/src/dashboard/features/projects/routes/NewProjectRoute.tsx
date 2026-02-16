@@ -21,21 +21,21 @@ export const NewProjectRoute = () => {
   const [config, setConfig] = useState<ProjectWizardConfig>(DEFAULT_PROJECT_CONFIG);
   const [schema, setSchema] = useState<WizardSchema | null>(null);
   const [schemaError, setSchemaError] = useState(false);
-  const { token } = useAuth();
+  const { user, hydrated } = useAuth();
   const createMutation = useMutation({
     mutationFn: async () => {
-      if (!token) throw new Error('Missing auth token');
-      return createProject(token, { name: config.name || 'untitled-project' });
+      if (!hydrated || !user) throw new Error('Not authenticated');
+      return createProject(undefined, { name: config.name || 'untitled-project' });
     },
   });
 
   useEffect(() => {
-    if (!token) return;
+    if (!hydrated || !user) return;
     const version = env.NEXT_PUBLIC_WIZARD_SCHEMA_VERSION || 'latest';
     let cancelled = false;
     (async () => {
       try {
-        const data = await fetchWizardSchema(token, String(version));
+        const data = await fetchWizardSchema(undefined, String(version));
         if (cancelled) return;
         setSchema(data);
         setSchemaError(false);
@@ -48,17 +48,17 @@ export const NewProjectRoute = () => {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [hydrated, user]);
 
   const handleDeploy = () => {
     setIsDeploying(true);
     createMutation.mutate(undefined, {
       onSuccess: async project => {
         try {
-          if (!token) throw new Error('Missing auth token');
+          if (!hydrated || !user) throw new Error('Not authenticated');
           const version = env.NEXT_PUBLIC_WIZARD_SCHEMA_VERSION || 'latest';
           const result = await generateWizard(
-            token,
+            undefined,
             String(version),
             project.id,
             config as unknown as Record<string, unknown>
