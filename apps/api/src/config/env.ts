@@ -2,6 +2,7 @@ import { bool, cleanEnv, num,str } from 'envalid';
 
 export function validateEnv() {
   return cleanEnv(process.env, {
+    APP_ENV: str({ default: '' }),
     NODE_ENV: str({ default: 'development' }),
     PORT: num({ default: 3001 }),
     FRONTEND_URL: str({ default: 'http://localhost:3000' }),

@@ -1,4 +1,5 @@
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import type { NextFunction,Request, Response } from 'express';
@@ -7,6 +8,7 @@ import helmet from 'helmet';
 import * as path from 'path';
 
 import { AppModule } from './app.module';
+import { getApiAppEnv } from './config/app-env';
 
 async function bootstrap() {
   // Disable Nest's default body parser so we can:
@@ -48,17 +50,16 @@ async function bootstrap() {
   );
 
   // CORS - explicit origins in production
-  const isDev = process.env.NODE_ENV === 'development';
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const configService = app.get(ConfigService);
+  const appEnv = getApiAppEnv(configService);
+  const isNodeDev = (configService.get<string>('NODE_ENV') ?? process.env.NODE_ENV) === 'development';
   app.enableCors({
-    origin: isDev ? true : frontendUrl.split(',').map((o) => o.trim()),
+    origin: isNodeDev ? true : appEnv.frontendOrigins,
     credentials: true,
   });
 
   // Static uploads (avatars)
-  const uploadDirRaw = process.env.UPLOAD_DIR || '';
-  const uploadDir = uploadDirRaw.trim() !== '' ? uploadDirRaw.trim() : 'uploads';
-  app.use(`/${uploadDir}`, express.static(path.join(process.cwd(), uploadDir)));
+  app.use(`/${appEnv.uploadDir}`, express.static(path.join(process.cwd(), appEnv.uploadDir)));
 
   // API prefix
   const globalPrefix = 'api/v1';

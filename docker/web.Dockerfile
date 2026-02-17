@@ -10,6 +10,16 @@ FROM deps AS build
 ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY
 ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
+# API base URL is also baked into the Next.js client bundle.
+# Example: https://api.dev.pytholit.dev
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
+# App environment selector, also baked into the Next.js client bundle.
+# Values: localhost | development | production
+ARG NEXT_PUBLIC_APP_ENV
+ENV NEXT_PUBLIC_APP_ENV=$NEXT_PUBLIC_APP_ENV
+
 RUN pnpm --filter @pytholit/web... build
 # In some CI/buildkit cases the `public/` dir may not exist (or may be empty).
 # Ensure the path exists so the runtime stage COPY doesn't fail.

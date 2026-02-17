@@ -4,6 +4,34 @@ set -euo pipefail
 : "${AWS_REGION:=us-east-1}"
 : "${IMAGE_TAG:=demo-$(date +%Y%m%d%H%M%S)}"
 : "${DEPLOY_ENV:=dev}"  # default to dev if not set
+: "${DOMAIN_NAME:=pytholit.dev}"
+: "${APP_DOMAIN_PREFIX:=}"
+: "${NEXT_PUBLIC_API_URL:=}"
+: "${NEXT_PUBLIC_APP_ENV:=}"
+
+if [[ "$DEPLOY_ENV" == "dev" && "$APP_DOMAIN_PREFIX" == "" ]]; then
+  APP_DOMAIN_PREFIX="dev"
+fi
+
+if [[ -z "${APP_DOMAIN_NAME:-}" ]]; then
+  if [[ "$APP_DOMAIN_PREFIX" != "" ]]; then
+    APP_DOMAIN_NAME="${APP_DOMAIN_PREFIX}.${DOMAIN_NAME}"
+  else
+    APP_DOMAIN_NAME="${DOMAIN_NAME}"
+  fi
+fi
+
+if [[ "$NEXT_PUBLIC_API_URL" == "" ]]; then
+  NEXT_PUBLIC_API_URL="https://api.${APP_DOMAIN_NAME}"
+fi
+
+if [[ "$NEXT_PUBLIC_APP_ENV" == "" ]]; then
+  if [[ "$DEPLOY_ENV" == "prod" ]]; then
+    NEXT_PUBLIC_APP_ENV="production"
+  else
+    NEXT_PUBLIC_APP_ENV="development"
+  fi
+fi
 
 services=(
   "web:docker/web.Dockerfile"
@@ -58,6 +86,8 @@ for entry in "${services[@]}"; do
     docker build \
       -f "$dockerfile" \
       --build-arg NEXT_PUBLIC_TURNSTILE_SITE_KEY="$TURNSTILE_SITE_KEY" \
+      --build-arg NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
+      --build-arg NEXT_PUBLIC_APP_ENV="$NEXT_PUBLIC_APP_ENV" \
       -t "$repo:$IMAGE_TAG" .
   else
     docker build -f "$dockerfile" -t "$repo:$IMAGE_TAG" .

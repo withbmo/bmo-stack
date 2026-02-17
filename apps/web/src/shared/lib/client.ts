@@ -1,30 +1,6 @@
-import { env } from "@/env";
+import { getWebAppEnv } from '@/shared/env/app-env';
 
-/**
- * API base URL. Paths are relative to /api/v1.
- * Next.js-compatible env resolution:
- * - `NEXT_PUBLIC_API_URL` takes priority
- * - fallback to `NEXT_PUBLIC_API_URL_DEV` / `NEXT_PUBLIC_API_URL_PROD`
- * - local development fallback: `http://localhost:3001`
- */
-const getApiBase = (): string => {
-  const trim = (value: string) => value.replace(/\/$/, "");
-  const direct = env.NEXT_PUBLIC_API_URL;
-  if (direct && direct !== "") return trim(direct);
-
-  const modeSpecific =
-    process.env.NODE_ENV === "development"
-      ? env.NEXT_PUBLIC_API_URL_DEV
-      : env.NEXT_PUBLIC_API_URL_PROD;
-  if (modeSpecific && modeSpecific !== "") return trim(modeSpecific);
-
-  if (process.env.NODE_ENV === "development") {
-    return "http://localhost:3001";
-  }
-  return "";
-};
-
-export const API_BASE = getApiBase();
+export const API_BASE = getWebAppEnv().apiBase;
 export const API_V1 = "/api/v1";
 
 export interface ApiError {
