@@ -26,7 +26,8 @@ export class TurnstileService {
     this.secretKey =
       this.configService.get<string>('TURNSTILE_SECRET_KEY') || '';
     this.isDevelopment =
-      this.configService.get<string>('NODE_ENV') === 'development';
+      this.configService.get<string>('NODE_ENV') === 'development' ||
+      this.configService.get<string>('APP_ENV') === 'localhost';
 
     if (!this.secretKey && !this.isDevelopment) {
       this.logger.warn(

@@ -17,6 +17,7 @@ export class OtpService {
   private readonly otpExpiryMinutes: number;
   private readonly otpLength: number;
   private readonly passwordResetTokenExpiryMinutes: number;
+  private readonly isLocalhost: boolean;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -29,6 +30,7 @@ export class OtpService {
     this.otpLength = this.configService.get<number>('OTP_LENGTH') || 6;
     this.passwordResetTokenExpiryMinutes =
       this.configService.get<number>('PASSWORD_RESET_TOKEN_EXPIRY_MINUTES') || 30;
+    this.isLocalhost = (this.configService.get<string>('APP_ENV') ?? '') === 'localhost';
   }
 
   private generateAccessToken(userId: string): string {
@@ -62,8 +64,8 @@ export class OtpService {
     purpose: OTPPurpose,
     captchaToken?: string
   ): Promise<{ message: string; expiresIn: number }> {
-    // Verify captcha if provided
-    if (captchaToken) {
+    // Verify captcha if provided (skip in localhost mode)
+    if (captchaToken && !this.isLocalhost) {
       const isValid = await this.turnstileService.verifyToken(captchaToken);
       if (!isValid && !this.turnstileService.isDevelopmentMode()) {
         throw new BadRequestException('Invalid captcha token');
@@ -82,8 +84,8 @@ export class OtpService {
       };
     }
 
-    // Generate OTP code
-    const code = this.generateOtpCode();
+    // In localhost mode, disable email delivery and use a stable code for convenience.
+    const code = this.isLocalhost ? '000000' : this.generateOtpCode();
     const codeHash = this.hashOtp(code);
     const expiresAt = new Date(Date.now() + this.otpExpiryMinutes * 60 * 1000);
 
@@ -109,6 +111,15 @@ export class OtpService {
         isUsed: false,
       },
     });
+
+    if (this.isLocalhost) {
+      // Avoid external email calls when developing locally.
+      console.log('[LOCALHOST] OTP generated', { email, purpose, code });
+      return {
+        message: 'OTP generated (localhost mode)',
+        expiresIn: this.otpExpiryMinutes * 60,
+      };
+    }
 
     // Send email with OTP code
     try {

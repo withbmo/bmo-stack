@@ -5,6 +5,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { LoginResponse } from '@pytholit/contracts';
 import { exclude } from '@pytholit/db';
@@ -20,8 +21,13 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
     private readonly turnstileService: TurnstileService
   ) {}
+
+  private isLocalhostEnv(): boolean {
+    return (this.configService.get<string>('APP_ENV') ?? '') === 'localhost';
+  }
 
   async hashPassword(password: string): Promise<string> {
     const salt = await bcrypt.genSalt(10);
@@ -59,13 +65,14 @@ export class AuthService {
 
     const hashedPassword = await this.hashPassword(dto.password);
 
+    const isEmailVerified = this.isLocalhostEnv() ? true : false;
     const user = await this.prisma.client.user.create({
       data: {
         email: dto.email,
         username: dto.username,
         fullName: dto.fullName,
         hashedPassword,
-        isEmailVerified: false,
+        isEmailVerified,
       },
     });
 
@@ -116,7 +123,7 @@ export class AuthService {
       throw new UnauthorizedException('Account is deactivated');
     }
 
-    if (!user.isEmailVerified) {
+    if (!user.isEmailVerified && !this.isLocalhostEnv()) {
       throw new ForbiddenException('Email verification required');
     }
 
