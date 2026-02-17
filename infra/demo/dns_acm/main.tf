@@ -25,7 +25,7 @@ resource "aws_acm_certificate" "env" {
 }
 
 locals {
-  use_route53_validation = var.validation_route53_zone_id != null && var.validation_route53_zone_id != ""
+  use_route53_validation    = var.validation_route53_zone_id != null && var.validation_route53_zone_id != ""
   manage_validation_records = local.use_route53_validation && var.manage_validation_records
 
   app_validation_records_by_domain = {
