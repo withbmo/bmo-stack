@@ -65,20 +65,12 @@ cleanup() {
 }
 trap cleanup EXIT
 
-cat >"$tmp_overrides" <<JSON
-{
-  "containerOverrides": [
-    {
-      "name": "${container_name}",
-      "command": [
-        "sh",
-        "-lc",
-        "set -euo pipefail; DATABASE_URL=\$(node -e \\\"const enc=encodeURIComponent; const host=process.env.DB_HOST; const user=process.env.DB_USER; const pass=process.env.DB_PASSWORD; const db=process.env.DB_NAME; const port=process.env.DB_PORT||'5432'; const ssl=process.env.DB_SSLMODE; if(!host||!user||!pass||!db) process.exit(2); const params=new URLSearchParams({schema:'public'}); if(ssl) params.set('sslmode', ssl); process.stdout.write('postgresql://'+enc(user)+':'+enc(pass)+'@'+host+':'+port+'/'+db+'?'+params.toString());\\\"); export DATABASE_URL; echo 'Running prisma migrate deploy...'; ./packages/db/node_modules/.bin/prisma migrate deploy --schema ${schema_path}"
-      ]
-    }
-  ]
-}
-JSON
+run_cmd="set -euo pipefail; DATABASE_URL=\$(node -e 'const enc=encodeURIComponent; const host=process.env.DB_HOST; const user=process.env.DB_USER; const pass=process.env.DB_PASSWORD; const db=process.env.DB_NAME; const port=process.env.DB_PORT||\"5432\"; const ssl=process.env.DB_SSLMODE; if(!host||!user||!pass||!db) process.exit(2); const params=new URLSearchParams({schema:\"public\"}); if(ssl) params.set(\"sslmode\", ssl); process.stdout.write(\"postgresql://\"+enc(user)+\":\"+enc(pass)+\"@\"+host+\":\"+port+\"/\"+db+\"?\"+params.toString());'); export DATABASE_URL; echo 'Running prisma migrate deploy...'; ./packages/db/node_modules/.bin/prisma migrate deploy --schema ${schema_path}"
+
+jq -n \
+  --arg name "$container_name" \
+  --arg cmd "$run_cmd" \
+  '{containerOverrides:[{name:$name,command:["sh","-lc",$cmd]}]}' >"$tmp_overrides"
 
 task_arn="$(
   aws ecs run-task \
@@ -131,4 +123,3 @@ if [[ "$exit_code" != "0" ]]; then
 fi
 
 echo "Migrations applied successfully."
-
