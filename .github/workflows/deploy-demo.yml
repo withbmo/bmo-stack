@@ -293,14 +293,23 @@ jobs:
             --query 'services[].{serviceName:serviceName,taskDef:taskDefinition,running:runningCount}' \
             --output table
 
-          for family in demo-web demo-api demo-ingress-router demo-terminal-gateway demo-orchestrator; do
-            latest="$(aws ecs list-task-definitions --family-prefix "$family" --sort DESC --max-items 1 --query 'taskDefinitionArns[0]' --output text)"
-            echo "--- $latest"
-            aws ecs describe-task-definition \
-              --task-definition "$latest" \
-              --query 'taskDefinition.containerDefinitions[].{name:name,image:image}' \
-              --output table
-          done
+          aws ecs describe-services \
+            --cluster "$cluster_name" \
+            --services demo-web demo-api demo-ingress-router demo-terminal-gateway demo-orchestrator \
+            --query 'services[].taskDefinition' \
+            --output text \
+            | tr '\t' '\n' \
+            | while read -r td; do
+              if [[ -z "$td" || "$td" == "None" ]]; then
+                echo "Skipping empty task definition value." >&2
+                continue
+              fi
+              echo "--- $td"
+              aws ecs describe-task-definition \
+                --task-definition "$td" \
+                --query 'taskDefinition.containerDefinitions[].{name:name,image:image}' \
+                --output table
+            done
 
   migrate:
     needs: [ecs_rollout, classify]
