@@ -8,7 +8,13 @@ if [[ -z "$GIT_SHA" ]]; then
   exit 2
 fi
 
-changed_files="$(git diff-tree --no-commit-id --name-only -r "$GIT_SHA" || true)"
+# NOTE: `git diff-tree` can return an empty list for merge commits unless `-m` is used.
+# `git show` defaults to the first parent diff, which is what we want for "what changed in this commit".
+changed_files="$(git show --name-only --pretty='' "$GIT_SHA" 2>/dev/null || true)"
+
+if [[ -z "$changed_files" ]]; then
+  changed_files="$(git diff-tree -m --no-commit-id --name-only -r "$GIT_SHA" 2>/dev/null | sort -u || true)"
+fi
 
 is_docs_only=true
 needs_build=false
