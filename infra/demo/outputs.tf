@@ -70,12 +70,28 @@ output "delegated_zone_name_servers" {
   value = try(module.route53_delegated[0].name_servers, [])
 }
 
+output "root_zone_name" {
+  value = try(module.route53_root[0].zone_name, null)
+}
+
+output "root_zone_name_servers" {
+  value = try(module.route53_root[0].name_servers, [])
+}
+
 output "delegation_record_for_godaddy" {
   value = local.delegated_dns_enabled ? {
     type   = "NS"
     host   = local.delegated_dns_host_label
     values = try(module.route53_delegated[0].name_servers, [])
     note   = "Create this once in GoDaddy under the parent domain to delegate DNS control to Route53"
+  } : null
+}
+
+output "nameservers_for_godaddy_root_domain" {
+  value = var.manage_root_dns ? {
+    host   = var.domain_name
+    values = try(module.route53_root[0].name_servers, [])
+    note   = "Set these as the authoritative nameservers for the domain in GoDaddy (domain-level nameserver change)."
   } : null
 }
 
@@ -93,7 +109,9 @@ output "acm_env_certificate_arn" {
 
 output "next_steps" {
   value = [
-    "1) If ALB/DNS is enabled, create required DNS records in GoDaddy from external_dns_records_required output",
+    "1) If manage_root_dns=true, update the domain-level nameservers in GoDaddy using nameservers_for_godaddy_root_domain output (one-time)",
+    "2) Otherwise (delegated subdomain), create required delegation record in GoDaddy from delegation_record_for_godaddy output (one-time)",
+    "3) If ALB/DNS is enabled and Route53 validation is disabled, create required DNS records in GoDaddy from external_dns_records_required output",
     "2) Build and push images using scripts/build-and-push-demo-images.sh",
     "3) Re-apply with final image tags"
   ]

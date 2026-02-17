@@ -59,6 +59,12 @@ variable "node_env" {
   description = "NODE_ENV for the API container."
 }
 
+variable "app_env" {
+  type        = string
+  default     = null
+  description = "APP_ENV for the API container (localhost|development|production)."
+}
+
 variable "redis_url" {
   type        = string
   default     = null

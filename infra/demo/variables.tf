@@ -44,6 +44,12 @@ variable "manage_delegated_dns" {
   default = true
 }
 
+variable "manage_root_dns" {
+  type        = bool
+  default     = false
+  description = "If true, create/manage the Route53 public hosted zone for domain_name and all app/env records inside it (recommended)."
+}
+
 variable "enable_dns_acm" {
   type    = bool
   default = true
@@ -111,4 +117,35 @@ variable "images" {
     ingress_router   = "public.ecr.aws/docker/library/nginx:stable"
     orchestrator     = "public.ecr.aws/docker/library/nginx:stable"
   }
+}
+
+variable "route53_extra_txt_records" {
+  type = list(object({
+    name  = string
+    value = string
+    ttl   = optional(number)
+  }))
+  default     = []
+  description = "Extra TXT records to manage in the (root) Route53 zone (e.g. ZeptoMail DKIM/SPF/verification)."
+}
+
+variable "route53_extra_cname_records" {
+  type = list(object({
+    name  = string
+    value = string
+    ttl   = optional(number)
+  }))
+  default     = []
+  description = "Extra CNAME records to manage in the (root) Route53 zone (e.g. ZeptoMail bounce/return-path)."
+}
+
+variable "route53_extra_mx_records" {
+  type = list(object({
+    name     = string
+    priority = number
+    value    = string
+    ttl      = optional(number)
+  }))
+  default     = []
+  description = "Extra MX records to manage in the (root) Route53 zone (e.g. Zoho inbound mail)."
 }

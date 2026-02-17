@@ -7,7 +7,7 @@ output "env_certificate_arn" {
 }
 
 output "required_dns_records" {
-  value = local.use_route53_validation ? [] : concat(
+  value = local.manage_validation_records ? [] : concat(
     [
       {
         type  = "CNAME"

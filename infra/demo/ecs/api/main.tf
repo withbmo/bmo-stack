@@ -53,6 +53,7 @@ resource "aws_ecs_task_definition" "this" {
       }
       environment = [
         { name = "NODE_ENV", value = var.node_env },
+        { name = "APP_ENV", value = var.app_env != null ? var.app_env : "" },
         { name = "FRONTEND_URL", value = var.frontend_url != null ? var.frontend_url : "" },
         { name = "COOKIE_DOMAIN", value = var.cookie_domain != null ? var.cookie_domain : "" },
         { name = "UPLOAD_DIR", value = var.upload_dir },

@@ -130,6 +130,34 @@ module "route53_delegated" {
   tags               = local.tags
 }
 
+module "route53_root" {
+  count = var.manage_root_dns ? 1 : 0
+
+  source    = "./route53_root"
+  zone_name = var.domain_name
+  tags      = local.tags
+}
+
+module "route53_records" {
+  count = var.manage_root_dns && var.enable_alb ? 1 : 0
+
+  source          = "./route53_records"
+  zone_id         = module.route53_root[0].zone_id
+  zone_name       = var.domain_name
+  app_domain_name = local.app_domain_name
+
+  app_alb_dns_name = module.alb_app[0].alb_dns_name
+  app_alb_zone_id  = module.alb_app[0].alb_zone_id
+  env_alb_dns_name = module.alb_env[0].alb_dns_name
+  env_alb_zone_id  = module.alb_env[0].alb_zone_id
+
+  enable_alb_records = var.enable_alb
+
+  extra_txt_records   = var.route53_extra_txt_records
+  extra_cname_records = var.route53_extra_cname_records
+  extra_mx_records    = var.route53_extra_mx_records
+}
+
 module "alb_app" {
   count = var.enable_alb ? 1 : 0
 
@@ -160,7 +188,8 @@ module "dns_acm" {
 
   source                     = "./dns_acm"
   app_domain_name            = local.app_domain_name
-  validation_route53_zone_id = local.delegated_dns_enabled ? module.route53_delegated[0].zone_id : null
+  validation_route53_zone_id = var.manage_root_dns ? module.route53_root[0].zone_id : (local.delegated_dns_enabled ? module.route53_delegated[0].zone_id : null)
+  manage_validation_records  = var.manage_root_dns
   app_alb_dns_name           = var.enable_alb ? module.alb_app[0].alb_dns_name : ""
   env_alb_dns_name           = var.enable_alb ? module.alb_env[0].alb_dns_name : ""
   tags                       = local.tags
@@ -197,6 +226,7 @@ module "ecs_api" {
   execution_role_arn        = module.iam.ecs_execution_role_arn
   task_role_arn             = module.iam.api_task_role_arn
   frontend_url              = "https://${local.app_domain_name}"
+  app_env                   = var.app_domain_prefix != "" ? "development" : "production"
   cookie_domain             = ".${var.domain_name}"
   upload_dir                = "uploads"
   node_env                  = "production"
