@@ -26,25 +26,50 @@ permissions:
   id-token: write
 
 concurrency:
-  group: demo-deploy-${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}
-  cancel-in-progress: true
+  group: demo-deploy-${{
+    github.event_name == 'workflow_dispatch' && inputs.target_env ||
+    (github.event_name == 'workflow_run' && startsWith(github.event.workflow_run.head_branch, 'release/') && 'prod') ||
+    (startsWith(github.ref, 'refs/heads/release/') && 'prod' || 'dev')
+  }}
+  cancel-in-progress: ${{
+    (github.event_name == 'workflow_dispatch' && inputs.target_env ||
+    (github.event_name == 'workflow_run' && startsWith(github.event.workflow_run.head_branch, 'release/') && 'prod') ||
+    (startsWith(github.ref, 'refs/heads/release/') && 'prod' || 'dev')) == 'dev'
+  }}
 
 env:
   AWS_REGION: us-east-1
+  TF_IN_AUTOMATION: 'true'
 
 jobs:
-  deploy:
+  classify:
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
-    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.target_env || (github.event_name == 'workflow_run' && startsWith(github.event.workflow_run.head_branch, 'release/') && 'prod') || (startsWith(github.ref, 'refs/heads/release/') && 'prod' || 'dev') }}
     defaults:
       run:
         shell: bash
+    outputs:
+      deploy_env: ${{ steps.context.outputs.deploy_env }}
+      aws_role: ${{ steps.context.outputs.aws_role }}
+      image_tag: ${{ steps.context.outputs.image_tag }}
+      needs_build: ${{ steps.changes.outputs.needs_build }}
+      needs_terraform: ${{ steps.changes.outputs.needs_terraform }}
+      needs_deploy: ${{ steps.changes.outputs.needs_deploy }}
+      deploy_sha: ${{ steps.sha.outputs.deploy_sha }}
     steps:
+      - name: Resolve deploy SHA
+        id: sha
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            echo "deploy_sha=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy_sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+          ref: ${{ steps.sha.outputs.deploy_sha }}
 
       - name: Resolve deploy context
         id: context
@@ -92,58 +117,183 @@ jobs:
             exit 1
           fi
 
+      - name: Detect no-op changes
+        id: changes
+        env:
+          GIT_SHA: ${{ steps.sha.outputs.deploy_sha }}
+        run: |
+          set -euo pipefail
+          ./scripts/ci/detect-changes.sh
+
+      - name: Summary
+        run: |
+          echo "deploy_sha:      ${{ steps.sha.outputs.deploy_sha }}"
+          echo "deploy_env:      ${{ steps.context.outputs.deploy_env }}"
+          echo "image_tag:       ${{ steps.context.outputs.image_tag }}"
+          echo "needs_build:     ${{ steps.changes.outputs.needs_build }}"
+          echo "needs_terraform: ${{ steps.changes.outputs.needs_terraform }}"
+          echo "needs_deploy:    ${{ steps.changes.outputs.needs_deploy }}"
+
+  build_push:
+    runs-on: ubuntu-latest
+    needs: [classify]
+    if: ${{ needs.classify.outputs.needs_deploy == 'true' && needs.classify.outputs.needs_build == 'true' }}
+    environment: ${{ needs.classify.outputs.deploy_env }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.classify.outputs.deploy_sha }}
+
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ steps.context.outputs.aws_role }}
+          role-to-assume: ${{ needs.classify.outputs.aws_role }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Resolve deployment metadata
+      - name: Build and push images (linux/amd64)
+        env:
+          DEPLOY_ENV: ${{ needs.classify.outputs.deploy_env }}
+          IMAGE_TAG: ${{ needs.classify.outputs.image_tag }}
+        run: |
+          set -euo pipefail
+          AWS_REGION="$AWS_REGION" ./scripts/build-and-push-demo-images.sh
+
+  terraform_apply:
+    runs-on: ubuntu-latest
+    needs: [classify, build_push]
+    if: ${{ needs.classify.outputs.needs_deploy == 'true' }}
+    environment: ${{ needs.classify.outputs.deploy_env }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.classify.outputs.deploy_sha }}
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ needs.classify.outputs.aws_role }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Resolve registry
         id: meta
         run: |
           account_id="$(aws sts get-caller-identity --query Account --output text)"
-          registry="${account_id}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-          {
-            echo "deploy_env=${{ steps.context.outputs.deploy_env }}"
-            echo "registry=$registry"
-            echo "image_tag=${{ steps.context.outputs.image_tag }}"
-          } >> "$GITHUB_OUTPUT"
+          echo "registry=${account_id}.dkr.ecr.${AWS_REGION}.amazonaws.com" >> "$GITHUB_OUTPUT"
 
-      - name: Build and push images
+      - name: Write Terraform images tfvars
+        env:
+          CLUSTER_NAME: 'demo-services-cluster'
+          TAG: ${{ needs.classify.outputs.image_tag }}
+          REGISTRY: ${{ steps.meta.outputs.registry }}
+          NEEDS_BUILD: ${{ needs.classify.outputs.needs_build }}
         run: |
           set -euo pipefail
-          registry="${{ steps.meta.outputs.registry }}"
-          tag="${{ steps.meta.outputs.image_tag }}"
-          deploy_env="${{ steps.meta.outputs.deploy_env }}"
+          if [[ "$NEEDS_BUILD" == "true" ]]; then
+            ./scripts/ci/write-ci-images-tfvars.sh --from-tag --registry "$REGISTRY" --tag "$TAG"
+          else
+            ./scripts/ci/write-ci-images-tfvars.sh --from-ecs --cluster "$CLUSTER_NAME"
+          fi
 
-          DEPLOY_ENV="$deploy_env" IMAGE_TAG="$tag" ECR_REGISTRY="$registry" AWS_REGION="$AWS_REGION" ./scripts/build-and-push-demo-images.sh
+      - name: Terraform init
+        run: terraform -chdir=infra/demo init -input=false
 
-      - name: Deploy to ECS (register new task defs + update services)
+      - name: Terraform apply
+        env:
+          DEPLOY_ENV: ${{ needs.classify.outputs.deploy_env }}
         run: |
           set -euo pipefail
-          registry="${{ steps.meta.outputs.registry }}"
-          tag="${{ steps.meta.outputs.image_tag }}"
+          if [[ "$DEPLOY_ENV" == "prod" ]]; then
+            varfile="prod.tfvars"
+          else
+            varfile="dev.tfvars"
+          fi
+          terraform -chdir=infra/demo apply -input=false -auto-approve -var-file="$varfile"
 
-          # NOTE: For now dev and prod share the same demo cluster name.
+  ecs_rollout:
+    runs-on: ubuntu-latest
+    needs: [terraform_apply, classify]
+    if: ${{ needs.classify.outputs.needs_deploy == 'true' }}
+    environment: ${{ needs.classify.outputs.deploy_env }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ needs.classify.outputs.aws_role }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Wait for services stable
+        run: |
+          set -euo pipefail
+          cluster_name="demo-services-cluster"
+          aws ecs wait services-stable \
+            --cluster "$cluster_name" \
+            --services demo-web demo-api demo-ingress-router demo-terminal-gateway demo-orchestrator
+
+      - name: Print deployed task defs + images
+        run: |
+          set -euo pipefail
           cluster_name="demo-services-cluster"
 
-          ./scripts/ecs-deploy-service-image.sh "$cluster_name" demo-web web "${registry}/web:${tag}"
-          ./scripts/ecs-deploy-service-image.sh "$cluster_name" demo-api api "${registry}/api:${tag}"
-          ./scripts/ecs-deploy-service-image.sh "$cluster_name" demo-ingress-router ingress-router "${registry}/ingress-router:${tag}"
-          ./scripts/ecs-deploy-service-image.sh "$cluster_name" demo-terminal-gateway terminal-gateway "${registry}/terminal-gateway:${tag}"
-          ./scripts/ecs-deploy-service-image.sh "$cluster_name" demo-orchestrator orchestrator "${registry}/env-orchestrator:${tag}"
+          aws ecs describe-services \
+            --cluster "$cluster_name" \
+            --services demo-web demo-api demo-ingress-router demo-terminal-gateway demo-orchestrator \
+            --query 'services[].{serviceName:serviceName,taskDef:taskDefinition,running:runningCount}' \
+            --output table
 
-      - name: Run Prisma migrations
+          for family in demo-web demo-api demo-ingress-router demo-terminal-gateway demo-orchestrator; do
+            latest="$(aws ecs list-task-definitions --family-prefix "$family" --sort DESC --max-items 1 --query 'taskDefinitionArns[0]' --output text)"
+            echo "--- $latest"
+            aws ecs describe-task-definition \
+              --task-definition "$latest" \
+              --query 'taskDefinition.containerDefinitions[].{name:name,image:image}' \
+              --output table
+          done
+
+  migrate:
+    needs: [ecs_rollout, classify]
+    if: ${{ needs.classify.outputs.needs_deploy == 'true' }}
+    uses: ./.github/workflows/migrate-demo.yml
+    secrets: inherit
+    with:
+      target_env: ${{ needs.classify.outputs.deploy_env }}
+
+  smoke_check:
+    runs-on: ubuntu-latest
+    needs: [migrate, classify]
+    if: ${{ needs.classify.outputs.needs_deploy == 'true' }}
+    environment: ${{ needs.classify.outputs.deploy_env }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.classify.outputs.deploy_sha }}
+
+      - name: Smoke check
+        env:
+          DEPLOY_ENV: ${{ needs.classify.outputs.deploy_env }}
         run: |
           set -euo pipefail
-          cluster_name="demo-services-cluster"
-          ./scripts/ecs-run-migrations.sh "$cluster_name" demo-api api packages/db/prisma/schema.prisma
+          ./scripts/ci/smoke-check.sh --deploy-env "$DEPLOY_ENV"
 
-      - name: Deploy summary
-        run: |
-          echo "Environment: ${{ steps.meta.outputs.deploy_env }}"
-          echo "Deployed image tag: ${{ steps.meta.outputs.image_tag }}"
-          echo "ECR registry: ${{ steps.meta.outputs.registry }}"

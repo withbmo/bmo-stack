@@ -8,6 +8,7 @@ set -euo pipefail
 : "${APP_DOMAIN_PREFIX:=}"
 : "${NEXT_PUBLIC_API_URL:=}"
 : "${NEXT_PUBLIC_APP_ENV:=}"
+PLATFORM="linux/amd64"
 
 if [[ "$DEPLOY_ENV" == "dev" && "$APP_DOMAIN_PREFIX" == "" ]]; then
   APP_DOMAIN_PREFIX="dev"
@@ -65,6 +66,12 @@ TURNSTILE_SITE_KEY="$(aws secretsmanager get-secret-value \
 aws ecr get-login-password --region "$AWS_REGION" \
   | docker login --username AWS --password-stdin "$ECR_REGISTRY"
 
+if docker buildx inspect pytholit-builder >/dev/null 2>&1; then
+  docker buildx use pytholit-builder >/dev/null
+else
+  docker buildx create --use --name pytholit-builder >/dev/null
+fi
+
 for entry in "${services[@]}"; do
   name="${entry%%:*}"
   dockerfile="${entry##*:}"
@@ -81,19 +88,30 @@ for entry in "${services[@]}"; do
 
   echo "Building $name -> $repo:$IMAGE_TAG"
 
+  cache_args=()
+  if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
+    cache_args+=(--cache-from "type=gha,scope=pytholit-${DEPLOY_ENV}-${name}")
+    cache_args+=(--cache-to "type=gha,scope=pytholit-${DEPLOY_ENV}-${name},mode=max")
+  else
+    mkdir -p ".buildx-cache/${name}"
+    cache_args+=(--cache-from "type=local,src=.buildx-cache/${name}")
+    cache_args+=(--cache-to "type=local,dest=.buildx-cache/${name},mode=max")
+  fi
+
+  build_args=(--platform "$PLATFORM" --push -f "$dockerfile" -t "$repo:$IMAGE_TAG")
+
   # Build web image with Turnstile site key as build arg
   if [[ "$name" == "web" ]]; then
-    docker build \
-      -f "$dockerfile" \
+    docker buildx build \
+      "${cache_args[@]}" \
+      "${build_args[@]}" \
       --build-arg NEXT_PUBLIC_TURNSTILE_SITE_KEY="$TURNSTILE_SITE_KEY" \
       --build-arg NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
       --build-arg NEXT_PUBLIC_APP_ENV="$NEXT_PUBLIC_APP_ENV" \
-      -t "$repo:$IMAGE_TAG" .
+      .
   else
-    docker build -f "$dockerfile" -t "$repo:$IMAGE_TAG" .
+    docker buildx build "${cache_args[@]}" "${build_args[@]}" .
   fi
-
-  docker push "$repo:$IMAGE_TAG"
 
 done
 

@@ -8,15 +8,20 @@ Workflow: `.github/workflows/deploy-demo.yml`
 
 It does:
 
-1) Builds and pushes container images to ECR:
+1. Classifies changes and skips deploy when no app/infra changes
+2. Builds and pushes container images to ECR (linux/amd64; buildx cache enabled):
    - `web`
    - `api`
    - `ingress-router`
    - `env-orchestrator`
    - `terminal-gateway`
-2) Writes `infra/demo/ci-images.auto.tfvars.json` to point Terraform at those image tags
-3) Runs `terraform init` + `terraform apply` in `infra/demo`
-4) Runs Prisma migrations as a one-off ECS task using the API task definition
+3. Writes `infra/demo/ci-images.auto.tfvars.json` for Terraform (from the new tag, or from currently deployed ECS images when build is skipped)
+4. Runs `terraform init` + `terraform apply` in `infra/demo` (authoritative for rollouts)
+5. Runs Prisma migrations as a one-off ECS task (via reusable workflow: `.github/workflows/migrate-demo.yml`)
+6. Runs post-deploy smoke checks:
+   - `GET /api/v1/health` (200)
+   - `GET /` on web (200/301/302)
+   - `GET /api/v1/users/me` (401 when logged out)
 
 ## Required GitHub secrets (for CI)
 
@@ -101,5 +106,4 @@ To serve real hostnames publicly you need:
 
 Script: `scripts/build-and-push-demo-images.sh`
 
-Builds and pushes the same set of images to ECR and prints the pushed tag.
-
+Builds and pushes the same set of images to ECR (linux/amd64) and prints the pushed tag.

@@ -1,0 +1,117 @@
+name: Run Prisma Migrations (demo)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+      image_tag:
+        description: 'Optional image tag (for visibility only)'
+        required: false
+        type: string
+      cluster_name:
+        description: 'ECS cluster name'
+        required: false
+        default: 'demo-services-cluster'
+        type: string
+      service_name:
+        description: 'ECS service name (used to resolve task definition + network config)'
+        required: false
+        default: 'demo-api'
+        type: string
+      container_name:
+        description: 'Container name in the task definition'
+        required: false
+        default: 'api'
+        type: string
+      schema_path:
+        description: 'Prisma schema path inside the container image'
+        required: false
+        default: 'packages/db/prisma/schema.prisma'
+        type: string
+      timeout_minutes:
+        description: 'Max minutes to wait for migrations'
+        required: false
+        default: '15'
+        type: string
+
+  workflow_call:
+    inputs:
+      target_env:
+        required: true
+        type: string
+      cluster_name:
+        required: false
+        default: 'demo-services-cluster'
+        type: string
+      service_name:
+        required: false
+        default: 'demo-api'
+        type: string
+      container_name:
+        required: false
+        default: 'api'
+        type: string
+      schema_path:
+        required: false
+        default: 'packages/db/prisma/schema.prisma'
+        type: string
+      timeout_minutes:
+        required: false
+        default: '15'
+        type: string
+    secrets:
+      AWS_ROLE_TO_ASSUME_DEV:
+        required: true
+      AWS_ROLE_TO_ASSUME_PROD:
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ fromJSON(inputs.timeout_minutes || github.event.inputs.timeout_minutes || '15') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve AWS role
+        id: role
+        env:
+          TARGET_ENV: ${{ inputs.target_env || github.event.inputs.target_env }}
+          AWS_ROLE_DEV: ${{ secrets.AWS_ROLE_TO_ASSUME_DEV }}
+          AWS_ROLE_PROD: ${{ secrets.AWS_ROLE_TO_ASSUME_PROD }}
+        run: |
+          if [[ "$TARGET_ENV" == "prod" ]]; then
+            echo "aws_role=$AWS_ROLE_PROD" >> "$GITHUB_OUTPUT"
+          else
+            echo "aws_role=$AWS_ROLE_DEV" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ steps.role.outputs.aws_role }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Run Prisma migrations
+        env:
+          CLUSTER_NAME: ${{ inputs.cluster_name || github.event.inputs.cluster_name }}
+          SERVICE_NAME: ${{ inputs.service_name || github.event.inputs.service_name }}
+          CONTAINER_NAME: ${{ inputs.container_name || github.event.inputs.container_name }}
+          SCHEMA_PATH: ${{ inputs.schema_path || github.event.inputs.schema_path }}
+        run: |
+          set -euo pipefail
+          ./scripts/ecs-run-migrations.sh "$CLUSTER_NAME" "$SERVICE_NAME" "$CONTAINER_NAME" "$SCHEMA_PATH"
+
