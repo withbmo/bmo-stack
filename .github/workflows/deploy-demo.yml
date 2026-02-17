@@ -2,22 +2,22 @@ name: Deploy Dev/Prod Platform
 
 on:
   workflow_run:
-    workflows: ["CI"]
+    workflows: ['CI']
     types: [completed]
     branches:
       - main
-      - "release/**"
+      - 'release/**'
   workflow_dispatch:
     inputs:
       target_env:
-        description: "Target environment"
+        description: 'Target environment'
         required: true
         type: choice
         options:
           - dev
           - prod
       image_tag:
-        description: "Optional image tag override (default: git short SHA)"
+        description: 'Optional image tag override (default: git short SHA)'
         required: false
         type: string
 
@@ -135,6 +135,12 @@ jobs:
           ./scripts/ecs-deploy-service-image.sh "$cluster_name" demo-ingress-router ingress-router "${registry}/ingress-router:${tag}"
           ./scripts/ecs-deploy-service-image.sh "$cluster_name" demo-terminal-gateway terminal-gateway "${registry}/terminal-gateway:${tag}"
           ./scripts/ecs-deploy-service-image.sh "$cluster_name" demo-orchestrator orchestrator "${registry}/env-orchestrator:${tag}"
+
+      - name: Run Prisma migrations
+        run: |
+          set -euo pipefail
+          cluster_name="demo-services-cluster"
+          ./scripts/ecs-run-migrations.sh "$cluster_name" demo-api api packages/db/prisma/schema.prisma
 
       - name: Deploy summary
         run: |
