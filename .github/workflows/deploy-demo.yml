@@ -26,16 +26,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: demo-deploy-${{
-    github.event_name == 'workflow_dispatch' && inputs.target_env ||
-    (github.event_name == 'workflow_run' && startsWith(github.event.workflow_run.head_branch, 'release/') && 'prod') ||
-    (startsWith(github.ref, 'refs/heads/release/') && 'prod' || 'dev')
-  }}
-  cancel-in-progress: ${{
-    (github.event_name == 'workflow_dispatch' && inputs.target_env ||
-    (github.event_name == 'workflow_run' && startsWith(github.event.workflow_run.head_branch, 'release/') && 'prod') ||
-    (startsWith(github.ref, 'refs/heads/release/') && 'prod' || 'dev')) == 'dev'
-  }}
+  group: demo-deploy-${{ github.event_name == 'workflow_dispatch' && inputs.target_env || (github.event_name == 'workflow_run' && startsWith(github.event.workflow_run.head_branch, 'release/') && 'prod') || (startsWith(github.ref, 'refs/heads/release/') && 'prod' || 'dev') }}
+  cancel-in-progress: ${{ (github.event_name == 'workflow_dispatch' && inputs.target_env || (github.event_name == 'workflow_run' && startsWith(github.event.workflow_run.head_branch, 'release/') && 'prod') || (startsWith(github.ref, 'refs/heads/release/') && 'prod' || 'dev')) == 'dev' }}
 
 env:
   AWS_REGION: us-east-1
@@ -296,4 +288,3 @@ jobs:
         run: |
           set -euo pipefail
           ./scripts/ci/smoke-check.sh --deploy-env "$DEPLOY_ENV"
-
