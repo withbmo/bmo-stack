@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { DEPLOY_JOB_STATUS } from '@pytholit/contracts';
 import type { Prisma } from '@pytholit/db';
 
 import { PrismaService } from '../../database/prisma.service';
@@ -75,14 +76,14 @@ export class AdminDeployJobsService {
       select: { id: true, status: true },
     });
     if (!job) throw new NotFoundException('Deploy job not found');
-    if (!['queued', 'running'].includes(job.status)) {
+    if (job.status !== DEPLOY_JOB_STATUS.QUEUED && job.status !== DEPLOY_JOB_STATUS.RUNNING) {
       throw new BadRequestException(`Cannot cancel job with status: ${job.status}`);
     }
 
     await this.prisma.client.deployJob.update({
       where: { id: jobId },
       data: {
-        status: 'canceled',
+        status: DEPLOY_JOB_STATUS.CANCELED,
         finishedAt: new Date(),
       },
     });
@@ -98,4 +99,3 @@ export class AdminDeployJobsService {
     return { message: 'Cancel requested' };
   }
 }
-

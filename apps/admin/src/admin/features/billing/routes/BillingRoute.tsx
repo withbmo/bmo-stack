@@ -61,7 +61,7 @@ export function BillingRoute() {
                     <tr key={s.id} className="border-b border-nexus-gray/60">
                       <td className="p-3 font-mono text-xs text-nexus-muted">{s.userId}</td>
                       <td className="p-3 font-mono text-xs">{s.status}</td>
-                      <td className="p-3 font-mono text-xs">{s.stripeSubscriptionId}</td>
+                      <td className="p-3 font-mono text-xs">{s.externalSubscriptionId}</td>
                     </tr>
                   ))
                 )}
@@ -123,4 +123,3 @@ export function BillingRoute() {
     </AdminPage>
   );
 }
-

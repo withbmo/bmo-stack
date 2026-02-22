@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
+import { readTrimmedStringOrEmpty } from '../../config/config-readers';
+
 interface TurnstileVerifyRequest {
   secret: string;
   response: string;
@@ -23,8 +25,7 @@ export class TurnstileService {
   private readonly isDevelopment: boolean;
 
   constructor(private readonly configService: ConfigService) {
-    this.secretKey =
-      this.configService.get<string>('TURNSTILE_SECRET_KEY') || '';
+    this.secretKey = readTrimmedStringOrEmpty(this.configService, 'TURNSTILE_SECRET_KEY');
     this.isDevelopment =
       this.configService.get<string>('NODE_ENV') === 'development' ||
       this.configService.get<string>('APP_ENV') === 'localhost';

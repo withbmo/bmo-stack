@@ -1,6 +1,24 @@
 /**
  * Authentication-related types and contracts
  */
+import type { User, UserProfile } from './user';
+
+/**
+ * Authentication constants
+ * Centralized configuration for auth-related values across the entire app
+ */
+export const AUTH_STORAGE = {
+  ACCESS_TOKEN_KEY: 'pytholit_access_token',
+} as const;
+
+/**
+ * Form validation constants for authentication
+ */
+export const AUTH_VALIDATION = {
+  MIN_PASSWORD_LENGTH: 8,
+  MAX_PASSWORD_LENGTH: 256,
+  EMAIL_PLACEHOLDER: 'dev@nexus.py',
+} as const;
 
 export interface LoginInput {
   email: string;
@@ -12,7 +30,8 @@ export interface SignupInput {
   email: string;
   username: string;
   password: string;
-  fullName: string;
+  firstName: string;
+  lastName?: string;
   captchaToken: string;
 }
 
@@ -24,68 +43,39 @@ export interface LoginResponse {
     id: string;
     email: string;
     username: string;
-    fullName: string | null;
     firstName: string | null;
     lastName: string | null;
     isEmailVerified: boolean;
   };
 }
 
-export interface OAuthProvider {
-  provider: 'google' | 'github';
-  accountId: string;
-  accountEmail: string;
-  accessToken: string;
-  refreshToken: string | null;
-  expiresAt: string | null;
+export type AuthFlowStatus =
+  | { status: 'authenticated' }
+  | { status: 'otp_required'; otpExpiresAt: string; nextRequestAt: string };
+
+export interface OtpSendResponse {
+  status: 'sent';
+  otpExpiresAt: string;
+  nextRequestAt: string;
 }
 
-export interface OTPSendInput {
+export interface OtpVerifyInput {
   email: string;
-  purpose: OTPPurpose;
-  captchaToken?: string;
-}
-
-export type OTPPurpose = 'email_verification' | 'password_reset' | '2fa' | 'login_verification';
-
-export interface OTPVerifyInput {
-  email: string;
+  purpose: 'email_verification';
   code: string;
-  purpose: OTPPurpose;
 }
 
-export interface OTPVerifyResponse {
-  success: boolean;
-  token?: string;
+export interface CheckPasswordStrengthInput {
+  password: string;
 }
 
-export interface ForgotPasswordInput {
-  email: string;
-  captchaToken: string;
+export interface PasswordStrengthResponse {
+  score: number; // 0-4
+  label: string; // "Too Weak", "Weak", "Fair", "Strong", "Very Strong"
+  crackTime: string; // Human-readable crack time estimate
+  feedback: string[]; // Actionable suggestions
+  isStrong: boolean; // true if score >= 3
 }
 
-export interface ResetPasswordInput {
-  token: string;
-  newPassword: string;
-}
-
-export interface UserProfile {
-  id: string;
-  email: string;
-  username: string;
-  fullName: string | null;
-  firstName: string | null;
-  lastName: string | null;
-  bio: string | null;
-  avatarUrl: string | null;
-  isEmailVerified: boolean;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  plan: {
-    name: string;
-    displayName: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    features: any[];
-  } | null;
-}
+// Re-export User and UserProfile for convenience
+export type { User, UserProfile };

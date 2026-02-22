@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
 import type { DeployJob } from '@pytholit/contracts';
 import { CreateDeployJobDto } from '@pytholit/validation/class-validator';
 
@@ -25,19 +16,19 @@ export class DeployJobsController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(
-    @CurrentUser() user: any,
+    @CurrentUser('id') userId: string,
     @Body() createDeployJobDto: CreateDeployJobDto
   ): Promise<DeployJob> {
-    return this.deployJobsService.create(user.id, createDeployJobDto);
+    return this.deployJobsService.create(userId, createDeployJobDto);
   }
 
   @Get()
   async findAll(
-    @CurrentUser() user: any,
+    @CurrentUser('id') userId: string,
     @Query('projectId') projectId?: string,
     @Query('environmentId') environmentId?: string
   ): Promise<DeployJob[]> {
-    return this.deployJobsService.findAll(user.id, {
+    return this.deployJobsService.findAll(userId, {
       projectId,
       environmentId,
     });
@@ -45,18 +36,18 @@ export class DeployJobsController {
 
   @Get(':id')
   async findOne(
-    @CurrentUser() user: any,
+    @CurrentUser('id') userId: string,
     @Param('id') id: string
   ): Promise<DeployJob> {
-    return this.deployJobsService.findOne(user.id, id);
+    return this.deployJobsService.findOne(userId, id);
   }
 
   @Post(':id/cancel')
   @HttpCode(HttpStatus.OK)
   async cancel(
-    @CurrentUser() user: any,
+    @CurrentUser('id') userId: string,
     @Param('id') id: string
   ): Promise<DeployJob> {
-    return this.deployJobsService.cancel(user.id, id);
+    return this.deployJobsService.cancel(userId, id);
   }
 }

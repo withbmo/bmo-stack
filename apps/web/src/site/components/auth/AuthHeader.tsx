@@ -4,19 +4,13 @@ type AuthMode = 'login' | 'register';
 
 interface AuthHeaderProps {
   mode: AuthMode;
-  showOtpStep: boolean;
   title?: ReactNode;
   subtitle?: string;
 }
 
-export const AuthHeader = ({ mode, showOtpStep, title, subtitle }: AuthHeaderProps) => {
+export const AuthHeader = ({ mode, title, subtitle }: AuthHeaderProps) => {
   const resolvedSubtitle =
-    subtitle ??
-    (mode === 'login'
-      ? 'Identify yourself'
-      : showOtpStep
-        ? 'Verify your email'
-        : 'Create your account');
+    subtitle ?? (mode === 'login' ? 'Identify yourself' : 'Create your account');
 
   return (
     <div className="mb-8 text-center">

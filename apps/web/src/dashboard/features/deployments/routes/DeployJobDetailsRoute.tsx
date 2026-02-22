@@ -1,5 +1,6 @@
 'use client';
 
+import { DEPLOY_JOB_STATUS } from '@pytholit/contracts';
 import { useQuery } from '@tanstack/react-query';
 import { Rocket } from 'lucide-react';
 import { useParams,useRouter } from 'next/navigation';
@@ -65,7 +66,7 @@ export const DeployJobDetailsRoute = () => {
             <Button variant="secondary" size="sm" onClick={() => router.back()}>
               Back
             </Button>
-            {job.status === 'queued' || job.status === 'running' ? (
+            {job.status === DEPLOY_JOB_STATUS.QUEUED || job.status === DEPLOY_JOB_STATUS.RUNNING ? (
               <Button variant="danger" size="sm" onClick={() => cancelJob.mutate(job.id)}>
                 Cancel
               </Button>
@@ -78,7 +79,7 @@ export const DeployJobDetailsRoute = () => {
       <div className="flex flex-wrap items-center gap-3 mb-8">
         <DeployJobStatusBadge status={job.status} />
         <div className="text-xs font-mono text-nexus-muted">
-          Env: {environment ? environment.name.toUpperCase() : 'UNKNOWN'}
+          Env: {environment ? (environment.displayName || environment.envType).toUpperCase() : 'UNKNOWN'}
         </div>
         <div className="text-xs font-mono text-nexus-muted">
           Mode: {job.executionModeSnapshot === 'managed' ? 'Managed' : 'BYO AWS'}

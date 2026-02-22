@@ -1,23 +1,21 @@
 'use client';
 
-import { usePathname,useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useAuth } from '@/shared/auth';
-import { getOtpMeta } from '@/shared/auth/utils/otp';
 import { FullScreenLoader } from '@/shared/components/FullScreenLoader';
-import { sendPublicSignupVerification } from '@/shared/lib/auth';
 
 export const PageLoader = () => <FullScreenLoader label="Loading..." />;
 
 /**
- * Protects dashboard routes: requires auth, validates token, redirects to login if invalid.
+ * Protects dashboard routes: requires auth, redirects to login if invalid.
  */
 export function ProtectedDashboardGuard({ children }: { children: React.ReactNode }) {
   const { user, hydrated } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [status, setStatus] = useState<'checking' | 'ok' | 'fail' | 'unverified'>('checking');
+  const [status, setStatus] = useState<'checking' | 'ok' | 'fail'>('checking');
 
   const next = useMemo(
     () => `${pathname}${typeof window !== 'undefined' ? window.location.search : ''}`,
@@ -30,10 +28,6 @@ export function ProtectedDashboardGuard({ children }: { children: React.ReactNod
       setStatus('fail');
       return;
     }
-    if (!user.isEmailVerified) {
-      setStatus('unverified');
-      return;
-    }
     setStatus('ok');
   }, [user, hydrated]);
 
@@ -43,35 +37,8 @@ export function ProtectedDashboardGuard({ children }: { children: React.ReactNod
     }
   }, [status, router, next]);
 
-  useEffect(() => {
-    if (status !== 'unverified' || !user?.email) return;
-    (async () => {
-      try {
-        const resp = await sendPublicSignupVerification(user.email);
-        const meta = getOtpMeta(resp);
-        const params = new URLSearchParams({
-          type: 'email-verification',
-          email: user.email,
-          next,
-          expiresAt: meta.expiresAt || '',
-          nextRequestAt: meta.nextRequestAt || '',
-        });
-        router.replace(`/auth/verify-otp?${params.toString()}`);
-      } catch {
-        const params = new URLSearchParams({
-          type: 'email-verification',
-          email: user.email,
-          next,
-          sendFailed: '1',
-        });
-        router.replace(`/auth/verify-otp?${params.toString()}`);
-      }
-    })();
-  }, [router, status, user, next]);
-
   if (!hydrated) return <PageLoader />;
   if (status === 'checking') return <PageLoader />;
   if (status === 'fail') return null; // redirecting
-  if (status === 'unverified') return <PageLoader />;
   return <>{children}</>;
 }

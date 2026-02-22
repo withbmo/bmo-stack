@@ -1,47 +1,30 @@
-# Entitlements (plans, limits, usage counters)
+# Entitlements
 
-Entitlements are the feature-gating layer that sits above billing.
-
-Implementation: `apps/api/src/entitlements/entitlements.service.ts`
+Entitlements are enforced in `apps/api/src/entitlements/entitlements.service.ts`.
 
 ## Feature flag
 
-Entitlements are disabled unless:
+- `ENTITLEMENTS_ENABLED=true` enables entitlements APIs.
 
-- `ENTITLEMENTS_ENABLED=true` (see `apps/api/src/config/env.ts`)
+## Lago rollout gate
 
-If disabled, `EntitlementsService` throws `503 Entitlements are disabled`.
+- Entitlements are Lago-backed only when `BillingConfigService.shouldUseLago(userId)` is true.
+- If Lago is not enabled for the user, entitlements APIs return unavailable for that account.
 
 ## Plan resolution
 
-The effective plan is resolved per user:
+- Effective plan is resolved from the latest active/trialing/past_due subscription row.
+- If no valid subscription is found, default plan is used.
 
-1) Look for most recent subscription where status is in:
-   - `active`, `trialing`, `past_due`
-2) If `subscription.planId` maps to a configured plan, use it; else fall back to default plan
-3) Determine billing period:
-   - if subscription has `currentPeriodStart`/`currentPeriodEnd`, use those
-   - otherwise default to current calendar month in UTC
+## Usage checks
 
-Plans come from `@pytholit/config` (`getDefaultPlan`, `getPlanById`).
+- `canConsume` reads current metric usage from Lago.
+- `recordUsage` sends usage events to Lago.
+- `getLimits` computes remaining limits from plan features + Lago usage.
 
-## Usage counters
+## Metric mapping
 
-Usage is tracked in Postgres table `usage_counters`:
-
-- Keyed by:
-  - `userId`, `featureId`, `periodStart`, `periodEnd`
-- `used` is incremented on each `recordUsage()` call
-
-## APIs that consume entitlements
-
-- Billing controller calls:
-  - `POST /api/v1/billing/usage` → `EntitlementsService.recordUsage(userId, metricName, value)`
-
-Other product flows can call:
-
-- `EntitlementsService.canConsume(userId, featureId, amount)`
-- `EntitlementsService.recordUsage(userId, featureId, amount)`
-
-to enforce limits (e.g. “environments created”, “build minutes”, etc.) based on plan features.
-
+- `deployments` → `deployments_monthly`
+- `projects` → `projects`
+- `environments` → `environments`
+- `storage` → `storage_gb`

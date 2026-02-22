@@ -3,8 +3,10 @@
   "name": "pro",
   "displayName": "Pro",
   "description": "For teams shipping production workloads.",
+  "currency": "USD",
   "monthlyPrice": 29,
   "yearlyPrice": 290,
+  "yearlyBonusCredits": 250,
   "stripePriceIdMonthly": null,
   "stripePriceIdYearly": null,
   "isDefault": false,
@@ -13,6 +15,10 @@
     { "id": "environments", "name": "Environments", "description": null, "value": 10 },
     { "id": "deployments", "name": "Monthly deployments", "description": null, "value": 100 },
     { "id": "storage", "name": "Storage (GB)", "description": null, "value": 50 },
+    { "id": "env_max_vcpu", "name": "Max env vCPU", "description": null, "value": 4 },
+    { "id": "env_max_ram_gb", "name": "Max env RAM (GB)", "description": null, "value": 16 },
+    { "id": "env_max_disk_gb", "name": "Max env disk (GB)", "description": null, "value": 200 },
+    { "id": "env_allow_spot", "name": "Allow spot instances", "description": null, "value": true },
     { "id": "support", "name": "Support", "description": null, "value": "email" }
   ],
   "isActive": true

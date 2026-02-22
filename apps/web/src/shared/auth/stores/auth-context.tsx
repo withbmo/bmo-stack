@@ -1,6 +1,7 @@
 'use client';
 
 import type { UserProfile } from '@pytholit/contracts';
+import { usePathname } from 'next/navigation';
 import {
   createContext,
   type ReactNode,
@@ -27,6 +28,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const pathname = usePathname() ?? '/';
 
   const refreshSession = useCallback(async (): Promise<UserProfile | null> => {
     try {
@@ -52,8 +54,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    refreshSession();
-  }, [refreshSession]);
+    const isProtectedRoute =
+      pathname.startsWith('/dashboard') ||
+      pathname.startsWith('/editor') ||
+      pathname.startsWith('/admin');
+
+    // Avoid noisy `/users/me -> 401` calls on public pages.
+    // We only hydrate the session when the user enters a protected area.
+    if (!isProtectedRoute) {
+      setHydrated(true);
+      return;
+    }
+
+    if (user) {
+      setHydrated(true);
+      return;
+    }
+
+    setHydrated(false);
+    void refreshSession();
+  }, [pathname, refreshSession, user]);
 
   const value = useMemo(
     () => ({
@@ -74,4 +94,3 @@ export function useAuth(): AuthContextValue {
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 }
-

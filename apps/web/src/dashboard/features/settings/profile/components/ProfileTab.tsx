@@ -19,8 +19,8 @@ export const ProfileTab = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [displayName, setDisplayName] = useState('');
-  const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [bio, setBio] = useState('');
 
   const avatarUrl = useMemo(() => resolveAvatarUrl(profile?.avatarUrl), [profile?.avatarUrl]);
@@ -35,8 +35,8 @@ export const ProfileTab = () => {
         if (cancelled) return;
         if (!data) return;
         setProfile(data);
-        setDisplayName(data.fullName || '');
-        setEmail(data.email || '');
+        setFirstName(data.firstName || '');
+        setLastName(data.lastName || '');
         setBio(data.bio || '');
       } catch {
         if (!cancelled) toast.error('Failed to load profile');
@@ -54,8 +54,8 @@ export const ProfileTab = () => {
     setIsSaving(true);
     try {
       const updated = await updateCurrentUser(undefined, {
-        fullName: displayName.trim(),
-        email: email.trim(),
+        firstName: firstName.trim(),
+        lastName: lastName.trim() || undefined,
         bio: bio.trim() || null,
       });
       setProfile(updated);
@@ -177,12 +177,23 @@ export const ProfileTab = () => {
         </div>
         <div className="space-y-2">
           <label className="font-mono text-[10px] text-nexus-purple uppercase tracking-wider">
-            Display Name
+            First Name
           </label>
           <Input
             type="text"
-            value={displayName}
-            onChange={e => setDisplayName(e.target.value)}
+            value={firstName}
+            onChange={e => setFirstName(e.target.value)}
+            disabled={isLoading}
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="font-mono text-[10px] text-nexus-purple uppercase tracking-wider">
+            Last Name
+          </label>
+          <Input
+            type="text"
+            value={lastName}
+            onChange={e => setLastName(e.target.value)}
             disabled={isLoading}
           />
         </div>
@@ -192,9 +203,9 @@ export const ProfileTab = () => {
           </label>
           <Input
             type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            disabled={isLoading}
+            value={profile?.email || ''}
+            disabled
+            readOnly
           />
         </div>
         <div className="space-y-2">

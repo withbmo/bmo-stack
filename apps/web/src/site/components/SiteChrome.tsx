@@ -12,8 +12,6 @@ import { NAV_ITEMS } from '@/site/data/navigation';
 const AUTH_PATHS = [
   '/auth/login',
   '/auth/signup',
-  '/auth/forgot-password',
-  '/auth/verify-otp',
   '/auth/callback',
 ];
 

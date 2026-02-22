@@ -1,11 +1,12 @@
-import { Globe, Lock, Play, Rocket, Square, Terminal,Trash2 } from 'lucide-react';
+import { ENVIRONMENT_VISIBILITY, ORCHESTRATOR_STATUS } from '@pytholit/contracts';
+import { Globe, Lock, Play, Rocket, Settings, Square, Terminal, Trash2 } from 'lucide-react';
+import Link from 'next/link';
 
-import { Button,Card } from '@/dashboard/components';
+import { Button, Card } from '@/dashboard/components';
 import type {
   Environment,
   EnvironmentOrchestratorInfo,
   EnvironmentOrchestratorStatus,
-  ExecutionMode,
 } from '@/shared/types';
 
 interface EnvironmentCardProps {
@@ -22,7 +23,7 @@ interface EnvironmentCardProps {
 
 export const EnvironmentCard = ({
   environment,
-  onUpdate,
+  onUpdate: _onUpdate,
   onDeploy,
   onOpenTerminal,
   onStart,
@@ -31,23 +32,38 @@ export const EnvironmentCard = ({
   isDeploying = false,
   isActing = false,
 }: EnvironmentCardProps) => {
-  const { id, name, displayName, executionMode, visibility, region } = environment;
+  void _onUpdate;
+  const { id, envType, displayName, visibility, region } = environment;
   const orchestrator = (environment.config as Record<string, unknown> | undefined)?.orchestrator as
     | EnvironmentOrchestratorInfo
     | undefined;
-  const status: EnvironmentOrchestratorStatus = orchestrator?.status ?? 'unknown';
+  const status: EnvironmentOrchestratorStatus = orchestrator?.status ?? ORCHESTRATOR_STATUS.UNKNOWN;
   const statusMessage =
-    orchestrator?.message ?? (status === 'queued' ? 'Queued to start' : undefined);
+    orchestrator?.message ?? (status === ORCHESTRATOR_STATUS.QUEUED ? 'Queued to start' : undefined);
   const lastError = orchestrator?.last_error ?? undefined;
-  const isBusy = isActing || ['queued', 'starting', 'stopping', 'terminating'].includes(status);
-  const canStart = ['stopped', 'failed', 'unknown', 'terminated'].includes(status);
-  const canStop = status === 'ready';
-  const canTerminate = ['ready', 'stopped', 'failed', 'unknown'].includes(status);
+  const isBusy =
+    isActing ||
+    status === ORCHESTRATOR_STATUS.QUEUED ||
+    status === ORCHESTRATOR_STATUS.STARTING ||
+    status === ORCHESTRATOR_STATUS.STOPPING ||
+    status === ORCHESTRATOR_STATUS.TERMINATING;
+  const canStart =
+    status === ORCHESTRATOR_STATUS.STOPPED ||
+    status === ORCHESTRATOR_STATUS.FAILED ||
+    status === ORCHESTRATOR_STATUS.UNKNOWN ||
+    status === ORCHESTRATOR_STATUS.TERMINATED;
+  const canStop = status === ORCHESTRATOR_STATUS.READY;
+  const canTerminate =
+    status === ORCHESTRATOR_STATUS.READY ||
+    status === ORCHESTRATOR_STATUS.STOPPED ||
+    status === ORCHESTRATOR_STATUS.FAILED ||
+    status === ORCHESTRATOR_STATUS.UNKNOWN;
+  const canOpenTerminal = status === ORCHESTRATOR_STATUS.READY && !isBusy;
   const envConfig = (environment.config as Record<string, unknown> | undefined) ?? {};
   const rawServices = envConfig.services;
   const serviceLinks = Array.isArray(rawServices)
     ? (rawServices as Array<Record<string, unknown>>)
-        .map((svc) => {
+        .map(svc => {
           const key = typeof svc?.key === 'string' ? svc.key : null;
           if (!key) return null;
           return {
@@ -59,27 +75,39 @@ export const EnvironmentCard = ({
     : [{ key: 'app', path: '/svc/app/' }];
 
   const statusLabel: Record<EnvironmentOrchestratorStatus, string> = {
-    queued: 'Queued',
-    starting: 'Starting',
-    ready: 'Ready',
-    stopping: 'Stopping',
-    stopped: 'Stopped',
-    terminating: 'Terminating',
-    terminated: 'Terminated',
-    failed: 'Failed',
-    unknown: 'Unknown',
+    [ORCHESTRATOR_STATUS.QUEUED]: 'Queued',
+    [ORCHESTRATOR_STATUS.STARTING]: 'Starting',
+    [ORCHESTRATOR_STATUS.READY]: 'Ready',
+    [ORCHESTRATOR_STATUS.STOPPING]: 'Stopping',
+    [ORCHESTRATOR_STATUS.STOPPED]: 'Stopped',
+    [ORCHESTRATOR_STATUS.TERMINATING]: 'Terminating',
+    [ORCHESTRATOR_STATUS.TERMINATED]: 'Terminated',
+    [ORCHESTRATOR_STATUS.FAILED]: 'Failed',
+    [ORCHESTRATOR_STATUS.UNKNOWN]: 'Not provisioned yet',
   };
 
   const statusClasses: Record<EnvironmentOrchestratorStatus, string> = {
-    queued: 'text-text-secondary border-border-dim bg-border-dim/10',
-    starting: 'text-brand-primary border-brand-primary/30 bg-brand-primary/10',
-    ready: 'text-brand-accent border-brand-accent/30 bg-brand-accent/10',
-    stopping: 'text-yellow-300 border-yellow-300/30 bg-yellow-300/10',
-    stopped: 'text-text-secondary border-border-dim bg-border-dim/10',
-    terminating: 'text-orange-300 border-orange-300/30 bg-orange-300/10',
-    terminated: 'text-text-secondary border-border-dim bg-border-dim/10',
-    failed: 'text-red-400 border-red-400/30 bg-red-400/10',
-    unknown: 'text-text-secondary border-border-dim bg-border-dim/10',
+    [ORCHESTRATOR_STATUS.QUEUED]: 'text-slate-200 border-slate-400/30 bg-slate-400/10',
+    [ORCHESTRATOR_STATUS.STARTING]: 'text-sky-200 border-sky-400/30 bg-sky-400/10',
+    [ORCHESTRATOR_STATUS.READY]: 'text-emerald-200 border-emerald-400/30 bg-emerald-400/10',
+    [ORCHESTRATOR_STATUS.STOPPING]: 'text-amber-200 border-amber-400/30 bg-amber-400/10',
+    [ORCHESTRATOR_STATUS.STOPPED]: 'text-zinc-200 border-zinc-400/30 bg-zinc-400/10',
+    [ORCHESTRATOR_STATUS.TERMINATING]: 'text-orange-200 border-orange-400/30 bg-orange-400/10',
+    [ORCHESTRATOR_STATUS.TERMINATED]: 'text-violet-200 border-violet-400/30 bg-violet-400/10',
+    [ORCHESTRATOR_STATUS.FAILED]: 'text-rose-200 border-rose-400/30 bg-rose-400/10',
+    [ORCHESTRATOR_STATUS.UNKNOWN]: 'text-stone-200 border-stone-400/30 bg-stone-400/10',
+  };
+
+  const statusDotClasses: Record<EnvironmentOrchestratorStatus, string> = {
+    [ORCHESTRATOR_STATUS.QUEUED]: 'bg-slate-300',
+    [ORCHESTRATOR_STATUS.STARTING]: 'bg-sky-300',
+    [ORCHESTRATOR_STATUS.READY]: 'bg-emerald-300',
+    [ORCHESTRATOR_STATUS.STOPPING]: 'bg-amber-300',
+    [ORCHESTRATOR_STATUS.STOPPED]: 'bg-zinc-300',
+    [ORCHESTRATOR_STATUS.TERMINATING]: 'bg-orange-300',
+    [ORCHESTRATOR_STATUS.TERMINATED]: 'bg-violet-300',
+    [ORCHESTRATOR_STATUS.FAILED]: 'bg-rose-300',
+    [ORCHESTRATOR_STATUS.UNKNOWN]: 'bg-stone-300',
   };
 
   return (
@@ -90,7 +118,7 @@ export const EnvironmentCard = ({
             Environment
           </div>
           <div className="text-xl font-sans font-bold text-white mt-1">
-            {(displayName || name).toUpperCase()}
+            {(displayName || envType).toUpperCase()}
           </div>
           <div className="text-xs font-mono text-text-secondary mt-2">
             Region: {region ?? 'Unassigned'}
@@ -102,18 +130,26 @@ export const EnvironmentCard = ({
             className={`inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider px-2 py-1 border ${statusClasses[status]}`}
             title={statusMessage}
           >
+            <span className={`h-1.5 w-1.5 rounded-full ${statusDotClasses[status]}`} />
             {statusLabel[status]}
           </div>
           <div
             className={`inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider px-2 py-1 border ${
-              visibility === 'public'
+              visibility === ENVIRONMENT_VISIBILITY.PUBLIC
                 ? 'text-brand-accent border-brand-accent/30 bg-brand-accent/10'
                 : 'text-text-secondary border-border-dim bg-border-dim/10'
             }`}
           >
-            {visibility === 'public' ? <Globe size={10} /> : <Lock size={10} />}
+            {visibility === ENVIRONMENT_VISIBILITY.PUBLIC ? <Globe size={10} /> : <Lock size={10} />}
             {visibility}
           </div>
+          <Link
+            href={`/dashboard/environments/${id}/settings`}
+            className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider px-2 py-1 border border-border-dim text-text-secondary hover:text-white hover:border-white/30 transition-colors"
+          >
+            <Settings size={10} />
+            <span className="hidden sm:inline">Settings</span>
+          </Link>
         </div>
       </div>
 
@@ -123,57 +159,19 @@ export const EnvironmentCard = ({
         <div className="mt-3 text-xs font-mono text-text-secondary">{statusMessage}</div>
       ) : null}
 
-      <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <div className="text-[10px] font-mono text-text-secondary uppercase tracking-wider">
-            Execution Mode
-          </div>
-          <select
-            value={executionMode}
-            onChange={event => onUpdate(id, { executionMode: event.target.value as ExecutionMode })}
-            className="w-full bg-black/60 border border-border-dim text-white text-sm font-mono px-3 py-2 focus:outline-none focus:border-brand-primary"
-          >
-            <option value="managed">Managed</option>
-            <option value="byo_aws">BYO AWS</option>
-          </select>
-        </div>
-
-        <div className="space-y-2">
-          <div className="text-[10px] font-mono text-text-secondary uppercase tracking-wider">
-            Visibility
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => onUpdate(id, { visibility: 'public' })}
-              className={`flex-1 border px-3 py-2 text-xs font-mono uppercase tracking-wider transition-colors ${
-                visibility === 'public'
-                  ? 'border-brand-accent text-brand-accent bg-brand-accent/10'
-                  : 'border-border-dim text-text-secondary hover:text-white'
-              }`}
-            >
-              Public
-            </button>
-            <button
-              onClick={() => onUpdate(id, { visibility: 'private' })}
-              className={`flex-1 border px-3 py-2 text-xs font-mono uppercase tracking-wider transition-colors ${
-                visibility === 'private'
-                  ? 'border-brand-primary text-brand-primary bg-brand-primary/10'
-                  : 'border-border-dim text-text-secondary hover:text-white'
-              }`}
-            >
-              Private
-            </button>
-          </div>
-        </div>
-      </div>
-
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
         <div className="text-[10px] font-mono text-text-secondary uppercase tracking-wider">
           Actions
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {onOpenTerminal && (
-            <Button variant="secondary" size="sm" onClick={() => onOpenTerminal(id)}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => onOpenTerminal(id)}
+              disabled={!canOpenTerminal}
+              title={!canOpenTerminal ? `Terminal is only available when environment is Ready` : undefined}
+            >
               <Terminal size={14} /> Terminal
             </Button>
           )}
@@ -228,7 +226,7 @@ export const EnvironmentCard = ({
           Service Paths
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {serviceLinks.map((svc) => (
+          {serviceLinks.map(svc => (
             <span
               key={svc.key}
               className="inline-flex border border-border-dim px-2 py-1 text-[10px] font-mono text-text-secondary"

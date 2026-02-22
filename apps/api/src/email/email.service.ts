@@ -1,271 +1,126 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { SendMailClient } from 'zeptomail';
+import { randomUUID } from 'crypto';
 
-import {
-  EmailVerifiedData,
-  getEmailVerifiedTemplate,
-  getOtpEmailTemplate,
-  OtpEmailData,
-} from './templates';
+import { EmailConfigService } from './email.config';
+import { EmailProcessor } from './email.processor';
+import { parseEmailOtpVerificationData, parseEmailVerifiedData } from './email.schemas';
+import type { EmailJobPayload, EmailJobType } from './email.types';
+import { EmailQueueService } from './email-queue.service';
+import { EmailOtpVerificationData, EmailVerifiedData } from './templates';
 
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
-  private readonly apiKey: string;
-  private readonly baseUrl: string;
-  private readonly fromEmail: string;
-  private readonly fromName: string;
-  private readonly enabled: boolean;
-  private readonly client?: SendMailClient;
 
-  constructor(private readonly configService: ConfigService) {
-    this.apiKey = this.configService.get<string>('ZEPTOMAIL_API_KEY') || '';
-    this.baseUrl =
-      this.configService.get<string>('ZEPTOMAIL_BASE_URL') ||
-      'https://api.zeptomail.com';
-    this.fromEmail =
-      this.configService.get<string>('ZEPTOMAIL_FROM_EMAIL') ||
-      'noreply@pytholit.dev';
-    this.fromName =
-      this.configService.get<string>('ZEPTOMAIL_FROM_NAME') || 'Pytholit';
-    this.enabled = this.apiKey.length > 0;
-
-    if (this.enabled) {
-      this.client = new SendMailClient({ url: this.baseUrl, token: this.apiKey });
-    }
-
-    if (!this.enabled) {
+  constructor(
+    private readonly configService: EmailConfigService,
+    private readonly queueService: EmailQueueService,
+    private readonly processor: EmailProcessor,
+  ) {
+    if (!this.configService.runtime.smtpEnabled) {
       this.logger.warn(
-        'ZeptoMail API key not configured. Email sending will be logged to console only.',
+        'SMTP is not fully configured. Email sending will be skipped unless localhost mode is active.',
       );
     }
   }
 
-  /**
-   * Validate email parameters before sending
-   */
-  private validateEmailParams(
-    toEmail: string,
-    subject: string,
-    htmlBody: string,
-    _textBody: string,
-  ): void {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  async sendEmailVerifiedNotification(data: EmailVerifiedData): Promise<void> {
+    const validatedData = parseEmailVerifiedData(data);
+    this.validateRecipientDomain(validatedData.toEmail);
 
-    if (!emailRegex.test(toEmail)) {
-      throw new Error(`Invalid email address: ${toEmail}`);
-    }
+    const payload: EmailJobPayload = {
+      type: 'email_verified',
+      data: validatedData,
+      idempotencyKey: this.createIdempotencyKey('email_verified', validatedData.toEmail),
+      meta: {
+        source: 'auth.emailVerified',
+      },
+    };
 
-    if (!subject || subject.trim().length === 0) {
-      throw new Error('Email subject cannot be empty');
-    }
-
-    if (!htmlBody || htmlBody.trim().length === 0) {
-      throw new Error('Email body cannot be empty');
+    try {
+      await this.dispatch(payload);
+    } catch (error) {
+      this.logger.warn('Failed to dispatch email verified notification', {
+        templateType: payload.type,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
     }
   }
 
-  /**
-   * Check if an error is permanent (don't retry) or transient (can retry)
-   */
-  private isPermanentError(error: any): boolean {
-    // Classify errors from ZeptoMail SDK
-    const permanentCodes = [
-      'invalid_email',
-      'auth_failed',
-      'forbidden',
-      'invalid_request',
-    ];
-    const permanentMessages = [
-      'invalid email',
-      'unauthorized',
-      'forbidden',
-      'bad request',
-    ];
+  async sendOtpVerificationEmail(data: EmailOtpVerificationData): Promise<void> {
+    const validatedData = parseEmailOtpVerificationData(data);
+    this.validateRecipientDomain(validatedData.toEmail);
 
-    if (error.code && permanentCodes.includes(error.code)) {
-      return true;
+    const payload: EmailJobPayload = {
+      type: 'email_otp_verification',
+      data: validatedData,
+      idempotencyKey: this.createIdempotencyKey('email_otp_verification', validatedData.toEmail),
+      meta: {
+        source: 'auth.emailOtpVerification',
+      },
+    };
+
+    try {
+      await this.dispatch(payload);
+    } catch (error) {
+      this.logger.warn('Failed to dispatch OTP verification email', {
+        templateType: payload.type,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
     }
-
-    if (error.message) {
-      const lowerMessage = error.message.toLowerCase();
-      return permanentMessages.some((msg) => lowerMessage.includes(msg));
-    }
-
-    return false;
   }
 
-  /**
-   * Retry an operation with exponential backoff
-   */
-  private async retryWithBackoff<T>(
-    operation: () => Promise<T>,
-    maxRetries = 3,
-    baseDelay = 1000,
-  ): Promise<T> {
-    let lastError: Error | undefined;
-
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        const startTime = Date.now();
-        const result = await operation();
-        const duration = Date.now() - startTime;
-
-        this.logger.log('Email operation successful', {
-          attempt,
-          duration,
-          timestamp: new Date().toISOString(),
+  private async dispatch(payload: EmailJobPayload): Promise<void> {
+    if (!this.configService.runtime.smtpEnabled) {
+      if (this.configService.runtime.isLocalhost) {
+        this.logger.log('Skipping email send in localhost mode', {
+          templateType: payload.type,
         });
-
-        return result;
-      } catch (error) {
-        lastError = error;
-
-        // Enhanced logging
-        this.logger.error('Email operation failed', {
-          attempt,
-          maxRetries,
-          error: error.message,
-          stack: error.stack,
-          isPermanent: this.isPermanentError(error),
-          timestamp: new Date().toISOString(),
-        });
-
-        // Don't retry on permanent errors
-        if (this.isPermanentError(error)) {
-          throw error;
-        }
-
-        // Retry with exponential backoff
-        if (attempt < maxRetries) {
-          const delay = baseDelay * Math.pow(2, attempt - 1);
-          this.logger.warn(
-            `Retrying in ${delay}ms (attempt ${attempt}/${maxRetries})`,
-          );
-          await new Promise((resolve) => setTimeout(resolve, delay));
-        }
+        return;
       }
+      throw new Error('SMTP is not configured.');
     }
 
-    // All retries exhausted
-    this.logger.error('All retry attempts exhausted', {
-      maxRetries,
-      finalError: lastError?.message || 'Unknown error',
-    });
-    throw lastError || new Error('All retry attempts failed');
-  }
-
-  /**
-   * Send an email via ZeptoMail API
-   */
-  private async sendEmail(
-    toEmail: string,
-    toName: string,
-    subject: string,
-    htmlBody: string,
-    textBody: string,
-    trackOpens = true,
-    trackClicks = false,
-  ): Promise<void> {
-    // Validate inputs
-    this.validateEmailParams(toEmail, subject, htmlBody, textBody);
-
-    // Development mode
-    if (!this.enabled) {
-      this.logger.log(
-        `[DEV MODE] Email would be sent to: ${toEmail}\nSubject: ${subject}\n`,
-      );
+    if (this.queueService.isEnabled()) {
+      await this.queueService.enqueue(payload);
       return;
     }
 
-    // Prepare payload
-    const payload = {
-      from: { address: this.fromEmail, name: this.fromName },
-      to: [{ email_address: { address: toEmail, name: toName } }],
-      subject,
-      htmlbody: htmlBody,
-      textbody: textBody,
-      track_opens: trackOpens,
-      track_clicks: trackClicks,
-    };
-
-    // Send with retry logic
-    await this.retryWithBackoff(async () => {
-      if (!this.client) {
-        throw new Error('Email client not initialized');
-      }
-      const response = await this.client.sendMail(payload);
-      this.logger.log('Email sent successfully', {
-        to: toEmail,
-        subject,
-        messageId: response.message,
+    if (!this.configService.runtime.isProductionLike) {
+      this.logger.warn('Queue delivery disabled; using direct fallback delivery for non-production env.');
+      await this.processor.processPayload(payload, {
+        jobId: payload.idempotencyKey,
+        attemptsMade: 0,
       });
-    });
+      return;
+    }
+
+    throw new Error('Email queue is unavailable in production-like environment.');
   }
 
-  /**
-   * Send OTP verification email
-   */
-  async sendOtpEmail(data: OtpEmailData): Promise<void> {
-    try {
-      const { subject, htmlBody, textBody } = getOtpEmailTemplate(data);
+  private validateRecipientDomain(email: string): void {
+    if (this.configService.runtime.isProductionLike) {
+      return;
+    }
 
-      await this.sendEmail(
-        data.toEmail,
-        data.toName,
-        subject,
-        htmlBody,
-        textBody,
-        true,
-        false,
-      );
+    const domain = email.split('@')[1]?.toLowerCase();
+    if (!domain) {
+      throw new Error('Recipient domain is invalid.');
+    }
 
-      this.logger.log('OTP email sent successfully', {
-        email: data.toEmail,
-        purpose: data.purpose,
-      });
-    } catch (error) {
-      this.logger.error('Failed to send OTP email', {
-        email: data.toEmail,
-        purpose: data.purpose,
-        error: error.message,
-        stack: error.stack,
-      });
-      throw new Error(
-        `Failed to send verification email. Please try again or contact support.`,
-      );
+    const blocked = this.configService.runtime.blockedDomains;
+    const allowed = this.configService.runtime.allowedDomains;
+
+    if (blocked.includes(domain)) {
+      throw new Error('Recipient domain is blocked in this environment.');
+    }
+
+    if (allowed.length > 0 && !allowed.includes(domain)) {
+      throw new Error('Recipient domain is not in the allowlist for this environment.');
     }
   }
 
-  /**
-   * Send email verification success notification
-   */
-  async sendEmailVerifiedNotification(
-    data: EmailVerifiedData,
-  ): Promise<void> {
-    try {
-      const { subject, htmlBody, textBody } = getEmailVerifiedTemplate(data);
-
-      await this.sendEmail(
-        data.toEmail,
-        data.toName,
-        subject,
-        htmlBody,
-        textBody,
-        true,
-        false,
-      );
-
-      this.logger.log('Email verified notification sent', {
-        email: data.toEmail,
-      });
-    } catch (error) {
-      // Non-critical notification - log but don't throw
-      this.logger.warn('Failed to send email verified notification', {
-        email: data.toEmail,
-        error: error.message,
-      });
-    }
+  private createIdempotencyKey(type: EmailJobType, toEmail: string): string {
+    return `${type}:${toEmail.toLowerCase()}:${Date.now()}:${randomUUID()}`;
   }
 }

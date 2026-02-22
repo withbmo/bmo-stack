@@ -2,6 +2,7 @@
 
 import type { TurnstileInstance } from '@marsidev/react-turnstile';
 import { Turnstile } from '@marsidev/react-turnstile';
+import { Button } from '@pytholit/ui';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -11,25 +12,13 @@ import { toast } from 'sonner';
 import { env } from '@/env';
 import { useAuth } from '@/shared/auth';
 import { useAuthForm } from '@/shared/auth/hooks/useAuthForm';
-import { useOtpFlow } from '@/shared/auth/hooks/useOtpFlow';
-import { applyOtpResponse, getOtpMeta } from '@/shared/auth/utils/otp';
-import type { ApiError } from '@/shared/lib/auth';
-import {
-  getApiErrorMessage,
-  login,
-  loginWithOtp,
-  requestLoginOtp,
-  sendPublicSignupVerification,
-} from '@/shared/lib/auth';
+import { useOAuthProviders } from '@/shared/auth/hooks/useOAuthProviders';
+import { type ApiError, getApiErrorMessage, login } from '@/shared/lib/auth';
 import { AuthCard } from '@/site/components/auth/AuthCard';
 import { AuthHeader } from '@/site/components/auth/AuthHeader';
 import { AuthPageLayout } from '@/site/components/auth/AuthPageLayout';
-import { AuthSubmitButton } from '@/site/components/auth/AuthSubmitButton';
-import {
-  EmailField,
-  OtpField,
-  PasswordField,
-} from '@/site/components/auth/FormFields';
+import { AuthPanelLoader } from '@/site/components/auth/AuthPanelLoader';
+import { EmailField, PasswordField } from '@/site/components/auth/FormFields';
 import { SocialAuthButtons } from '@/site/components/auth/SocialAuthButtons';
 
 const TURNSTILE_SITE_KEY = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
@@ -48,21 +37,11 @@ export function LoginRoute() {
     setPassword,
     isLoading,
     setIsLoading,
-    loginMethod,
-    toggleLoginMethod,
     clearError,
   } = useAuthForm({ mode: 'login' });
 
-  const {
-    otpSent,
-    otpCode,
-    setOtpCode,
-    resendSecondsLeft,
-    markOtpSent,
-    clearFlow: clearOtpFlow,
-  } = useOtpFlow({ flowType: 'login' });
-
   const [turnstileToken, setTurnstileToken] = useState('');
+  const { providers: oauthProviders, isLoading: isPanelLoading } = useOAuthProviders();
   const turnstileRef = useRef<TurnstileInstance | null>(null);
 
   const redirectTarget = useMemo(() => {
@@ -72,12 +51,7 @@ export function LoginRoute() {
     return '/dashboard';
   }, [nextParam]);
 
-  const requireTurnstile = loginMethod === 'password' && !IS_DEV;
-  const showOtpInput = loginMethod === 'otp' && otpSent;
-
-  useEffect(() => {
-    clearError();
-  }, [clearError, loginMethod]);
+  const requireTurnstile = !IS_DEV;
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -91,29 +65,11 @@ export function LoginRoute() {
   }, []);
 
   const handleAuthSuccess = useCallback(
-    async (_accessToken: string) => {
-      clearOtpFlow();
+    async () => {
       await refreshSession();
       router.replace(redirectTarget);
     },
-    [clearOtpFlow, redirectTarget, router, refreshSession]
-  );
-
-  const goToOtpVerification = useCallback(
-    (sendFailed: boolean, expiresAt?: string | null, nextRequestAt?: string | null) => {
-      const params = new URLSearchParams({
-        type: 'email-verification',
-        email,
-        next: redirectTarget,
-      });
-
-      if (sendFailed) params.set('sendFailed', '1');
-      if (expiresAt) params.set('expiresAt', expiresAt);
-      if (nextRequestAt) params.set('nextRequestAt', nextRequestAt);
-
-      router.push(`/auth/verify-otp?${params.toString()}`);
-    },
-    [email, redirectTarget, router]
+    [redirectTarget, router, refreshSession]
   );
 
   const handleSubmitError = useCallback(
@@ -126,26 +82,9 @@ export function LoginRoute() {
           : 'Request failed'
       );
 
-      if (apiErr.status === 403) {
-        try {
-          const response = await sendPublicSignupVerification(email);
-          const meta = getOtpMeta(response);
-          toast.info(`Email verification required. ${response.message}`);
-          goToOtpVerification(false, meta.expiresAt, meta.nextRequestAt);
-        } catch (sendErr) {
-          const sendError = getApiErrorMessage(
-            sendErr,
-            'Failed to send verification code'
-          );
-          toast.error(`Verification failed: ${sendError}`);
-          goToOtpVerification(true);
-        }
-        return;
-      }
-
       toast.error(message);
     },
-    [email, goToOtpVerification]
+    []
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -160,17 +99,20 @@ export function LoginRoute() {
     setIsLoading(true);
 
     try {
-      if (loginMethod === 'password') {
-        const { access_token } = await login(email, password, turnstileToken);
-        handleAuthSuccess(access_token);
-      } else if (!otpSent) {
-        const response = await requestLoginOtp(email);
-        applyOtpResponse(response, email, markOtpSent);
-        toast.success('Code sent to your email.');
-      } else {
-        const { access_token } = await loginWithOtp(email, otpCode);
-        handleAuthSuccess(access_token);
+      const response = await login(email, password, turnstileToken);
+      if (response.status === 'otp_required') {
+        const params = new URLSearchParams({
+          email,
+          next: redirectTarget,
+          type: 'email-verification',
+          expiresAt: response.otpExpiresAt,
+          nextRequestAt: response.nextRequestAt,
+        });
+        router.replace(`/auth/verify-otp?${params.toString()}`);
+        return;
       }
+
+      await handleAuthSuccess();
     } catch (err) {
       resetTurnstile();
       await handleSubmitError(err);
@@ -179,105 +121,49 @@ export function LoginRoute() {
     }
   };
 
-  const handleSwitchLoginMethod = () => {
-    toggleLoginMethod();
-    setOtpCode('');
-    clearError();
-    clearOtpFlow();
-    resetTurnstile();
-  };
-
-  const handleResendOtp = async () => {
-    clearError();
-    setIsLoading(true);
-    try {
-      const response = await requestLoginOtp(email);
-      applyOtpResponse(response, email, markOtpSent);
-      toast.success(response.message || 'Code sent to your email.');
-    } catch (err) {
-      toast.error(getApiErrorMessage(err, 'Resend failed'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const getButtonText = () => {
-    if (loginMethod === 'otp') {
-      return otpSent ? 'VERIFY' : 'SEND CODE';
-    }
-    return 'LOGIN';
-  };
-
-  const getLoadingText = () => {
-    if (loginMethod === 'otp' && !otpSent) return 'SENDING...';
-    return 'VERIFYING...';
-  };
-
   return (
-    <AuthPageLayout
-      contentClassName="animate-scan"
-      contentStyle={{ animationDuration: '0.5s', animationIterationCount: 1 }}
-    >
-      <AuthHeader mode="login" showOtpStep={showOtpInput} />
+    <AuthPageLayout>
+      <AuthHeader mode="login" />
 
       <AuthCard>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="flex items-center justify-center gap-2">
-            <button
-              type="button"
-              onClick={handleSwitchLoginMethod}
-              className="font-mono text-[10px] text-nexus-muted hover:text-nexus-purple underline decoration-dotted underline-offset-2 uppercase tracking-wider"
-            >
-              {loginMethod === 'password'
-                ? 'Use email code (OTP)'
-                : 'Use password'}
-            </button>
-          </div>
+        {isPanelLoading ? (
+          <AuthPanelLoader label="Loading login..." />
+        ) : (
+          <>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <EmailField value={email} onChange={setEmail} />
 
-          <EmailField value={email} onChange={setEmail} readOnly={showOtpInput} />
+              <PasswordField value={password} onChange={setPassword} required />
 
-          {showOtpInput ? (
-            <OtpField
-              value={otpCode}
-              onChange={setOtpCode}
-              onResend={handleResendOtp}
-              resendSecondsLeft={resendSecondsLeft}
-              isLoading={isLoading}
-              email={email}
-            />
-          ) : null}
+              {requireTurnstile && TURNSTILE_SITE_KEY ? (
+                <div className="flex justify-center">
+                  <Turnstile
+                    ref={turnstileRef}
+                    siteKey={TURNSTILE_SITE_KEY}
+                    options={{ theme: 'dark' }}
+                    onSuccess={(token) => setTurnstileToken(token)}
+                    onExpire={() => setTurnstileToken('')}
+                  />
+                </div>
+              ) : null}
 
-          {!showOtpInput && loginMethod === 'password' ? (
-            <PasswordField value={password} onChange={setPassword} required />
-          ) : null}
+              <Button type="submit" variant="primary" fullWidth disabled={isLoading} size="sm">
+                {isLoading ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin shrink-0" />
+                    <span>VERIFYING...</span>
+                  </>
+                ) : (
+                  <>
+                    LOGIN <ArrowRight size={16} />
+                  </>
+                )}
+              </Button>
+            </form>
 
-          {requireTurnstile && TURNSTILE_SITE_KEY ? (
-            <div className="flex justify-center">
-              <Turnstile
-                ref={turnstileRef}
-                siteKey={TURNSTILE_SITE_KEY}
-                options={{ theme: 'dark' }}
-                onSuccess={(token) => setTurnstileToken(token)}
-                onExpire={() => setTurnstileToken('')}
-              />
-            </div>
-          ) : null}
-
-          <AuthSubmitButton type="submit" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 size={18} className="animate-spin shrink-0" />
-                <span>{getLoadingText()}</span>
-              </>
-            ) : (
-              <>
-                {getButtonText()} <ArrowRight size={16} />
-              </>
-            )}
-          </AuthSubmitButton>
-        </form>
-
-        <SocialAuthButtons next={redirectTarget} />
+            <SocialAuthButtons next={redirectTarget} providers={oauthProviders} />
+          </>
+        )}
       </AuthCard>
 
       <div className="mt-6 text-center space-y-2">

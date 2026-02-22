@@ -31,6 +31,12 @@ variable "enable_alb_records" {
   default = true
 }
 
+variable "enable_lago" {
+  type        = bool
+  default     = false
+  description = "Create Lago DNS record (lago.<app_domain_name>) pointing to app ALB."
+}
+
 variable "extra_txt_records" {
   type = list(object({
     name  = string

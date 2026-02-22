@@ -2,10 +2,28 @@
  * Deployment-related types and contracts
  */
 
+export const DEPLOY_JOB_STATUS = {
+  QUEUED: 'queued',
+  RUNNING: 'running',
+  SUCCEEDED: 'succeeded',
+  FAILED: 'failed',
+  CANCELED: 'canceled',
+} as const;
+export type DeployJobStatus = (typeof DEPLOY_JOB_STATUS)[keyof typeof DEPLOY_JOB_STATUS];
+
+export const DEPLOY_JOB_STEP_STATUS = {
+  QUEUED: 'queued',
+  RUNNING: 'running',
+  SUCCEEDED: 'succeeded',
+  FAILED: 'failed',
+  SKIPPED: 'skipped',
+} as const;
+export type DeployJobStepStatus = (typeof DEPLOY_JOB_STEP_STATUS)[keyof typeof DEPLOY_JOB_STEP_STATUS];
+
 export interface DeployJobStep {
   key: string;
   title: string;
-  status: 'queued' | 'running' | 'succeeded' | 'failed' | 'skipped';
+  status: DeployJobStepStatus;
 }
 
 export interface DeployJob {
@@ -13,7 +31,7 @@ export interface DeployJob {
   projectId: string;
   environmentId: string;
   triggeredByUserId: string | null;
-  status: 'queued' | 'running' | 'succeeded' | 'failed' | 'canceled';
+  status: DeployJobStatus;
   currentStep: string | null;
   steps: DeployJobStep[];
   source: {
@@ -29,7 +47,7 @@ export interface DeployJob {
     slug: string;
   };
   environment?: {
-    name: string;
+    envType: string;
     displayName: string;
   };
 }

@@ -59,7 +59,7 @@ export default function DeploymentsPage() {
 | Shared (site + dashboard) | `common/features/<name>/routes/`    | HubRoute, ContributeRoute                                                   |
 | Dashboard-only            | `dashboard/features/<name>/routes/` | DeploymentsRoute, NewEnvironmentRoute                                       |
 | Site-only (marketing)     | `site/sections/`                    | HeroSection, PricingSection                                                 |
-| Auth                      | `common/features/auth/routes/`      | LoginRoute, SignupRoute, ForgotPasswordRoute, VerifyOtpRoute, CallbackRoute |
+| Auth                      | `common/features/auth/routes/`      | LoginRoute, SignupRoute, CallbackRoute |
 
 ### 3. Naming convention
 
@@ -74,8 +74,6 @@ All migrations complete. Pages now following the plan:
 
 - `app/(site)/auth/login/page.tsx` → `LoginRoute`
 - `app/(site)/auth/signup/page.tsx` → `SignupRoute`
-- `app/(site)/auth/forgot-password/page.tsx` → `ForgotPasswordRoute`
-- `app/(site)/auth/verify-otp/page.tsx` → `VerifyOtpRoute`
 - `app/(site)/auth/callback/page.tsx` → `CallbackRoute`
 - `app/(site)/pricing/page.tsx` → `PricingRoute`
 - `app/(site)/docs/page.tsx`, `app/(site)/docs/[slug]/page.tsx` → `DocsRoute`
@@ -90,7 +88,7 @@ Pages already following the plan:
 
 ## Implementation Order
 
-1. **Auth routes** – Extract LoginRoute, SignupRoute, ForgotPasswordRoute, VerifyOtpRoute, CallbackRoute into `common/features/auth/routes/`. Auth pages become thin wrappers. (Done)
+1. **Auth routes** – Extract LoginRoute, SignupRoute, CallbackRoute into `common/features/auth/routes/`. Auth pages become thin wrappers. (Done)
 2. **Pricing** – Extract PricingRoute to `common/features/pricing/routes/`. (Done)
 3. **Docs** – Extract DocsRoute to `common/features/docs/routes/`. (Done)
 

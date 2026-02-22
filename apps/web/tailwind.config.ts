@@ -6,11 +6,16 @@ const config: Config = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
     './src/features/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/site/**/*.{js,ts,jsx,tsx,mdx}',
     // Include UI package components
     '../../packages/ui/src/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
-    extend: {},
+    extend: {
+      animation: {
+        'spin-slow': 'spin 1s linear infinite',
+      },
+    },
   },
   plugins: [],
 };

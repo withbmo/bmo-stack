@@ -7,7 +7,14 @@ import { Button, Card, Input } from '@pytholit/ui';
 import { AdminPage } from '@/admin/shared/components/AdminPage';
 import { useAuth } from '@/shared/auth';
 import { getApiErrorMessage } from '@/shared/lib/client';
-import { adminListUsers, adminUpdateUser } from '@/shared/lib/admin';
+import {
+  adminGrantAdmin,
+  adminListUsers,
+  adminRevokeAdmin,
+  adminUpdateAdminLevel,
+  adminUpdateUser,
+} from '@/shared/lib/admin';
+import { getCurrentUser } from '@/shared/lib/user';
 
 export function UsersRoute() {
   const { token } = useAuth();
@@ -16,6 +23,13 @@ export function UsersRoute() {
   const [pendingQ, setPendingQ] = useState('');
 
   const queryKey = useMemo(() => ['admin', 'users', { q }], [q]);
+  const meQ = useQuery({
+    queryKey: ['admin', 'me'],
+    queryFn: () => getCurrentUser(token || ''),
+    enabled: !!token,
+  });
+  const canManageAdmins = meQ.data?.adminLevel === 'owner';
+
   const usersQ = useQuery({
     queryKey,
     queryFn: () => adminListUsers(token || '', { q, page: 1, pageSize: 50 }),
@@ -23,8 +37,29 @@ export function UsersRoute() {
   });
 
   const updateM = useMutation({
-    mutationFn: (args: { userId: string; body: { isActive?: boolean; role?: string | null } }) =>
+    mutationFn: (args: { userId: string; body: { isActive?: boolean } }) =>
       adminUpdateUser(token || '', args.userId, args.body),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ['admin', 'users'] });
+      toast.success('Updated.');
+    },
+    onError: (err) => toast.error(getApiErrorMessage(err, 'Update failed')),
+  });
+
+  const adminM = useMutation<
+    unknown,
+    unknown,
+    { kind: 'grant' | 'revoke' | 'level'; userId: string; level?: 'owner' | 'operator' | 'viewer' }
+  >({
+    mutationFn: (args: { kind: 'grant' | 'revoke' | 'level'; userId: string; level?: 'owner' | 'operator' | 'viewer' }) => {
+      if (args.kind === 'grant') {
+        return adminGrantAdmin(token || '', { userId: args.userId, level: args.level || 'viewer' });
+      }
+      if (args.kind === 'level') {
+        return adminUpdateAdminLevel(token || '', args.userId, { level: args.level || 'viewer' });
+      }
+      return adminRevokeAdmin(token || '', args.userId);
+    },
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['admin', 'users'] });
       toast.success('Updated.');
@@ -35,7 +70,7 @@ export function UsersRoute() {
   return (
     <AdminPage
       title="Users"
-      subtitle="Search users, manage roles/permissions, and deactivate accounts"
+      subtitle="Search users, manage admin memberships, and deactivate accounts"
       right={
         <form
           onSubmit={(e) => {
@@ -63,9 +98,9 @@ export function UsersRoute() {
               <tr className="font-mono text-[10px] tracking-wider uppercase text-nexus-muted">
                 <th className="p-3">Email</th>
                 <th className="p-3">Username</th>
-                <th className="p-3">Role</th>
+                <th className="p-3">Admin</th>
                 <th className="p-3">Active</th>
-                <th className="p-3 w-[220px]" />
+                <th className="p-3 w-[460px]" />
               </tr>
             </thead>
             <tbody>
@@ -92,7 +127,7 @@ export function UsersRoute() {
                   <tr key={u.id} className="border-b border-nexus-gray/60">
                     <td className="p-3 font-mono text-xs">{u.email}</td>
                     <td className="p-3 font-mono text-xs text-nexus-muted">{u.username}</td>
-                    <td className="p-3 font-mono text-xs">{u.role || 'user'}</td>
+                    <td className="p-3 font-mono text-xs">{u.adminLevel || '-'}</td>
                     <td className="p-3 font-mono text-xs">{u.isActive ? 'yes' : 'no'}</td>
                     <td className="p-3 flex gap-2 justify-end">
                       <Button
@@ -107,18 +142,74 @@ export function UsersRoute() {
                       >
                         {u.isActive ? 'Deactivate' : 'Activate'}
                       </Button>
-                      <Button
-                        variant="primary"
-                        onClick={() =>
-                          updateM.mutate({
-                            userId: u.id,
-                            body: { role: u.role === 'admin' ? 'user' : 'admin' },
-                          })
-                        }
-                        disabled={updateM.isPending}
-                      >
-                        Toggle Role
-                      </Button>
+                      {canManageAdmins ? (
+                        <>
+                          {u.isAdmin ? (
+                            <>
+                              <Button
+                                variant="secondary"
+                                onClick={() =>
+                                  adminM.mutate({
+                                    kind: 'level',
+                                    userId: u.id,
+                                    level: 'owner',
+                                  })
+                                }
+                                disabled={adminM.isPending}
+                              >
+                                Owner
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                onClick={() =>
+                                  adminM.mutate({
+                                    kind: 'level',
+                                    userId: u.id,
+                                    level: 'operator',
+                                  })
+                                }
+                                disabled={adminM.isPending}
+                              >
+                                Operator
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                onClick={() =>
+                                  adminM.mutate({
+                                    kind: 'level',
+                                    userId: u.id,
+                                    level: 'viewer',
+                                  })
+                                }
+                                disabled={adminM.isPending}
+                              >
+                                Viewer
+                              </Button>
+                              <Button
+                                variant="primary"
+                                onClick={() => adminM.mutate({ kind: 'revoke', userId: u.id })}
+                                disabled={adminM.isPending}
+                              >
+                                Revoke Admin
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              variant="primary"
+                              onClick={() =>
+                                adminM.mutate({
+                                  kind: 'grant',
+                                  userId: u.id,
+                                  level: 'viewer',
+                                })
+                              }
+                              disabled={adminM.isPending}
+                            >
+                              Make Admin
+                            </Button>
+                          )}
+                        </>
+                      ) : null}
                     </td>
                   </tr>
                 ))
@@ -130,4 +221,3 @@ export function UsersRoute() {
     </AdminPage>
   );
 }
-

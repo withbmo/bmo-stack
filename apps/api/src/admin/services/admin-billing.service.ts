@@ -8,7 +8,7 @@ export type AdminSubscriptionRow = {
   userId: string;
   planId: string | null;
   status: string;
-  stripeSubscriptionId: string;
+  externalSubscriptionId: string;
   currentPeriodStart: string;
   currentPeriodEnd: string;
   cancelAtPeriodEnd: boolean;
@@ -17,7 +17,7 @@ export type AdminSubscriptionRow = {
 export type AdminInvoiceRow = {
   id: string;
   userId: string;
-  stripeInvoiceId: string;
+  externalInvoiceId: string;
   amount: number;
   currency: string;
   status: string;
@@ -51,7 +51,7 @@ export class AdminBillingService {
         userId: s.userId,
         planId: s.planId ?? null,
         status: s.status,
-        stripeSubscriptionId: s.stripeSubscriptionId,
+        externalSubscriptionId: s.externalSubscriptionId,
         currentPeriodStart: s.currentPeriodStart.toISOString(),
         currentPeriodEnd: s.currentPeriodEnd.toISOString(),
         cancelAtPeriodEnd: s.cancelAtPeriodEnd,
@@ -81,7 +81,7 @@ export class AdminBillingService {
       items: invs.map((i) => ({
         id: i.id,
         userId: i.userId,
-        stripeInvoiceId: i.stripeInvoiceId,
+        externalInvoiceId: i.externalInvoiceId,
         amount: i.amount,
         currency: i.currency,
         status: i.status,
@@ -95,4 +95,3 @@ export class AdminBillingService {
     };
   }
 }
-

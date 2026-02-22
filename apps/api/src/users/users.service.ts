@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -10,6 +9,8 @@ import { exclude } from '@pytholit/db';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
+import { readTrimmedStringOrDefault } from '../config/config-readers';
+import { UPLOAD_DIR_DEFAULT } from '../config/defaults';
 import { PrismaService } from '../database/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -25,12 +26,19 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService
   ) {
-    this.uploadDir = this.configService.get<string>('UPLOAD_DIR') || 'uploads';
+    this.uploadDir = readTrimmedStringOrDefault(this.configService, 'UPLOAD_DIR', UPLOAD_DIR_DEFAULT);
   }
 
   async getUserProfile(userId: string): Promise<UserProfile> {
     const user = await this.prisma.client.user.findUnique({
       where: { id: userId },
+      include: {
+        adminMembership: {
+          select: {
+            level: true,
+          },
+        },
+      },
     });
 
     if (!user) {
@@ -43,16 +51,16 @@ export class UsersService {
       id: userWithoutPassword.id,
       email: userWithoutPassword.email,
       username: userWithoutPassword.username,
-      fullName: userWithoutPassword.fullName,
       firstName: userWithoutPassword.firstName ?? null,
       lastName: userWithoutPassword.lastName ?? null,
       bio: userWithoutPassword.bio,
       avatarUrl: userWithoutPassword.avatarUrl,
       isEmailVerified: userWithoutPassword.isEmailVerified,
       isActive: userWithoutPassword.isActive,
-      isSuperuser: userWithoutPassword.isSuperuser,
-      role: userWithoutPassword.role,
-      permissions: userWithoutPassword.permissions,
+      isAdmin: !!userWithoutPassword.adminMembership,
+      adminLevel: userWithoutPassword.adminMembership?.level ?? null,
+      stripeCustomerId: null,
+      novuSubscriberId: userWithoutPassword.novuSubscriberId ?? null,
       createdAt: userWithoutPassword.createdAt.toISOString(),
       updatedAt: userWithoutPassword.updatedAt.toISOString(),
       plan: null,
@@ -68,25 +76,10 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    // Check if email is being changed and already exists
-    if (updateUserDto.email && updateUserDto.email !== user.email) {
-      const existingUser = await this.prisma.client.user.findUnique({
-        where: { email: updateUserDto.email },
-      });
-
-      if (existingUser) {
-        throw new ConflictException('Email already in use');
-      }
-    }
-
     await this.prisma.client.user.update({
       where: { id: userId },
       data: {
         ...updateUserDto,
-        // Reset email verification if email changed
-        ...(updateUserDto.email && updateUserDto.email !== user.email
-          ? { isEmailVerified: false }
-          : {}),
       },
     });
 

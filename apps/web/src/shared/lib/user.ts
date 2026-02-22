@@ -5,8 +5,8 @@ import { API_V1,apiRequest } from "./client";
 export type { UserProfile };
 
 export interface UserProfileUpdate {
-  email?: string;
-  fullName?: string;
+  firstName?: string;
+  lastName?: string;
   bio?: string | null;
 }
 

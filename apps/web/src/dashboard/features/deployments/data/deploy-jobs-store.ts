@@ -1,11 +1,12 @@
+import { DEPLOY_JOB_STATUS, DEPLOY_JOB_STEP_STATUS } from '@pytholit/contracts';
 import type { DeployJob, DeployJobStep, DeployStepStatus } from '@/shared/types';
 
 const BASE_STEPS: DeployJobStep[] = [
-  { key: 'validate', title: 'Validate config', status: 'queued' },
-  { key: 'prepare', title: 'Prepare build context', status: 'queued' },
-  { key: 'mock_build', title: 'Build image (mock)', status: 'queued' },
-  { key: 'mock_deploy', title: 'Deploy (mock)', status: 'queued' },
-  { key: 'finalize', title: 'Finalize', status: 'queued' },
+  { key: 'validate', title: 'Validate config', status: DEPLOY_JOB_STEP_STATUS.QUEUED },
+  { key: 'prepare', title: 'Prepare build context', status: DEPLOY_JOB_STEP_STATUS.QUEUED },
+  { key: 'mock_build', title: 'Build image (mock)', status: DEPLOY_JOB_STEP_STATUS.QUEUED },
+  { key: 'mock_deploy', title: 'Deploy (mock)', status: DEPLOY_JOB_STEP_STATUS.QUEUED },
+  { key: 'finalize', title: 'Finalize', status: DEPLOY_JOB_STEP_STATUS.QUEUED },
 ];
 
 let deployJobs: DeployJob[] = [
@@ -14,9 +15,9 @@ let deployJobs: DeployJob[] = [
     projectId: 'p-001',
     environmentId: 'env-001',
     triggeredBy: 'user_01',
-    status: 'succeeded',
+    status: DEPLOY_JOB_STATUS.SUCCEEDED,
     currentStep: null,
-    steps: BASE_STEPS.map(step => ({ ...step, status: 'succeeded' })),
+    steps: BASE_STEPS.map(step => ({ ...step, status: DEPLOY_JOB_STEP_STATUS.SUCCEEDED })),
     source: { commit: 'a1b2c3d', origin: 'repo' },
     executionModeSnapshot: 'managed',
     createdAt: '2026-02-05T10:22:00Z',
@@ -28,14 +29,14 @@ let deployJobs: DeployJob[] = [
     projectId: 'p-002',
     environmentId: 'env-004',
     triggeredBy: 'user_01',
-    status: 'running',
+    status: DEPLOY_JOB_STATUS.RUNNING,
     currentStep: 'mock_build',
     steps: [
-      { key: 'validate', title: 'Validate config', status: 'succeeded' },
-      { key: 'prepare', title: 'Prepare build context', status: 'succeeded' },
-      { key: 'mock_build', title: 'Build image (mock)', status: 'running' },
-      { key: 'mock_deploy', title: 'Deploy (mock)', status: 'queued' },
-      { key: 'finalize', title: 'Finalize', status: 'queued' },
+      { key: 'validate', title: 'Validate config', status: DEPLOY_JOB_STEP_STATUS.SUCCEEDED },
+      { key: 'prepare', title: 'Prepare build context', status: DEPLOY_JOB_STEP_STATUS.SUCCEEDED },
+      { key: 'mock_build', title: 'Build image (mock)', status: DEPLOY_JOB_STEP_STATUS.RUNNING },
+      { key: 'mock_deploy', title: 'Deploy (mock)', status: DEPLOY_JOB_STEP_STATUS.QUEUED },
+      { key: 'finalize', title: 'Finalize', status: DEPLOY_JOB_STEP_STATUS.QUEUED },
     ],
     source: { commit: 'e4f5g6h', origin: 'repo' },
     executionModeSnapshot: 'byo_aws',
@@ -78,13 +79,16 @@ const updateStepStatus = (steps: DeployJobStep[], stepKey: string, status: Deplo
 
 export const cancelDeployJob = (jobId: string) => {
   updateDeployJob(jobId, job => {
-    if (job.status === 'succeeded' || job.status === 'failed') return job;
+    if (job.status === DEPLOY_JOB_STATUS.SUCCEEDED || job.status === DEPLOY_JOB_STATUS.FAILED)
+      return job;
     const steps: DeployJobStep[] = job.steps.map(step =>
-      step.status === 'queued' ? { ...step, status: 'skipped' as DeployStepStatus } : step
+      step.status === DEPLOY_JOB_STEP_STATUS.QUEUED
+        ? { ...step, status: DEPLOY_JOB_STEP_STATUS.SKIPPED }
+        : step
     );
     return {
       ...job,
-      status: 'canceled',
+      status: DEPLOY_JOB_STATUS.CANCELED,
       currentStep: null,
       steps,
       finishedAt: new Date().toISOString(),
@@ -98,36 +102,36 @@ export const startMockDeploy = async (jobId: string) => {
 
   updateDeployJob(jobId, job => ({
     ...job,
-    status: 'running',
+    status: DEPLOY_JOB_STATUS.RUNNING,
     startedAt: job.startedAt ?? new Date().toISOString(),
   }));
 
   for (const step of BASE_STEPS) {
     const latest = getDeployJobById(jobId);
-    if (!latest || latest.status !== 'running') break;
+    if (!latest || latest.status !== DEPLOY_JOB_STATUS.RUNNING) break;
 
     updateDeployJob(jobId, job => ({
       ...job,
       currentStep: step.key,
-      steps: updateStepStatus(job.steps, step.key, 'running'),
+      steps: updateStepStatus(job.steps, step.key, DEPLOY_JOB_STEP_STATUS.RUNNING),
     }));
 
     await sleep(1200);
 
     const afterRun = getDeployJobById(jobId);
-    if (!afterRun || afterRun.status !== 'running') break;
+    if (!afterRun || afterRun.status !== DEPLOY_JOB_STATUS.RUNNING) break;
 
     updateDeployJob(jobId, job => ({
       ...job,
-      steps: updateStepStatus(job.steps, step.key, 'succeeded'),
+      steps: updateStepStatus(job.steps, step.key, DEPLOY_JOB_STEP_STATUS.SUCCEEDED),
     }));
   }
 
   const final = getDeployJobById(jobId);
-  if (final && final.status === 'running') {
+  if (final && final.status === DEPLOY_JOB_STATUS.RUNNING) {
     updateDeployJob(jobId, job => ({
       ...job,
-      status: 'succeeded',
+      status: DEPLOY_JOB_STATUS.SUCCEEDED,
       currentStep: null,
       finishedAt: new Date().toISOString(),
     }));

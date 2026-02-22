@@ -20,17 +20,6 @@ export interface WorkflowStep {
   icon: string;
 }
 
-export interface PricingPlan {
-  id: string;
-  name: string;
-  price: string;
-  period: string;
-  description: string;
-  features: string[];
-  recommended?: boolean;
-  buttonText: string;
-}
-
 export type ResourceType = 'readme' | 'skill';
 
 export interface HubResource {

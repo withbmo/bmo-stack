@@ -19,6 +19,7 @@ dist/
 # Misc
 .DS_Store
 *.pem
+apps-export.txt
 
 # Debug
 npm-debug.log*

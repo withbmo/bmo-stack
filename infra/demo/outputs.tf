@@ -20,10 +20,6 @@ output "env_routing_table_name" {
   value = module.dynamodb.table_name
 }
 
-output "env_launch_template_id" {
-  value = module.compute.launch_template_id
-}
-
 output "jwt_secret_arn" {
   value = module.secrets.jwt_secret_arn
 }
@@ -115,4 +111,29 @@ output "next_steps" {
     "2) Build and push images using scripts/build-and-push-demo-images.sh",
     "3) Re-apply with final image tags"
   ]
+}
+
+output "lago_api_service_name" {
+  value       = var.enable_lago ? module.ecs_lago[0].api_service_name : null
+  description = "ECS service name for Lago API."
+}
+
+output "lago_worker_service_name" {
+  value       = var.enable_lago ? module.ecs_lago[0].worker_service_name : null
+  description = "ECS service name for Lago worker."
+}
+
+output "lago_front_service_name" {
+  value       = var.enable_lago ? module.ecs_lago[0].front_service_name : null
+  description = "ECS service name for Lago front (if enabled)."
+}
+
+output "lago_unhealthy_targets_alarm_arn" {
+  value       = var.enable_lago ? module.alb_app[0].lago_unhealthy_targets_alarm_arn : null
+  description = "CloudWatch alarm ARN for Lago unhealthy targets."
+}
+
+output "lago_alb_5xx_alarm_arn" {
+  value       = var.enable_lago ? module.alb_app[0].lago_alb_5xx_alarm_arn : null
+  description = "CloudWatch alarm ARN for Lago target 5xx errors."
 }

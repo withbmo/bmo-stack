@@ -64,3 +64,9 @@ export interface BlueprintLock {
   generatedAt: string;
 }
 
+export interface WizardTemplateSummary {
+  templateId: string;
+  title: string;
+  versions: string[];
+  latestVersion: string;
+}

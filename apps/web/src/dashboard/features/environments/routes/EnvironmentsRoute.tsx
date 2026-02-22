@@ -1,7 +1,8 @@
 'use client';
 
+import { ORCHESTRATOR_STATUS } from '@pytholit/contracts';
 import { EnvironmentsSkeleton } from '@pytholit/ui';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Layers, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -12,16 +13,39 @@ import { useAuth } from '@/shared/auth';
 import { DashboardPageHeader,PageLayout } from '@/shared/components/layout';
 import { getApiErrorMessage } from '@/shared/lib';
 import { startEnvironment, stopEnvironment, terminateEnvironment } from '@/shared/lib/environments';
+import { queryKeys } from '@/shared/lib/query-keys';
+import type { Environment } from '@/shared/types';
 
 import { EnvironmentList } from '../../projects/components/EnvironmentList';
 import { useEnvironments, useUpdateEnvironment } from '../../projects/hooks/useEnvironments';
 
 const tabs = ['environments'] as const;
 
+function patchEnvOrchestrator(
+  env: Environment,
+  patch: { status: string; message: string }
+): Environment {
+  const config = (env.config as Record<string, unknown> | undefined) ?? {};
+  const current = (config.orchestrator as Record<string, unknown> | undefined) ?? {};
+  return {
+    ...env,
+    config: {
+      ...config,
+      orchestrator: {
+        ...current,
+        status: patch.status,
+        message: patch.message,
+        ts: new Date().toISOString(),
+      },
+    },
+  };
+}
+
 export const EnvironmentsRoute = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('environments');
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const { user, hydrated } = useAuth();
   const { data: environments = [], isLoading: envLoading } = useEnvironments();
@@ -32,12 +56,32 @@ export const EnvironmentsRoute = () => {
       if (!hydrated || !user) throw new Error('Not authenticated');
       return startEnvironment(undefined, envId);
     },
-    onError: err => {
+    onMutate: async (envId: string) => {
+      setActiveActionId(envId);
+      await queryClient.cancelQueries({ queryKey: queryKeys.environments() });
+      const prev = queryClient.getQueryData<Environment[]>(queryKeys.environments());
+      if (prev) {
+        queryClient.setQueryData<Environment[]>(
+          queryKeys.environments(),
+          prev.map((e) =>
+            e.id === envId
+              ? patchEnvOrchestrator(e, { status: 'queued', message: 'Environment start requested' })
+              : e
+          )
+        );
+      }
+      return { prev };
+    },
+    onError: (err, _vars, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(queryKeys.environments(), ctx.prev);
       const msg =
         err instanceof Error ? err.message : getApiErrorMessage(err, 'Failed to start environment');
       toast.error(msg);
     },
-    onSettled: () => setActiveActionId(null),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.environments() });
+      setActiveActionId(null);
+    },
   });
 
   const stopMutation = useMutation({
@@ -45,12 +89,35 @@ export const EnvironmentsRoute = () => {
       if (!hydrated || !user) throw new Error('Not authenticated');
       return stopEnvironment(undefined, envId);
     },
-    onError: err => {
+    onMutate: async (envId: string) => {
+      setActiveActionId(envId);
+      await queryClient.cancelQueries({ queryKey: queryKeys.environments() });
+      const prev = queryClient.getQueryData<Environment[]>(queryKeys.environments());
+      if (prev) {
+        queryClient.setQueryData<Environment[]>(
+          queryKeys.environments(),
+          prev.map((e) =>
+            e.id === envId
+              ? patchEnvOrchestrator(e, {
+                  status: ORCHESTRATOR_STATUS.STOPPING,
+                  message: 'Environment stop requested',
+                })
+              : e
+          )
+        );
+      }
+      return { prev };
+    },
+    onError: (err, _vars, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(queryKeys.environments(), ctx.prev);
       const msg =
         err instanceof Error ? err.message : getApiErrorMessage(err, 'Failed to stop environment');
       toast.error(msg);
     },
-    onSettled: () => setActiveActionId(null),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.environments() });
+      setActiveActionId(null);
+    },
   });
 
   const terminateMutation = useMutation({
@@ -58,14 +125,37 @@ export const EnvironmentsRoute = () => {
       if (!hydrated || !user) throw new Error('Not authenticated');
       return terminateEnvironment(undefined, envId);
     },
-    onError: err => {
+    onMutate: async (envId: string) => {
+      setActiveActionId(envId);
+      await queryClient.cancelQueries({ queryKey: queryKeys.environments() });
+      const prev = queryClient.getQueryData<Environment[]>(queryKeys.environments());
+      if (prev) {
+        queryClient.setQueryData<Environment[]>(
+          queryKeys.environments(),
+          prev.map((e) =>
+            e.id === envId
+              ? patchEnvOrchestrator(e, {
+                  status: ORCHESTRATOR_STATUS.TERMINATING,
+                  message: 'Environment termination requested',
+                })
+              : e
+          )
+        );
+      }
+      return { prev };
+    },
+    onError: (err, _vars, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(queryKeys.environments(), ctx.prev);
       const msg =
         err instanceof Error
           ? err.message
           : getApiErrorMessage(err, 'Failed to terminate environment');
       toast.error(msg);
     },
-    onSettled: () => setActiveActionId(null),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.environments() });
+      setActiveActionId(null);
+    },
   });
 
   const projectTabs = [{ value: 'environments', label: 'ENVIRONMENTS' }];

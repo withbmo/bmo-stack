@@ -66,6 +66,20 @@ resource "aws_route53_record" "terminal" {
   }
 }
 
+resource "aws_route53_record" "lago" {
+  count = local.use_alb && var.enable_lago ? 1 : 0
+
+  zone_id = var.zone_id
+  name    = "lago.${var.app_domain_name}"
+  type    = "A"
+
+  alias {
+    name                   = var.app_alb_dns_name
+    zone_id                = var.app_alb_zone_id
+    evaluate_target_health = true
+  }
+}
+
 resource "aws_route53_record" "env_wildcard" {
   count = local.use_alb ? 1 : 0
 

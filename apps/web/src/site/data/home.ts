@@ -1,4 +1,4 @@
-import type { Feature, Stat } from '@/shared/types';
+import type { Stat } from '@/shared/types';
 
 export const HERO_PYTHON_CODE = `class PytholitApp(App):
     def __init__(self):
@@ -44,37 +44,6 @@ export const WORKFLOW_STEPS = [
     description: 'Ship to global regions, add a custom domain, and monitor SLOs in one panel.',
     meta: 'Edge deploys',
     icon: 'rocket',
-  },
-];
-
-export const FEATURES: Feature[] = [
-  {
-    id: 'f1',
-    title: 'INSTANT RUNTIME',
-    description: 'Zero-config environments with hot reload and deterministic builds.',
-    pythonCode: 'env = Runtime.spawn(config="turbo")\nenv.boot()  # cold start: 28ms',
-    icon: 'zap',
-  },
-  {
-    id: 'f2',
-    title: 'NEURAL CODEGEN',
-    description: 'AI that plans before it codes. It ships clean scaffolds.',
-    pythonCode: 'architect = PytholitAI.summon()\narchitect.plan("billing-api")',
-    icon: 'cpu',
-  },
-  {
-    id: 'f3',
-    title: 'GLOBAL EDGE',
-    description: 'Multi-region deploys with smart routing and edge caching.',
-    pythonCode: 'app.deploy(region="global")\n# P95: 12ms',
-    icon: 'cloud',
-  },
-  {
-    id: 'f4',
-    title: 'LIVE MULTIPLAYER',
-    description: 'Pair on the same runtime with shared state and instant sync.',
-    pythonCode: 'session = Collab.join(room_id="x9f2")\nsession.sync()',
-    icon: 'users',
   },
 ];
 

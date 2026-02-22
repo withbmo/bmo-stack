@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import type { AdminLevel } from '@pytholit/contracts';
 import type { Prisma } from '@pytholit/db';
 
 import { PrismaService } from '../../database/prisma.service';
@@ -11,9 +12,8 @@ export type AdminUserRow = {
   username: string;
   isActive: boolean;
   isEmailVerified: boolean;
-  isSuperuser: boolean;
-  role: string | null;
-  permissions: string[];
+  isAdmin: boolean;
+  adminLevel: AdminLevel | null;
   createdAt: string;
 };
 
@@ -54,10 +54,12 @@ export class AdminUsersService {
           username: true,
           isActive: true,
           isEmailVerified: true,
-          isSuperuser: true,
-          role: true,
-          permissions: true,
           createdAt: true,
+          adminMembership: {
+            select: {
+              level: true,
+            },
+          },
         },
       }),
     ]);
@@ -69,9 +71,8 @@ export class AdminUsersService {
         username: u.username,
         isActive: u.isActive,
         isEmailVerified: u.isEmailVerified,
-        isSuperuser: u.isSuperuser,
-        role: (u.role as unknown as string) ?? null,
-        permissions: u.permissions ?? [],
+        isAdmin: !!u.adminMembership,
+        adminLevel: u.adminMembership?.level ?? null,
         createdAt: u.createdAt.toISOString(),
       })),
       total,
@@ -85,18 +86,12 @@ export class AdminUsersService {
     userId: string,
     input: {
       isActive?: boolean;
-      isSuperuser?: boolean;
-      role?: 'user' | 'admin' | 'support' | 'billing';
-      permissions?: string[];
     }
   ): Promise<AdminUserRow> {
     const before = await this.prisma.client.user.findUnique({
       where: { id: userId },
       select: {
         isActive: true,
-        isSuperuser: true,
-        role: true,
-        permissions: true,
       },
     });
     if (!before) throw new NotFoundException('User not found');
@@ -105,9 +100,6 @@ export class AdminUsersService {
       where: { id: userId },
       data: {
         ...(typeof input.isActive === 'boolean' ? { isActive: input.isActive } : {}),
-        ...(typeof input.isSuperuser === 'boolean' ? { isSuperuser: input.isSuperuser } : {}),
-        ...(typeof input.role === 'string' ? { role: input.role as any } : {}),
-        ...(Array.isArray(input.permissions) ? { permissions: input.permissions } : {}),
       },
       select: {
         id: true,
@@ -115,10 +107,12 @@ export class AdminUsersService {
         username: true,
         isActive: true,
         isEmailVerified: true,
-        isSuperuser: true,
-        role: true,
-        permissions: true,
         createdAt: true,
+        adminMembership: {
+          select: {
+            level: true,
+          },
+        },
       },
     });
 
@@ -130,15 +124,9 @@ export class AdminUsersService {
       meta: {
         before: {
           isActive: before.isActive,
-          isSuperuser: before.isSuperuser,
-          role: before.role,
-          permissions: before.permissions,
         },
         after: {
           isActive: updated.isActive,
-          isSuperuser: updated.isSuperuser,
-          role: updated.role,
-          permissions: updated.permissions,
         },
       } as unknown as Prisma.InputJsonValue,
     });
@@ -149,9 +137,8 @@ export class AdminUsersService {
       username: updated.username,
       isActive: updated.isActive,
       isEmailVerified: updated.isEmailVerified,
-      isSuperuser: updated.isSuperuser,
-      role: (updated.role as unknown as string) ?? null,
-      permissions: updated.permissions ?? [],
+      isAdmin: !!updated.adminMembership,
+      adminLevel: updated.adminMembership?.level ?? null,
       createdAt: updated.createdAt.toISOString(),
     };
   }
@@ -165,10 +152,12 @@ export class AdminUsersService {
         username: true,
         isActive: true,
         isEmailVerified: true,
-        isSuperuser: true,
-        role: true,
-        permissions: true,
         createdAt: true,
+        adminMembership: {
+          select: {
+            level: true,
+          },
+        },
       },
     });
     if (!user) throw new NotFoundException('User not found');
@@ -178,11 +167,9 @@ export class AdminUsersService {
       username: user.username,
       isActive: user.isActive,
       isEmailVerified: user.isEmailVerified,
-      isSuperuser: user.isSuperuser,
-      role: (user.role as unknown as string) ?? null,
-      permissions: user.permissions ?? [],
+      isAdmin: !!user.adminMembership,
+      adminLevel: user.adminMembership?.level ?? null,
       createdAt: user.createdAt.toISOString(),
     };
   }
 }
-

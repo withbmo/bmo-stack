@@ -1,5 +1,6 @@
 'use client';
 
+import { DEPLOY_JOB_STATUS } from '@pytholit/contracts';
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -45,11 +46,11 @@ export function DeployJobsRoute() {
             className="bg-nexus-black border border-nexus-gray text-white font-mono text-xs px-2 py-2"
           >
             <option value="">ALL</option>
-            <option value="queued">QUEUED</option>
-            <option value="running">RUNNING</option>
-            <option value="succeeded">SUCCEEDED</option>
-            <option value="failed">FAILED</option>
-            <option value="canceled">CANCELED</option>
+            {Object.values(DEPLOY_JOB_STATUS).map((s) => (
+              <option key={s} value={s}>
+                {s.toUpperCase()}
+              </option>
+            ))}
           </select>
         </div>
       }

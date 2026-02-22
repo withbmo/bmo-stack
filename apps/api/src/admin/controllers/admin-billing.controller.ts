@@ -1,11 +1,12 @@
 import { Controller, Get, Query } from '@nestjs/common';
+import { UseAbility } from 'nest-casl';
 
-import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
+import { BillingSubject } from '../../auth-admin/casl/subjects';
 import { PaginationDto } from '../dto/pagination.dto';
 import { AdminBillingService } from '../services/admin-billing.service';
 
 @Controller('admin/billing')
-@RequirePermissions('admin.access', 'admin.billing.read')
+@UseAbility('read', BillingSubject) // Replaces ADMIN_BILLING_READ
 export class AdminBillingController {
   constructor(private readonly billing: AdminBillingService) {}
 
@@ -19,4 +20,3 @@ export class AdminBillingController {
     return this.billing.listInvoices({ page: q.page, pageSize: q.pageSize });
   }
 }
-

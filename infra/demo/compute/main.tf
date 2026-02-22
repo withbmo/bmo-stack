@@ -23,6 +23,16 @@ locals {
     #!/bin/bash
     set -eux
     apt-get update
+
+    # Install AWS SSM Agent via snap (Ubuntu 22.04 recommended method).
+    # Must be installed before Docker so it registers with Systems Manager
+    # before the network is saturated by container traffic.
+    # --classic confinement is required: the agent needs host-level access
+    # (process management, filesystem, network) blocked under strict snap confinement.
+    snap install amazon-ssm-agent --classic
+    systemctl enable snap.amazon-ssm-agent.amazon-ssm-agent.service
+    systemctl start snap.amazon-ssm-agent.amazon-ssm-agent.service
+
     apt-get install -y docker.io docker-compose-plugin
     systemctl enable docker
     systemctl start docker
@@ -60,6 +70,4 @@ resource "aws_launch_template" "env_vm" {
   }
 }
 
-output "launch_template_id" {
-  value = aws_launch_template.env_vm.id
-}
+// launch template output removed; env provisioning no longer depends on a single template id

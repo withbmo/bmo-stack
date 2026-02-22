@@ -8,4 +8,8 @@ export class RecordEntitlementUsageDto {
   @IsNumber()
   @Min(1)
   amount!: number;
+
+  @IsString()
+  @MinLength(1)
+  operationId!: string;
 }

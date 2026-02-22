@@ -66,7 +66,9 @@ resource "aws_ecs_task_definition" "this" {
         { name = "DB_SSLMODE", value = "require" },
         { name = "ZEPTOMAIL_BASE_URL", value = "https://api.zeptomail.com" },
         { name = "ZEPTOMAIL_FROM_EMAIL", value = "noreply@pytholit.dev" },
-        { name = "ZEPTOMAIL_FROM_NAME", value = "Pytholit" }
+        { name = "ZEPTOMAIL_FROM_NAME", value = "Pytholit" },
+        { name = "ORCHESTRATOR_URL", value = var.orchestrator_url != null ? var.orchestrator_url : "" },
+        { name = "INTERNAL_SECRET", value = var.internal_secret != null ? var.internal_secret : "" }
       ]
       secrets = local.container_secrets
     }

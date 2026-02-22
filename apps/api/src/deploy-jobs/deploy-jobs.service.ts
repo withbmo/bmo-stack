@@ -5,11 +5,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { DeployJob, DeployJobStep } from '@pytholit/contracts';
+import { DEPLOY_JOB_STATUS, DEPLOY_JOB_STEP_STATUS } from '@pytholit/contracts';
 import type { Prisma } from '@pytholit/db';
 import { CreateDeployJobDto } from '@pytholit/validation/class-validator';
 
 import { PrismaService } from '../database/prisma.service';
-import { EnvironmentsService } from '../environments/environments.service';
+import { EnvironmentsCrudService } from '../environments/services/environments-crud.service';
 import { ProjectsService } from '../projects/projects.service';
 
 /**
@@ -19,18 +20,18 @@ import { ProjectsService } from '../projects/projects.service';
 @Injectable()
 export class DeployJobsService {
   private readonly defaultSteps: DeployJobStep[] = [
-    { key: 'validate', title: 'Validate config', status: 'queued' },
-    { key: 'prepare', title: 'Prepare build context', status: 'queued' },
-    { key: 'mock_build', title: 'Build image (mock)', status: 'queued' },
-    { key: 'mock_deploy', title: 'Deploy (mock)', status: 'queued' },
-    { key: 'finalize', title: 'Finalize', status: 'queued' },
+    { key: 'validate', title: 'Validate config', status: DEPLOY_JOB_STEP_STATUS.QUEUED },
+    { key: 'prepare', title: 'Prepare build context', status: DEPLOY_JOB_STEP_STATUS.QUEUED },
+    { key: 'mock_build', title: 'Build image (mock)', status: DEPLOY_JOB_STEP_STATUS.QUEUED },
+    { key: 'mock_deploy', title: 'Deploy (mock)', status: DEPLOY_JOB_STEP_STATUS.QUEUED },
+    { key: 'finalize', title: 'Finalize', status: DEPLOY_JOB_STEP_STATUS.QUEUED },
   ];
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly projectsService: ProjectsService,
-    private readonly environmentsService: EnvironmentsService
-  ) {}
+    private readonly environmentsCrudService: EnvironmentsCrudService
+  ) { }
 
   async create(
     userId: string,
@@ -40,7 +41,7 @@ export class DeployJobsService {
     await this.projectsService.findOne(userId, createDeployJobDto.projectId);
 
     // Verify environment ownership
-    await this.environmentsService.findOne(userId, createDeployJobDto.environmentId);
+    await this.environmentsCrudService.findOne(userId, createDeployJobDto.environmentId);
 
     // Get environment execution mode for snapshot
     const environment = await this.prisma.client.environment.findUnique({
@@ -60,7 +61,7 @@ export class DeployJobsService {
         projectId: createDeployJobDto.projectId,
         environmentId: createDeployJobDto.environmentId,
         triggeredByUserId: userId,
-        status: 'queued',
+        status: DEPLOY_JOB_STATUS.QUEUED,
         currentStep: null,
         steps: this.defaultSteps as unknown as Prisma.InputJsonValue,
         source: (createDeployJobDto.source ?? { origin: 'manual', ref: 'main' }) as unknown as Prisma.InputJsonValue,
@@ -90,7 +91,7 @@ export class DeployJobsService {
 
     if (filters?.environmentId) {
       // Verify environment ownership first
-      await this.environmentsService.findOne(userId, filters.environmentId);
+      await this.environmentsCrudService.findOne(userId, filters.environmentId);
       where.environmentId = filters.environmentId;
     }
 
@@ -132,7 +133,10 @@ export class DeployJobsService {
     const deployJob = await this.findOne(userId, jobId);
 
     // Can only cancel queued or running jobs
-    if (!['queued', 'running'].includes(deployJob.status)) {
+    if (
+      deployJob.status !== DEPLOY_JOB_STATUS.QUEUED &&
+      deployJob.status !== DEPLOY_JOB_STATUS.RUNNING
+    ) {
       throw new BadRequestException(
         `Cannot cancel job with status: ${deployJob.status}`
       );
@@ -141,7 +145,7 @@ export class DeployJobsService {
     const updatedJob = await this.prisma.client.deployJob.update({
       where: { id: jobId },
       data: {
-        status: 'canceled',
+        status: DEPLOY_JOB_STATUS.CANCELED,
         finishedAt: new Date(),
       },
       include: {
@@ -161,11 +165,11 @@ export class DeployJobsService {
       where: {
         environmentId,
         status: {
-          in: ['queued', 'running'],
+          in: [DEPLOY_JOB_STATUS.QUEUED, DEPLOY_JOB_STATUS.RUNNING],
         },
       },
       data: {
-        status: 'canceled',
+        status: DEPLOY_JOB_STATUS.CANCELED,
         finishedAt: new Date(),
       },
     });
@@ -187,15 +191,15 @@ export class DeployJobsService {
       finishedAt: job.finishedAt?.toISOString() || null,
       project: job.project
         ? {
-            name: job.project.name,
-            slug: job.project.slug,
-          }
+          name: job.project.name,
+          slug: job.project.slug,
+        }
         : undefined,
       environment: job.environment
         ? {
-            name: job.environment.name,
-            displayName: job.environment.displayName,
-          }
+          envType: job.environment.envType,
+          displayName: job.environment.displayName,
+        }
         : undefined,
     };
   }

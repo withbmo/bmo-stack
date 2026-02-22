@@ -1,135 +1,167 @@
 'use client';
 
-import { ArrowRight } from 'lucide-react';
+import type { TurnstileInstance } from '@marsidev/react-turnstile';
+import { Turnstile } from '@marsidev/react-turnstile';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
+import { env } from '@/env';
 import { useAuth } from '@/shared/auth';
-import { useOtpFlow } from '@/shared/auth/hooks/useOtpFlow';
-import { applyOtpResponse } from '@/shared/auth/utils/otp';
-import {
-  getApiErrorMessage,
-  sendPublicSignupVerification,
-  verifyPublicSignupOtp,
-} from '@/shared/lib/auth';
+import { getApiErrorMessage, sendOtp, verifyOtp } from '@/shared/lib/auth';
 import { AuthCard } from '@/site/components/auth/AuthCard';
 import { AuthHeader } from '@/site/components/auth/AuthHeader';
 import { AuthPageLayout } from '@/site/components/auth/AuthPageLayout';
 import { AuthSubmitButton } from '@/site/components/auth/AuthSubmitButton';
-import { EmailField, OtpField } from '@/site/components/auth/FormFields';
+
+const TURNSTILE_SITE_KEY = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
+const IS_DEV = process.env.NODE_ENV === 'development';
 
 export function VerifyOtpRoute() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { refreshSession } = useAuth();
-  const [submitting, setSubmitting] = useState(false);
+
+  const email = (searchParams.get('email') || '').trim().toLowerCase();
+  const next = searchParams.get('next') || '/dashboard';
+
+  const [code, setCode] = useState('');
+  const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const turnstileRef = useRef<TurnstileInstance | null>(null);
 
-  const email = useMemo(() => searchParams.get('email') ?? '', [searchParams]);
-  const nextTarget = useMemo(
-    () => searchParams.get('next') || '/dashboard',
-    [searchParams]
-  );
-  const sendFailed = searchParams.get('sendFailed') === '1';
-  const expiresAt = useMemo(() => searchParams.get('expiresAt'), [searchParams]);
-  const nextRequestAt = useMemo(
-    () => searchParams.get('nextRequestAt'),
-    [searchParams]
-  );
+  const canUseCaptcha = !IS_DEV && TURNSTILE_SITE_KEY;
 
-  const { otpCode, setOtpCode, resendSecondsLeft, markOtpSent } = useOtpFlow({
-    flowType: 'signup',
-  });
-
-  useEffect(() => {
-    if (!email || sendFailed) return;
-    if (!nextRequestAt) return;
-    markOtpSent(email, expiresAt ?? null, nextRequestAt ?? null);
-  }, [email, expiresAt, nextRequestAt, sendFailed, markOtpSent]);
+  const submitDisabled = loading || code.length !== 6 || !email;
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      toast.error('Missing email context. Please go back to login.');
+      toast.error('Missing email for OTP verification. Please restart login/signup.');
       return;
     }
 
-    setSubmitting(true);
+    setLoading(true);
     try {
-      await verifyPublicSignupOtp(email, otpCode);
+      const result = await verifyOtp(email, code);
+      if (result.status !== 'authenticated') {
+        toast.error('OTP verification requires another step.');
+        return;
+      }
       await refreshSession();
-      toast.success('Email verified. Redirecting...');
-      router.replace(nextTarget);
+      router.replace(next);
     } catch (err) {
-      toast.error(getApiErrorMessage(err, 'Verification failed'));
+      toast.error(getApiErrorMessage(err, 'OTP verification failed.'));
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   };
 
   const handleResend = async () => {
     if (!email) {
-      toast.error('Missing email context. Please go back to login.');
+      toast.error('Missing email for OTP resend.');
+      return;
+    }
+    if (canUseCaptcha && !turnstileToken) {
+      toast.error('Please complete the security check first.');
       return;
     }
 
     setResending(true);
     try {
-      const response = await sendPublicSignupVerification(email);
-      applyOtpResponse(response, email, markOtpSent);
-      toast.success(response.message || 'Verification code sent.');
+      const resp = await sendOtp(email, turnstileToken);
+      toast.success(`New code sent. Expires at ${new Date(resp.otpExpiresAt).toLocaleTimeString()}.`);
+      setCode('');
+      if (canUseCaptcha) {
+        turnstileRef.current?.reset();
+        setTurnstileToken('');
+      }
     } catch (err) {
-      toast.error(getApiErrorMessage(err, 'Failed to resend code'));
+      toast.error(getApiErrorMessage(err, 'Failed to resend OTP.'));
     } finally {
       setResending(false);
     }
   };
 
+  const maskedEmail = useMemo(() => {
+    if (!email.includes('@')) return email;
+    const [localRaw, domainRaw] = email.split('@');
+    const local = localRaw ?? '';
+    const domain = domainRaw ?? '';
+    if (local.length <= 2) return `${local[0] ?? '*'}*@${domain}`;
+    return `${local.slice(0, 2)}***@${domain}`;
+  }, [email]);
+
   return (
     <AuthPageLayout>
-      <AuthHeader
-        mode="register"
-        showOtpStep
-        title={
-          <>
-            VERIFY <span className="text-nexus-purple">EMAIL</span>
-          </>
-        }
-        subtitle="Enter the OTP code sent to your inbox"
-      />
-
+      <AuthHeader mode="login" />
       <AuthCard>
-        {sendFailed && (
-          <div className="mb-4 border border-red-500/40 bg-red-500/10 p-3 font-mono text-xs text-red-300">
-            Initial OTP send failed. Use resend below.
+        <div className="mb-6 text-center space-y-2">
+          <h2 className="font-mono text-sm uppercase tracking-wider text-nexus-light">Verify Email OTP</h2>
+          <p className="font-mono text-xs text-nexus-muted">Enter the 6-digit code sent to {maskedEmail || 'your email'}.</p>
+        </div>
+
+        <form onSubmit={handleVerify} className="space-y-6">
+          <div className="space-y-2">
+            <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider">OTP Code</label>
+            <input
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={6}
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              className="w-full bg-nexus-black border border-nexus-gray px-3 py-3 text-center tracking-[0.4em] font-mono text-sm text-nexus-light"
+              placeholder="000000"
+              required
+            />
           </div>
-        )}
-        <form onSubmit={handleVerify} className="space-y-4">
-          <EmailField value={email} onChange={() => {}} readOnly />
 
-          <OtpField
-            value={otpCode}
-            onChange={setOtpCode}
-            onResend={handleResend}
-            resendSecondsLeft={resendSecondsLeft}
-            isLoading={resending}
-            email={email}
-          />
+          {canUseCaptcha ? (
+            <div className="flex justify-center">
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={TURNSTILE_SITE_KEY}
+                options={{ theme: 'dark' }}
+                onSuccess={(token) => setTurnstileToken(token)}
+                onExpire={() => setTurnstileToken('')}
+              />
+            </div>
+          ) : null}
 
-          <AuthSubmitButton type="submit" disabled={submitting} size="sm">
-            {submitting ? 'VERIFYING...' : <>VERIFY <ArrowRight size={16} /></>}
+          <AuthSubmitButton type="submit" disabled={submitDisabled}>
+            {loading ? (
+              <>
+                <Loader2 size={18} className="animate-spin shrink-0" />
+                <span>VERIFYING...</span>
+              </>
+            ) : (
+              <>
+                VERIFY CODE <ArrowRight size={16} />
+              </>
+            )}
           </AuthSubmitButton>
         </form>
 
-        <div className="mt-6 text-center">
-          <Link
-            href="/auth/login"
-            className="font-mono text-xs text-nexus-muted hover:text-nexus-purple uppercase tracking-wider"
+        <div className="mt-6 text-center space-y-3">
+          <button
+            type="button"
+            onClick={handleResend}
+            disabled={resending}
+            className="font-mono text-xs text-nexus-muted hover:text-nexus-purple underline decoration-dotted underline-offset-4 transition-colors uppercase tracking-wider disabled:opacity-60"
           >
-            Back to login
-          </Link>
+            {resending ? 'SENDING...' : 'Resend OTP'}
+          </button>
+          <div>
+            <Link
+              href="/auth/login"
+              className="font-mono text-xs text-nexus-muted hover:text-nexus-purple underline decoration-dotted underline-offset-4 transition-colors uppercase tracking-wider"
+            >
+              Back to login
+            </Link>
+          </div>
         </div>
       </AuthCard>
     </AuthPageLayout>

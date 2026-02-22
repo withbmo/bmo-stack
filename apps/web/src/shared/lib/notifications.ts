@@ -2,7 +2,7 @@ import { API_V1,apiRequest } from "./client";
 
 export type NovuTokenResponse = {
   subscriber_id: string;
-  subscriber_hash?: string | null;
+  subscriber_hash: string;
 };
 
 export async function getNovuToken(

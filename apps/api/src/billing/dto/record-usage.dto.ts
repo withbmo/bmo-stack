@@ -1,4 +1,4 @@
-import { IsNumber, IsString, MinLength } from 'class-validator';
+import { IsNumber, IsString, Min, MinLength } from 'class-validator';
 
 export class RecordUsageDto {
   @IsString()
@@ -6,6 +6,10 @@ export class RecordUsageDto {
   metricName!: string;
 
   @IsNumber()
+  @Min(1)
   value!: number;
-}
 
+  @IsString()
+  @MinLength(1)
+  operationId!: string;
+}

@@ -27,37 +27,34 @@ export class ProjectsController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(
-    @CurrentUser() user: any,
+    @CurrentUser('id') userId: string,
     @Body() createProjectDto: CreateProjectDto
   ): Promise<Project> {
-    return this.projectsService.create(user.id, createProjectDto);
+    return this.projectsService.create(userId, createProjectDto);
   }
 
   @Get()
-  async findAll(@CurrentUser() user: any): Promise<Project[]> {
-    return this.projectsService.findAll(user.id);
+  async findAll(@CurrentUser('id') userId: string): Promise<Project[]> {
+    return this.projectsService.findAll(userId);
   }
 
   @Get(':id')
-  async findOne(
-    @CurrentUser() user: any,
-    @Param('id') id: string
-  ): Promise<Project> {
-    return this.projectsService.findOne(user.id, id);
+  async findOne(@CurrentUser('id') userId: string, @Param('id') id: string): Promise<Project> {
+    return this.projectsService.findOne(userId, id);
   }
 
   @Patch(':id')
   async update(
-    @CurrentUser() user: any,
+    @CurrentUser('id') userId: string,
     @Param('id') id: string,
     @Body() updateProjectDto: UpdateProjectDto
   ): Promise<Project> {
-    return this.projectsService.update(user.id, id, updateProjectDto);
+    return this.projectsService.update(userId, id, updateProjectDto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@CurrentUser() user: any, @Param('id') id: string): Promise<void> {
-    return this.projectsService.remove(user.id, id);
+  async remove(@CurrentUser('id') userId: string, @Param('id') id: string): Promise<void> {
+    return this.projectsService.remove(userId, id);
   }
 }

@@ -1,5 +1,7 @@
 import type { ConfigService } from '@nestjs/config';
 
+import { FRONTEND_URL_DEFAULT, UPLOAD_DIR_DEFAULT } from './defaults';
+
 export type AppEnvName = 'localhost' | 'development' | 'production';
 
 export interface ApiAppEnv {
@@ -41,7 +43,7 @@ export function getApiAppEnv(config: ConfigService): ApiAppEnv {
   const explicit = normalizeEnvName(rawAppEnv);
 
   const nodeEnv = (config.get<string>('NODE_ENV') ?? process.env.NODE_ENV ?? '').toString();
-  const frontendUrl = (config.get<string>('FRONTEND_URL') ?? 'http://localhost:3000').toString();
+  const frontendUrl = (config.get<string>('FRONTEND_URL') ?? FRONTEND_URL_DEFAULT).toString();
   const cookieDomainRaw = (config.get<string>('COOKIE_DOMAIN') ?? '').toString();
   const uploadDirRaw = (config.get<string>('UPLOAD_DIR') ?? '').toString();
 
@@ -55,7 +57,7 @@ export function getApiAppEnv(config: ConfigService): ApiAppEnv {
     .filter(Boolean);
 
   const cookieDomain = cookieDomainRaw.trim() !== '' ? cookieDomainRaw.trim() : undefined;
-  const uploadDir = uploadDirRaw.trim() !== '' ? uploadDirRaw.trim() : 'uploads';
+  const uploadDir = uploadDirRaw.trim() !== '' ? uploadDirRaw.trim() : UPLOAD_DIR_DEFAULT;
 
   return {
     name,

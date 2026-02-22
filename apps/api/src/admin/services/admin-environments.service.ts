@@ -8,7 +8,7 @@ export type AdminEnvironmentRow = {
   id: string;
   ownerId: string;
   projectId: string | null;
-  name: string;
+  envType: string;
   displayName: string;
   tierPolicy: string;
   executionMode: string;
@@ -33,7 +33,7 @@ export class AdminEnvironmentsService {
     const where: Prisma.EnvironmentWhereInput = params.q
       ? {
           OR: [
-            { name: { contains: params.q, mode: 'insensitive' } },
+            { envType: { contains: params.q, mode: 'insensitive' } },
             { displayName: { contains: params.q, mode: 'insensitive' } },
             { ownerId: { contains: params.q } },
             { projectId: { contains: params.q } },
@@ -56,7 +56,7 @@ export class AdminEnvironmentsService {
         id: e.id,
         ownerId: e.ownerId,
         projectId: e.projectId ?? null,
-        name: e.name,
+        envType: e.envType,
         displayName: e.displayName,
         tierPolicy: e.tierPolicy,
         executionMode: e.executionMode,
@@ -71,4 +71,3 @@ export class AdminEnvironmentsService {
     };
   }
 }
-

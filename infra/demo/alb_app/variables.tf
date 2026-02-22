@@ -29,3 +29,15 @@ variable "tags" {
   type    = map(string)
   default = {}
 }
+
+variable "enable_lago" {
+  type        = bool
+  default     = false
+  description = "Create Lago target group and listener rules."
+}
+
+variable "alarm_actions" {
+  type        = list(string)
+  default     = []
+  description = "Optional CloudWatch alarm action ARNs (e.g. SNS topic ARN)."
+}

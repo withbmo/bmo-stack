@@ -1,61 +1,37 @@
-# Stripe webhooks
+# Billing Webhooks
 
-Webhook endpoint: `POST /api/v1/billing/webhook`
+## Endpoints
 
-Implementation:
+- `POST /api/v1/billing/webhook` (Stripe)
+- `POST /api/v1/billing/webhook/lago` (Lago)
 
-- Controller: `apps/api/src/billing/billing.controller.ts`
-- Signature verification: `apps/api/src/billing/stripe.service.ts`
-- Event handlers + dedupe: `apps/api/src/billing/billing.service.ts`
+## Stripe webhook (`/billing/webhook`)
 
-## Raw body requirement
+Purpose:
+- Handle **credit purchase** completion and top up Lago wallet.
 
-Stripe signature verification requires the **exact raw request payload**.
+Requirements:
+- Raw body parsing enabled for this route in `apps/api/src/main.ts`.
+- `STRIPE_WEBHOOK_SECRET` must be configured.
 
-The API sets up raw body parsing only for this endpoint in `apps/api/src/main.ts`:
+Current event handling:
+- `checkout.session.completed` with `metadata.credits` and `metadata.userId`:
+  - find/create Lago wallet
+  - add purchased credits
 
-- `express.raw({ type: 'application/json' })` for the webhook path
-- normal JSON parsing for everything else
+## Lago webhook (`/billing/webhook/lago`)
 
-## Required configuration
+Purpose:
+- Handle Lago billing lifecycle events.
 
-Environment variables (see `apps/api/src/config/env.ts`):
+Requirements:
+- `LAGO_WEBHOOK_SECRET` must be configured.
+- Signature header: `x-lago-signature`.
 
-- `STRIPE_SECRET_KEY`: initializes the Stripe client
-- `STRIPE_WEBHOOK_SECRET`: used to validate the `stripe-signature` header
-
-## Deduplication
-
-Before handling, the service records the event id in Postgres:
-
-- Table: `stripe_webhook_events` (`StripeWebhookEvent` model)
-- If a duplicate is detected (unique constraint), processing is skipped
-
-This logic is in `BillingService.markStripeEventAsProcessed()`.
-
-## Events handled
-
-From `BillingService.handleWebhookEvent()`:
-
-- `checkout.session.completed`
-  - reads `metadata.userId` and `metadata.planId`
-  - links Stripe customer to user (best-effort)
-  - fetches Stripe subscription and upserts `subscriptions`
-
-- `customer.subscription.created`
-- `customer.subscription.updated`
-  - upserts `subscriptions` with:
-    - normalized status
-    - current period start/end
-    - cancelAtPeriodEnd
-    - inferred `planId` (via subscription metadata or price id mapping)
-
-- `customer.subscription.deleted`
-  - sets subscription status to `canceled`
-
-- `invoice.payment_succeeded`
-  - upserts `invoices` (amount/status/URLs)
-
-- `invoice.payment_failed`
-  - logs a warning (TODO: notify user)
-
+Current handler:
+- `apps/api/src/billing/lago-webhook.handler.ts`
+- Stores event id in `lago_webhook_events` for idempotency.
+- Handles:
+  - `invoice.paid`
+  - `invoice.payment_failed`
+  - `subscription.terminated`

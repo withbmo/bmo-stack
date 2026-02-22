@@ -1,5 +1,6 @@
-import { IsEmail, IsString, MaxLength, MinLength, Matches, IsEnum, IsOptional } from 'class-validator';
+import { IsEmail, IsString, MaxLength, MinLength, Matches, IsOptional } from 'class-validator';
 import { AUTH_CONSTANTS } from '../schemas/auth.schema';
+import { IsStrongPassword } from '../validators/password-strength.validator';
 
 /**
  * Login DTO
@@ -12,6 +13,9 @@ export class LoginDto {
   @IsString()
   @MinLength(AUTH_CONSTANTS.MIN_PASSWORD_LENGTH)
   @MaxLength(AUTH_CONSTANTS.MAX_PASSWORD_LENGTH)
+  @IsStrongPassword(3, {
+    message: 'Password is not strong enough. Use a mix of uncommon words, avoid patterns, and make it longer.',
+  })
   password!: string;
 
   @IsString()
@@ -37,97 +41,21 @@ export class SignupDto {
   @IsString()
   @MinLength(AUTH_CONSTANTS.MIN_PASSWORD_LENGTH)
   @MaxLength(AUTH_CONSTANTS.MAX_PASSWORD_LENGTH)
+  @IsStrongPassword(3, {
+    message: 'Password is not strong enough. Use a mix of uncommon words, avoid patterns, and make it longer.',
+  })
   password!: string;
 
   @IsString()
   @MinLength(1)
-  @MaxLength(AUTH_CONSTANTS.MAX_FULLNAME_LENGTH)
-  fullName!: string;
+  @MaxLength(AUTH_CONSTANTS.MAX_NAME_LENGTH)
+  firstName!: string;
 
-  @IsString()
-  captchaToken!: string;
-}
-
-/**
- * OTP Purpose enum
- */
-export enum OTPPurpose {
-  EMAIL_VERIFICATION = 'email_verification',
-  PASSWORD_RESET = 'password_reset',
-  TWO_FA = '2fa',
-  LOGIN_VERIFICATION = 'login_verification',
-}
-
-/**
- * Send OTP DTO
- */
-export class SendOtpDto {
-  @IsEmail({}, { message: 'Invalid email address' })
-  @MaxLength(AUTH_CONSTANTS.MAX_EMAIL_LENGTH)
-  email!: string;
-
-  @IsEnum(OTPPurpose)
-  purpose!: OTPPurpose;
-
-  @IsString()
   @IsOptional()
-  captchaToken?: string;
-}
-
-/**
- * Verify OTP DTO
- */
-export class VerifyOtpDto {
-  @IsEmail({}, { message: 'Invalid email address' })
-  @MaxLength(AUTH_CONSTANTS.MAX_EMAIL_LENGTH)
-  email!: string;
-
   @IsString()
-  @MinLength(6)
-  @MaxLength(6)
-  @Matches(/^\d{6}$/, { message: 'OTP code must be 6 digits' })
-  code!: string;
-
-  @IsEnum(OTPPurpose)
-  purpose!: OTPPurpose;
-}
-
-/**
- * Forgot Password DTO
- */
-export class ForgotPasswordDto {
-  @IsEmail({}, { message: 'Invalid email address' })
-  @MaxLength(AUTH_CONSTANTS.MAX_EMAIL_LENGTH)
-  email!: string;
+  @MaxLength(AUTH_CONSTANTS.MAX_NAME_LENGTH)
+  lastName?: string;
 
   @IsString()
   captchaToken!: string;
-}
-
-/**
- * Reset Password DTO
- */
-export class ResetPasswordDto {
-  @IsString()
-  token!: string;
-
-  @IsString()
-  @MinLength(AUTH_CONSTANTS.MIN_PASSWORD_LENGTH)
-  @MaxLength(AUTH_CONSTANTS.MAX_PASSWORD_LENGTH)
-  newPassword!: string;
-}
-
-/**
- * Change Password DTO
- */
-export class ChangePasswordDto {
-  @IsString()
-  @MinLength(AUTH_CONSTANTS.MIN_PASSWORD_LENGTH)
-  @MaxLength(AUTH_CONSTANTS.MAX_PASSWORD_LENGTH)
-  currentPassword!: string;
-
-  @IsString()
-  @MinLength(AUTH_CONSTANTS.MIN_PASSWORD_LENGTH)
-  @MaxLength(AUTH_CONSTANTS.MAX_PASSWORD_LENGTH)
-  newPassword!: string;
 }

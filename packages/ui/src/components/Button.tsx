@@ -23,11 +23,11 @@ const variantClasses: Record<ButtonVariant, string> = {
   primary:
     'nexus-shadow-btn flex items-center justify-center gap-2 bg-brand-primary text-white border border-white/30 uppercase tracking-wider',
   secondary:
-    'inline-flex items-center justify-center gap-2 bg-black/40 backdrop-blur text-white font-mono border-2 border-border-dim hover:border-brand-primary hover:text-brand-primary transition-all',
+    'inline-flex items-center justify-center gap-2 bg-black/40 backdrop-blur text-white font-mono border-2 border-border-dim hover:border-brand-primary hover:text-brand-primary transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-border-dim disabled:hover:text-white',
   ghost:
-    'inline-flex items-center justify-center gap-2 bg-transparent text-text-secondary hover:text-white hover:bg-white/5 font-mono transition-all',
+    'inline-flex items-center justify-center gap-2 bg-transparent text-text-secondary hover:text-white hover:bg-white/5 font-mono transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-text-secondary disabled:hover:bg-transparent',
   danger:
-    'inline-flex items-center justify-center gap-2 font-mono border border-red-500/50 text-red-500 hover:bg-red-500 hover:text-white transition-all',
+    'inline-flex items-center justify-center gap-2 font-mono border border-red-500/50 text-red-500 hover:bg-red-500 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-red-500',
 };
 
 export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'size'> {

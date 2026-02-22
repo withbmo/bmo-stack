@@ -12,7 +12,7 @@ export const DeployJobRow = ({ job, environment }: DeployJobRowProps) => {
     <tr className="border-b border-nexus-gray/40 hover:bg-white/2 transition-colors">
       <td className="px-4 py-3 text-xs font-mono text-white">{formatTimestamp(job.createdAt)}</td>
       <td className="px-4 py-3 text-xs font-mono text-white">
-        {environment ? environment.name.toUpperCase() : 'UNKNOWN'}
+        {environment ? (environment.displayName || environment.envType).toUpperCase() : 'UNKNOWN'}
       </td>
       <td className="px-4 py-3">
         <DeployJobStatusBadge status={job.status} />

@@ -1,5 +1,6 @@
 'use client';
 
+import { DEPLOY_JOB_STATUS } from '@pytholit/contracts';
 import { Rocket, Terminal } from 'lucide-react';
 import { useParams,useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
@@ -88,11 +89,7 @@ export const ProjectDetailsRoute = () => {
 
   const statusTabs = [
     { value: 'all', label: 'ALL' },
-    { value: 'queued', label: 'QUEUED' },
-    { value: 'running', label: 'RUNNING' },
-    { value: 'succeeded', label: 'SUCCEEDED' },
-    { value: 'failed', label: 'FAILED' },
-    { value: 'canceled', label: 'CANCELED' },
+    ...Object.values(DEPLOY_JOB_STATUS).map(v => ({ value: v, label: v.toUpperCase() })),
   ];
 
   return (

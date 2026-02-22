@@ -28,20 +28,9 @@ export const NovuInbox = () => {
   const [auth, setAuth] = useState<NovuTokenResponse | null>(null);
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
-  const didLog = useRef(false);
 
   useEffect(() => {
-    if (didLog.current) return;
-    didLog.current = true;
-    // Dev-only: helps confirm env vars are loaded/restarted.
-    if (process.env.NODE_ENV === 'development') {
-      console.log('NOVU_API_URL', NOVU_API_URL);
-      console.log('NOVU_WS_URL', NOVU_WS_URL);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!hydrated || !user) {
+    if (!hydrated || !user || !NOVU_APP_ID) {
       setAuth(null);
       return;
     }
@@ -126,7 +115,7 @@ export const NovuInbox = () => {
     <NovuProvider
       applicationIdentifier={NOVU_APP_ID}
       subscriberId={auth.subscriber_id}
-      subscriberHash={auth.subscriber_hash ?? undefined}
+      subscriberHash={auth.subscriber_hash}
       backendUrl={toAbsoluteUrl(normalizeRelativeUrl(NOVU_API_URL)) || undefined}
       socketUrl={toAbsoluteUrl(normalizeRelativeUrl(NOVU_WS_URL)) || undefined}
     >

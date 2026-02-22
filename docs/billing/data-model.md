@@ -1,79 +1,30 @@
-# Billing data model (Prisma / Postgres)
+# Billing Data Model
 
-Schema: `packages/db/prisma/schema.prisma`
+Schema source: `packages/db/prisma/schema.prisma`
 
 ## User billing fields
 
-`users`:
+`users` table:
+- `stripe_customer_id` (nullable): Stripe customer for portal/payment method flows
+- `lago_customer_id` (nullable): Lago customer reference
+- `lago_wallet_id` (nullable): Lago wallet reference
 
-- `stripeCustomerId` (nullable, unique): links a user to a Stripe Customer
+## Billing tables currently used
 
-## Core billing tables
+- `lago_webhook_events`
+  - Idempotency tracking for Lago webhooks
+  - Optional `user_id` reference
 
-### `subscriptions`
+## Legacy-compatible tables still present
 
-- `stripeSubscriptionId` (unique)
-- `userId` → `users.id` (cascade delete)
-- `planId` (nullable): internal plan id (from `@pytholit/config`)
-- `status`: `active | canceled | past_due | unpaid | trialing`
-- `currentPeriodStart`, `currentPeriodEnd`
-- `cancelAtPeriodEnd`
+- `subscriptions`
+- `invoices`
+- `payments`
+- `user_payment_methods`
 
-### `invoices`
+These remain in schema for compatibility, but core billing behavior is Lago-first.
 
-- `stripeInvoiceId` (unique)
-- `userId` → `users.id` (cascade delete)
-- `amount` (minor units, e.g. cents), `currency`
-- `status`: `draft | open | paid | void | uncollectible`
-- `paidAt`, `dueDate`
-- `invoiceUrl`, `pdfUrl`
+## Removed tables
 
-### `payments`
-
-Model exists for recording individual payments:
-
-- `stripePaymentId` (unique)
-- `userId` → `users.id` (cascade delete)
-- `amount`, `currency`
-- `status`: `pending | succeeded | failed | refunded`
-
-Note: current billing implementation persists invoices and subscriptions, but does not upsert `payments` yet.
-
-### `user_payment_methods`
-
-Model exists for persisting payment methods:
-
-- `stripePaymentMethodId` (unique)
-- `userId` → `users.id` (cascade delete)
-- `type`, `last4`, `brand`, `expiryMonth`, `expiryYear`
-- `isDefault`
-
-Note: current billing implementation reads payment methods live from Stripe and returns them, but does not persist them to this table.
-
-### `stripe_webhook_events`
-
-Used for webhook deduplication:
-
-- `id` (primary key): Stripe event id (e.g. `evt_...`)
-- `type`
-
-## Entitlements / usage metering
-
-### `usage_counters`
-
-Tracks metered usage per user/feature/period:
-
-- composite unique:
-  - `userId`, `featureId`, `periodStart`, `periodEnd`
-- `used` increments via `EntitlementsService.recordUsage()`
-
-## How billing relates to environments
-
-There is no direct FK between billing and `environments`.
-
-Relationship is:
-
-- `environments.ownerId` → `users.id`
-- user’s effective plan is inferred from `subscriptions` (or default plan)
-- entitlements/feature gating can then be applied to environment-related operations.
-
+- `usage_counters` removed via migration `20260220094000_drop_usage_counters`
+- `stripe_webhook_events` removed via migration `20260220095500_drop_stripe_webhook_events`

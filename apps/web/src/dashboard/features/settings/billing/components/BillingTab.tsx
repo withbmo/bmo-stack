@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   Wallet,
 } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -17,6 +18,7 @@ import { PLAN_FEATURES,USAGE_METRICS } from '@/shared/constants/settings';
 import {
   createCheckoutSession,
   createPortalSession,
+  finalizeCheckoutSession,
   getInvoices,
   getPaymentMethods,
   getPlans,
@@ -51,13 +53,17 @@ const formatPeriod = (start: string, end: string) =>
   })}`;
 
 export const BillingTab = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, hydrated } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [plans, setPlans] = useState<PublicPlan[]>([]);
-  const [subscription, setSubscription] = useState<SubscriptionResponse | null>(null);
+  const [subscriptionResponse, setSubscriptionResponse] = useState<SubscriptionResponse | null>(null);
   const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month');
   const [invoices, setInvoices] = useState<InvoiceResponse[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodResponse[]>([]);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>('');
+  const [isFinalizingCheckout, setIsFinalizingCheckout] = useState(false);
 
   useEffect(() => {
     if (!hydrated || !user) return;
@@ -72,10 +78,19 @@ export const BillingTab = () => {
           getPaymentMethods(undefined),
         ]);
         if (cancelled) return;
-        setSubscription(sub);
-        setInvoices(inv);
+        setSubscriptionResponse(sub);
+        setInvoices(inv.items ?? []);
         setPlans(planData);
         setPaymentMethods(pms);
+        if (planData.length > 0) {
+          const preferredPlanId =
+            (sub?.subscription?.planId && planData.some((p) => p.id === sub.subscription.planId)
+              ? sub.subscription.planId
+              : planData[0]?.id) || '';
+          setSelectedPlanId((prev) =>
+            prev && planData.some((p) => p.id === prev) ? prev : preferredPlanId
+          );
+        }
       } catch {
         if (!cancelled) toast.error('Failed to load billing data');
       } finally {
@@ -88,44 +103,102 @@ export const BillingTab = () => {
   }, [hydrated, user]);
 
   const activePlan = useMemo(() => {
-    if (subscription?.planId) {
-      return plans.find(p => p.id === subscription.planId) || null;
+    if (subscriptionResponse?.subscription?.planId) {
+      return plans.find(p => p.id === subscriptionResponse.subscription.planId) || null;
     }
     return plans[0] || null;
-  }, [plans, subscription?.planId]);
+  }, [plans, subscriptionResponse?.subscription?.planId]);
 
-  const isActive = subscription?.status === 'active' || subscription?.status === 'trialing';
+  const selectedPlan = useMemo(() => {
+    if (!plans.length) return null;
+    const found = plans.find((p) => p.id === selectedPlanId);
+    return found ?? activePlan ?? plans[0] ?? null;
+  }, [activePlan, plans, selectedPlanId]);
+
+  const currentSubscription = subscriptionResponse?.subscription ?? null;
+  const rolloutEnabled = subscriptionResponse?.rolloutEnabled ?? false;
+  const isActive = currentSubscription?.status === 'active' || currentSubscription?.status === 'trialing';
+  const isSelectedCurrentPlan = Boolean(
+    isActive && selectedPlan?.id && selectedPlan.id === currentSubscription?.planId
+  );
   const planLabel = activePlan?.name || (isActive ? 'Active' : 'Free');
   const planPrice = activePlan
-    ? `$${billingInterval === 'year' ? activePlan.yearlyPrice : activePlan.monthlyPrice} / ${
+    ? `$${((billingInterval === 'year'
+      ? activePlan.yearlyPriceCents
+      : activePlan.monthlyPriceCents) / 100).toFixed(0)} / ${
         billingInterval === 'year' ? 'year' : 'month'
       }`
     : isActive
       ? 'Active subscription'
       : 'No active subscription';
-  const nextCharge = subscription?.currentPeriodEnd || null;
+  const nextCharge = currentSubscription?.periodEnd || null;
+
+  useEffect(() => {
+    if (!hydrated || !user) return;
+
+    const setup = searchParams.get('setup');
+    const pendingPlanCode = searchParams.get('pendingPlanCode');
+    if (setup !== 'success' || !pendingPlanCode || isFinalizingCheckout) return;
+
+    let cancelled = false;
+    (async () => {
+      setIsFinalizingCheckout(true);
+      try {
+        await finalizeCheckoutSession(undefined, pendingPlanCode);
+        if (cancelled) return;
+        toast.success('Plan activated successfully.');
+        router.replace('/dashboard/settings/billing');
+      } catch (err: any) {
+        if (cancelled) return;
+        toast.error(err?.detail || 'Failed to finalize checkout');
+      } finally {
+        if (!cancelled) setIsFinalizingCheckout(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, isFinalizingCheckout, router, searchParams, user]);
 
   const billingHistory = useMemo(() => {
     if (invoices.length === 0) return [];
     return invoices.map(inv => ({
-      invoice: inv.stripeInvoiceId,
-      period: formatPeriod(inv.createdAt, inv.createdAt),
-      amount: formatCurrency(inv.amount, inv.currency),
+      invoice: inv.number,
+      period: formatPeriod(inv.issuingDate || new Date().toISOString(), inv.issuingDate || new Date().toISOString()),
+      amount: formatCurrency(inv.amountCents, inv.currency),
       status: inv.status,
-      date: inv.createdAt,
-      invoiceUrl: inv.invoiceUrl,
+      date: inv.issuingDate || '',
+      invoiceUrl: inv.pdfUrl,
     }));
   }, [invoices]);
 
   const handleCheckout = async () => {
     if (!hydrated || !user) return;
-    if (!activePlan) {
-      toast.error('Missing active plan');
+    if (!rolloutEnabled) {
+      toast.error('Billing checkout is not enabled for this account yet.');
+      return;
+    }
+    if (!selectedPlan) {
+      toast.error('Missing selected plan');
+      return;
+    }
+    if (isSelectedCurrentPlan) {
+      toast.error('Selected plan is already active');
       return;
     }
     try {
-      const { url } = await createCheckoutSession(undefined, activePlan.id, billingInterval);
-      window.location.href = url;
+      const result = await createCheckoutSession(undefined, selectedPlan.id, billingInterval);
+      if (result.requiresPaymentMethod && result.paymentSetupUrl) {
+        window.location.href = result.paymentSetupUrl;
+        return;
+      }
+      if (result.url) {
+        window.location.href = result.url;
+        return;
+      }
+      toast.success('Checkout completed.');
+      router.refresh();
     } catch (err: any) {
       toast.error(err?.detail || 'Failed to start checkout');
     }
@@ -133,6 +206,10 @@ export const BillingTab = () => {
 
   const handlePortal = async () => {
     if (!hydrated || !user) return;
+    if (!rolloutEnabled) {
+      toast.error('Billing portal is not enabled for this account yet.');
+      return;
+    }
     try {
       const { url } = await createPortalSession(undefined);
       window.location.href = url;
@@ -185,13 +262,48 @@ export const BillingTab = () => {
                   </div>
                 </div>
                 <button
-                  onClick={isActive ? handlePortal : handleCheckout}
+                  onClick={isSelectedCurrentPlan ? handlePortal : handleCheckout}
                   className="px-4 py-2 border border-nexus-purple text-nexus-purple font-mono text-[10px] uppercase tracking-wider hover:bg-nexus-purple/10 transition-colors flex items-center gap-2 disabled:opacity-60"
-                  disabled={isLoading}
+                  disabled={isLoading || isFinalizingCheckout || !rolloutEnabled}
                 >
                   <CircleDollarSign size={14} />
-                  {isActive ? 'Manage Plan' : 'Upgrade Plan'}
+                  {isSelectedCurrentPlan ? 'Manage Plan' : 'Upgrade / Downgrade'}
                 </button>
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-3">
+                {plans.map((plan) => {
+                  const isCurrent = Boolean(
+                    currentSubscription?.planId && plan.id === currentSubscription.planId && isActive
+                  );
+                  const isSelected = selectedPlan?.id === plan.id;
+
+                  return (
+                    <button
+                      key={plan.id}
+                      type="button"
+                      onClick={() => setSelectedPlanId(plan.id)}
+                      className={`border px-3 py-3 text-left transition-colors ${
+                        isSelected
+                          ? 'border-nexus-purple bg-nexus-purple/10'
+                          : 'border-nexus-gray hover:border-nexus-purple/60'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-xs uppercase text-white">{plan.displayName}</span>
+                        {isCurrent ? (
+                          <span className="font-mono text-[10px] uppercase text-nexus-accent">Current</span>
+                        ) : null}
+                      </div>
+                      <div className="mt-1 font-mono text-[10px] text-nexus-muted">
+                        ${((billingInterval === 'year'
+                          ? plan.yearlyPriceCents
+                          : plan.monthlyPriceCents) / 100).toFixed(0)}/
+                        {billingInterval === 'year' ? 'year' : 'month'}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
 
               <div className="flex flex-wrap gap-2">
@@ -220,8 +332,8 @@ export const BillingTab = () => {
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
-                {(activePlan?.features?.length
-                  ? activePlan.features.map(feature => feature.name)
+                {(selectedPlan?.features?.length
+                  ? selectedPlan.features.map(feature => feature.name)
                   : PLAN_FEATURES
                 ).map(feature => (
                   <div key={feature} className="flex items-start gap-2 text-nexus-light/80">
@@ -245,6 +357,11 @@ export const BillingTab = () => {
               </div>
             </div>
             <div className="border border-nexus-gray/50 p-4 bg-nexus-black/50 flex flex-col gap-3">
+              {!rolloutEnabled ? (
+                <p className="font-mono text-[10px] text-yellow-400 uppercase tracking-wider">
+                  Billing controls are unavailable for this account cohort.
+                </p>
+              ) : null}
               {paymentMethods.length === 0 ? (
                 <div className="flex items-center gap-3 text-white">
                   <Wallet size={16} className="text-nexus-purple" />
@@ -287,7 +404,7 @@ export const BillingTab = () => {
                 </button>
               </div>
             </div>
-            {subscription?.status === 'active' ? (
+            {currentSubscription?.status === 'active' ? (
               <div className="flex items-center justify-between text-nexus-light/60 font-mono text-xs uppercase">
                 <span>Next charge</span>
                 <span className="text-white">{formatDate(nextCharge)}</span>

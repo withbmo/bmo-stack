@@ -12,8 +12,6 @@ export {
   DeploymentStatusBadge,
   EmptyState,
   EnvironmentsSkeleton,
-  ErrorBoundary,
-  FeatureCard,
   FilterTabButton,
   GlitchText,
   Input,
@@ -34,4 +32,4 @@ export {
 export type { AsyncStateProps } from '../shared/state/AsyncState';
 export { AsyncState } from '../shared/state/AsyncState';
 export { DashboardLayout } from './layout';
-export { DashboardPageHeader,PageLayout } from '@/shared/components/layout';
+export { DashboardPageHeader, PageLayout } from '@/shared/components/layout';

@@ -1,13 +1,10 @@
+import type { DeployJobStatus as ContractDeployJobStatus } from '@pytholit/contracts';
+
 export type ProjectStatus = 'running' | 'stopped' | 'building' | 'error';
 
 export type DeploymentStatus = 'live' | 'stopped' | 'deploying' | 'failed';
 
-export type DeployJobStatus =
-  | 'queued'
-  | 'running'
-  | 'succeeded'
-  | 'failed'
-  | 'canceled';
+export type DeployJobStatus = ContractDeployJobStatus;
 
 export interface PricingPlan {
   id?: string;

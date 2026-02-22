@@ -1,3 +1,4 @@
+import type { AdminLevel } from '@pytholit/contracts';
 import { apiRequest, API_V1 } from './client';
 
 export type PageResult<T> = {
@@ -13,17 +14,26 @@ export type AdminUserRow = {
   username: string;
   isActive: boolean;
   isEmailVerified: boolean;
-  isSuperuser: boolean;
-  role: string | null;
-  permissions: string[];
+  isAdmin: boolean;
+  adminLevel: AdminLevel | null;
   createdAt: string;
+};
+
+export type AdminMembershipRow = {
+  userId: string;
+  email: string;
+  username: string;
+  level: AdminLevel;
+  grantedByUserId: string | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type AdminEnvironmentRow = {
   id: string;
   ownerId: string;
   projectId: string | null;
-  name: string;
+  envType: string;
   displayName: string;
   tierPolicy: string;
   executionMode: string;
@@ -48,7 +58,7 @@ export type AdminSubscriptionRow = {
   userId: string;
   planId: string | null;
   status: string;
-  stripeSubscriptionId: string;
+  externalSubscriptionId: string;
   currentPeriodStart: string;
   currentPeriodEnd: string;
   cancelAtPeriodEnd: boolean;
@@ -57,7 +67,7 @@ export type AdminSubscriptionRow = {
 export type AdminInvoiceRow = {
   id: string;
   userId: string;
-  stripeInvoiceId: string;
+  externalInvoiceId: string;
   amount: number;
   currency: string;
   status: string;
@@ -86,12 +96,60 @@ export async function adminListUsers(
 export async function adminUpdateUser(
   token: string,
   userId: string,
-  body: Partial<Pick<AdminUserRow, 'isActive' | 'isSuperuser' | 'role' | 'permissions'>>
+  body: Partial<Pick<AdminUserRow, 'isActive'>>
 ): Promise<AdminUserRow> {
   return apiRequest<AdminUserRow>(`${ADMIN_PREFIX}/users/${userId}`, {
     method: 'PATCH',
     token,
     body: JSON.stringify(body),
+  });
+}
+
+export async function adminListAdmins(
+  token: string,
+  params: { q?: string; page?: number; pageSize?: number } = {}
+): Promise<PageResult<AdminMembershipRow>> {
+  const qs = new URLSearchParams();
+  if (params.q) qs.set('q', params.q);
+  if (params.page) qs.set('page', String(params.page));
+  if (params.pageSize) qs.set('pageSize', String(params.pageSize));
+  const suffix = qs.toString() ? `?${qs.toString()}` : '';
+  return apiRequest<PageResult<AdminMembershipRow>>(`${ADMIN_PREFIX}/admins${suffix}`, {
+    method: 'GET',
+    token,
+  });
+}
+
+export async function adminGrantAdmin(
+  token: string,
+  body: { userId: string; level: AdminLevel }
+): Promise<AdminMembershipRow> {
+  return apiRequest<AdminMembershipRow>(`${ADMIN_PREFIX}/admins`, {
+    method: 'POST',
+    token,
+    body: JSON.stringify(body),
+  });
+}
+
+export async function adminUpdateAdminLevel(
+  token: string,
+  userId: string,
+  body: { level: AdminLevel }
+): Promise<AdminMembershipRow> {
+  return apiRequest<AdminMembershipRow>(`${ADMIN_PREFIX}/admins/${userId}`, {
+    method: 'PATCH',
+    token,
+    body: JSON.stringify(body),
+  });
+}
+
+export async function adminRevokeAdmin(
+  token: string,
+  userId: string
+): Promise<{ message: string }> {
+  return apiRequest<{ message: string }>(`${ADMIN_PREFIX}/admins/${userId}`, {
+    method: 'DELETE',
+    token,
   });
 }
 
@@ -162,4 +220,3 @@ export async function adminListInvoices(
     token,
   });
 }
-

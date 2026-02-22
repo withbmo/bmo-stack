@@ -1,61 +1,45 @@
-# Billing system — overview
+# Billing System Overview
 
-Billing is implemented in the **API** (`apps/api`) using **Stripe** for subscriptions and **Postgres** (Prisma) for persistence.
+Billing is now **Lago-first**:
+- Lago handles subscriptions, invoices, usage metering, and webhook idempotency.
+- Stripe is used for payment methods, billing portal, and one-time credit purchases.
 
 ## High-level flow
 
 ```mermaid
 flowchart TD
-  User -->|"POST /api/v1/billing/checkout"| API[apps/api]
-  API --> StripeCheckout[Stripe Checkout Session]
-  StripeCheckout --> User
+  User -->|"POST /api/v1/billing/checkout"| API[BillingController]
+  API --> Lago[Lago API]
+  API --> StripeSetup[Stripe setup checkout if payment method missing]
 
-  Stripe -->|"POST /api/v1/billing/webhook"| Webhook[BillingController webhook]
-  Webhook --> StripeVerify[Stripe signature verify]
-  StripeVerify --> BillingSvc[BillingService]
-  BillingSvc --> Dedup[StripeWebhookEvent table]
-  BillingSvc --> DB[(Postgres via Prisma)]
-  DB --> Sub[subscriptions]
-  DB --> Inv[invoices]
-  DB --> UserTbl[users.stripeCustomerId]
+  Product -->|"POST /api/v1/billing/usage"| API
+  API --> Lago
 
-  API --> Entitlements[EntitlementsService]
-  Entitlements --> Usage[(usage_counters)]
-  Entitlements --> Plans[@pytholit/config plans]
+  Stripe -->|"POST /api/v1/billing/webhook"| API
+  API --> Wallet[Lago wallet top-up for credit purchases]
+
+  Lago -->|"POST /api/v1/billing/webhook/lago"| API
+  API --> LagoEvents[(lago_webhook_events)]
 ```
 
 ## Main components
 
-- **Stripe SDK wrapper**: `apps/api/src/billing/stripe.service.ts`
-  - Initializes Stripe with `STRIPE_SECRET_KEY`
-  - Constructs webhook events with `STRIPE_WEBHOOK_SECRET`
-- **Billing API**: `apps/api/src/billing/billing.controller.ts`
-  - Checkout, portal, plans, subscription, invoices, payment methods, usage, webhook
-- **Billing logic + webhook handlers**: `apps/api/src/billing/billing.service.ts`
-  - Creates Stripe customer, checkout/portal sessions
-  - Processes webhook events and upserts subscription/invoice records
-  - Dedupes webhook events via `stripe_webhook_events`
-- **Entitlements (feature gating / usage metering)**: `apps/api/src/entitlements/entitlements.service.ts`
-  - Resolves effective plan from subscription (or defaults)
-  - Tracks usage in `usage_counters`
+- `apps/api/src/billing/lago.service.ts`
+  - Lago API wrapper for customers, subscriptions, invoices, usage events, wallets.
+- `apps/api/src/billing/lago-webhook.handler.ts`
+  - Handles Lago webhook events with DB idempotency.
+- `apps/api/src/billing/billing.service.ts`
+  - Billing orchestration layer (Lago-first, rollout-gated).
+- `apps/api/src/billing/stripe.service.ts`
+  - Stripe helper for customer, setup/payment checkout, payment methods, portal.
+- `apps/api/src/entitlements/entitlements.service.ts`
+  - Entitlement checks and usage logic backed by Lago usage reads/events.
 
-## Environment variables
+## Key environment variables
 
-Defined in `apps/api/src/config/env.ts`:
-
-- `STRIPE_SECRET_KEY`: enables Stripe SDK
-- `STRIPE_WEBHOOK_SECRET`: required to validate webhooks
-- `FRONTEND_URL`: used to build success/cancel/return URLs
-- `ENTITLEMENTS_ENABLED`: enables entitlements API/usage tracking
-
-## What is persisted (today)
-
-From the webhook handlers in `BillingService`:
-
-- **`users.stripeCustomerId`** is set/updated from Stripe customer id
-- **`subscriptions`** is upserted on subscription create/update/delete events
-- **`invoices`** is upserted on `invoice.payment_succeeded`
-- **`stripe_webhook_events`** records event ids for dedupe
-
-`payments` and `user_payment_methods` models exist in Prisma but are not currently written by the billing service (payment methods are fetched live from Stripe in `getUserPaymentMethods()`).
-
+- `LAGO_API_URL`
+- `LAGO_API_KEY`
+- `LAGO_WEBHOOK_SECRET`
+- `LAGO_ROLLOUT_PERCENT`
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`

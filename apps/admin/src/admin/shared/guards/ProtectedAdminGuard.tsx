@@ -8,42 +8,18 @@ import { FullScreenLoader } from '@/shared/components/FullScreenLoader';
 
 type AccessState = 'checking' | 'ok' | 'fail' | 'forbidden';
 
-const ROLE_BASE_PERMISSIONS: Record<string, string[]> = {
-  admin: [
-    'admin.access',
-    'admin.users.read',
-    'admin.users.write',
-    'admin.environments.read',
-    'admin.environments.write',
-    'admin.deployJobs.read',
-    'admin.deployJobs.write',
-    'admin.billing.read',
-    'admin.billing.write',
-  ],
-  support: [
-    'admin.access',
-    'admin.users.read',
-    'admin.environments.read',
-    'admin.deployJobs.read',
-  ],
-  billing: ['admin.access', 'admin.billing.read'],
-  user: [],
-};
-
-function hasPermission(me: Awaited<ReturnType<typeof getCurrentUser>>, required: string[]) {
-  if ((me as { isSuperuser?: boolean }).isSuperuser) return true;
-  const role = typeof me.role === 'string' ? me.role : 'user';
-  const perms = Array.isArray(me.permissions) ? me.permissions : [];
-  const effective = new Set<string>([...(ROLE_BASE_PERMISSIONS[role] || []), ...perms]);
-  return required.every((p) => effective.has(p));
+/**
+ * Check if user has admin access.
+ * Backend enforces granular RBAC; frontend only gates on admin membership.
+ */
+function hasAdminAccess(me: Awaited<ReturnType<typeof getCurrentUser>>): boolean {
+  return me.isAdmin === true;
 }
 
 export function ProtectedAdminGuard({
   children,
-  requiredPermissions = ['admin.access'],
 }: {
   children: React.ReactNode;
-  requiredPermissions?: string[];
 }) {
   const { token, logout, hydrated } = useAuth();
   const router = useRouter();
@@ -71,7 +47,7 @@ export function ProtectedAdminGuard({
           setState('forbidden');
           return;
         }
-        if (!hasPermission(me, requiredPermissions)) {
+        if (!hasAdminAccess(me)) {
           setState('forbidden');
           return;
         }
@@ -85,7 +61,7 @@ export function ProtectedAdminGuard({
     return () => {
       cancelled = true;
     };
-  }, [hydrated, logout, requiredPermissions, token]);
+  }, [hydrated, logout, token]);
 
   useEffect(() => {
     if (state === 'fail') {
@@ -100,4 +76,3 @@ export function ProtectedAdminGuard({
   if (state === 'fail' || state === 'forbidden') return null;
   return <>{children}</>;
 }
-

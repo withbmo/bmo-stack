@@ -59,27 +59,56 @@ export const UsernameField = ({
   </div>
 );
 
-export interface FullNameFieldProps {
+export interface FirstNameFieldProps {
   value: string;
   onChange: (value: string) => void;
   error?: string;
   placeholder?: string;
 }
 
-export const FullNameField = ({
+export const FirstNameField = ({
   value,
   onChange,
   error,
-  placeholder = 'John Doe',
-}: FullNameFieldProps) => (
+  placeholder = 'John',
+}: FirstNameFieldProps) => (
   <div className="space-y-2">
     <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider flex items-center gap-2">
-      <User size={12} /> Full name
+      <User size={12} /> First name
     </label>
     <Input
       type="text"
       required
-      autoComplete="name"
+      autoComplete="given-name"
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      error={!!error}
+      placeholder={placeholder}
+    />
+    {error && <p className="font-mono text-xs text-red-500">{error}</p>}
+  </div>
+);
+
+export interface LastNameFieldProps {
+  value: string;
+  onChange: (value: string) => void;
+  error?: string;
+  placeholder?: string;
+}
+
+export const LastNameField = ({
+  value,
+  onChange,
+  error,
+  placeholder = 'Doe',
+}: LastNameFieldProps) => (
+  <div className="space-y-2">
+    <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider flex items-center gap-2">
+      <User size={12} /> Last name
+    </label>
+    <Input
+      type="text"
+      autoComplete="family-name"
       value={value}
       onChange={e => onChange(e.target.value)}
       error={!!error}
@@ -118,59 +147,5 @@ export const PasswordField = ({
       error={error}
       placeholder={placeholder}
     />
-  </div>
-);
-
-export interface OtpFieldProps {
-  value: string;
-  onChange: (value: string) => void;
-  onResend: () => void;
-  resendSecondsLeft: number;
-  isLoading: boolean;
-  email?: string;
-  /** Optional ref for the code input (e.g. for focus management) */
-  inputRef?: React.RefObject<HTMLInputElement | null>;
-}
-
-export const OtpField = ({
-  value,
-  onChange,
-  onResend,
-  resendSecondsLeft,
-  isLoading,
-  email,
-  inputRef,
-}: OtpFieldProps) => (
-  <div className="space-y-2">
-    {email && (
-      <p className="font-mono text-xs text-nexus-light/80">
-        We sent a code to <span className="text-nexus-purple">{email}</span>
-      </p>
-    )}
-    <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider flex items-center gap-2">
-      <Key size={12} /> Verification code
-    </label>
-    <Input
-      ref={inputRef}
-      type="text"
-      inputMode="numeric"
-      autoComplete="one-time-code"
-      required
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      placeholder="000000"
-      className="tracking-widest"
-    />
-    <p className="font-mono text-[10px] text-nexus-muted">Check your email for the code.</p>
-    <button
-      type="button"
-      onClick={onResend}
-      disabled={resendSecondsLeft > 0 || isLoading}
-      className="font-mono text-xs text-nexus-muted hover:text-nexus-purple underline decoration-dotted underline-offset-2 transition-colors disabled:opacity-50 disabled:pointer-events-none disabled:no-underline"
-    >
-      {resendSecondsLeft > 0
-        ? `Resend in 0:${String(resendSecondsLeft).padStart(2, '0')}`
-        : 'Resend code'}
-    </button>
   </div>
 );

@@ -1,47 +1,4 @@
-import type { Project, Template } from '@/shared/types';
-
-export const MOCK_PROJECTS: Project[] = [
-  {
-    id: 'p-001',
-    name: 'hyper-api-gateway',
-    framework: 'FastAPI',
-    region: 'us-east-1',
-    status: 'running',
-    lastDeployed: '2m ago',
-    cpuUsage: 12,
-    memoryUsage: 256,
-  },
-  {
-    id: 'p-002',
-    name: 'neural-processor-v2',
-    framework: 'PyTorch',
-    region: 'eu-west-2',
-    status: 'building',
-    lastDeployed: 'Just now',
-    cpuUsage: 85,
-    memoryUsage: 2048,
-  },
-  {
-    id: 'p-003',
-    name: 'legacy-data-pipe',
-    framework: 'Django',
-    region: 'us-west-1',
-    status: 'stopped',
-    lastDeployed: '2d ago',
-    cpuUsage: 0,
-    memoryUsage: 0,
-  },
-  {
-    id: 'p-004',
-    name: 'crypto-bot-alpha',
-    framework: 'Python',
-    region: 'ap-northeast',
-    status: 'running',
-    lastDeployed: '4h ago',
-    cpuUsage: 45,
-    memoryUsage: 512,
-  },
-];
+import type { Template } from '@/shared/types';
 
 export const MOCK_TEMPLATES: Template[] = [
   {

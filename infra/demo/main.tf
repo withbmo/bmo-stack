@@ -152,6 +152,7 @@ module "route53_records" {
   env_alb_zone_id  = module.alb_env[0].alb_zone_id
 
   enable_alb_records = var.enable_alb
+  enable_lago        = var.enable_lago
 
   extra_txt_records   = var.route53_extra_txt_records
   extra_cname_records = var.route53_extra_cname_records
@@ -166,6 +167,8 @@ module "alb_app" {
   public_subnet_ids     = module.servicesvpc.public_subnet_ids
   alb_security_group_id = module.security.alb_app_security_group_id
   app_domain_name       = local.app_domain_name
+  enable_lago           = var.enable_lago
+  alarm_actions         = var.lago_alarm_actions
   certificate_arn       = var.enable_dns_acm ? module.dns_acm[0].app_certificate_arn : null
   enable_https          = var.enable_dns_acm
   tags                  = local.tags
@@ -246,6 +249,8 @@ module "ecs_api" {
   enable_load_balancer      = var.enable_alb
   target_group_arn          = var.enable_alb ? module.alb_app[0].api_target_group_arn : null
   image                     = var.images.api
+  orchestrator_url          = var.orchestrator_api_url
+  internal_secret           = var.orchestrator_internal_secret
   tags                      = local.tags
 
   depends_on = [module.alb_app, module.elasticache]
@@ -294,5 +299,40 @@ module "ecs_orchestrator" {
   execution_role_arn = module.iam.ecs_execution_role_arn
   task_role_arn      = module.iam.orchestrator_task_role_arn
   image              = var.images.orchestrator
+  redis_url          = module.elasticache.redis_url
+  api_url            = var.orchestrator_api_url
+  internal_secret    = var.orchestrator_internal_secret
   tags               = local.tags
+}
+
+module "ecs_lago" {
+  count = var.enable_lago ? 1 : 0
+
+  source               = "./ecs/lago"
+  cluster_arn          = module.ecs_shared.cluster_arn
+  cluster_name         = module.ecs_shared.cluster_name
+  private_subnet_ids   = module.servicesvpc.private_subnet_ids
+  security_group_id    = module.security.ecs_services_security_group_id
+  execution_role_arn   = module.iam.ecs_execution_role_arn
+  task_role_arn        = module.iam.api_task_role_arn
+  db_host              = module.postgres.endpoints[var.api_database_env]
+  db_port              = module.postgres.ports[var.api_database_env]
+  db_name              = var.lago_db_name
+  db_user              = var.lago_db_user
+  db_password          = var.lago_db_password
+  redis_url            = module.elasticache.redis_url
+  api_url              = var.lago_api_url
+  front_url            = var.lago_front_url
+  api_key              = var.lago_api_key
+  secret_key_base      = var.lago_secret_key_base
+  stripe_secret_key    = var.lago_stripe_secret_key
+  api_image            = var.lago_api_image
+  worker_image         = var.lago_worker_image
+  front_image          = var.lago_front_image
+  enable_front         = var.lago_enable_front
+  enable_load_balancer = var.enable_alb
+  api_target_group_arn = var.enable_alb ? module.alb_app[0].lago_target_group_arn : null
+  tags                 = local.tags
+
+  depends_on = [module.elasticache]
 }

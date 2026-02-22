@@ -1,7 +1,8 @@
 import { useState } from 'react';
 
+import { Input } from '@/dashboard/components';
 import { useAuth } from '@/shared/auth';
-import { createTerminalSession } from '@/shared/lib/environments';
+import { createTerminalSession, createTerminalTab, listTerminalTabs } from '@/shared/lib/environments';
 
 interface TerminalPanelProps {
   environmentId?: string;
@@ -18,7 +19,7 @@ export const TerminalPanel = ({ environmentId }: TerminalPanelProps) => {
   const [connected, setConnected] = useState(false);
 
   const appendLog = (line: string) => {
-    setTerminalLogs((prev) => [...prev, line]);
+    setTerminalLogs(prev => [...prev, line]);
   };
 
   const connect = async () => {
@@ -26,13 +27,15 @@ export const TerminalPanel = ({ environmentId }: TerminalPanelProps) => {
 
     setConnecting(true);
     try {
-      const session = await createTerminalSession(undefined, environmentId);
+      const tabs = await listTerminalTabs(undefined, environmentId);
+      const active = tabs.find(t => t.isActive) ?? tabs[0] ?? (await createTerminalTab(undefined, environmentId));
+      const session = await createTerminalSession(undefined, environmentId, active.id);
       const ws = new WebSocket(`${session.wsUrl}?token=${encodeURIComponent(session.token)}`);
       ws.onopen = () => {
         setConnected(true);
         appendLog('> Connected to terminal gateway');
       };
-      ws.onmessage = (event) => {
+      ws.onmessage = event => {
         appendLog(typeof event.data === 'string' ? event.data : '[binary message]');
       };
       ws.onerror = () => appendLog('> Terminal connection error');
@@ -101,15 +104,17 @@ export const TerminalPanel = ({ environmentId }: TerminalPanelProps) => {
         ))}
         <form onSubmit={handleTerminalSubmit} className="flex gap-2 mt-2">
           <span className="text-nexus-accent">$</span>
-          <input
+          <Input
             id="term-input"
             type="text"
             value={terminalInput}
-            onChange={(e) => setTerminalInput(e.target.value)}
-            className="flex-1 bg-transparent border-none outline-none text-white focus:ring-0"
+            onChange={e => setTerminalInput(e.target.value)}
+            className="flex-1"
             autoComplete="off"
             disabled={!connected}
             placeholder={connected ? 'Run command...' : 'Connect terminal session first'}
+            variant="terminal"
+            size="sm"
           />
         </form>
       </div>

@@ -31,7 +31,11 @@ export const PricingCard = ({ plan, onAction, actionDisabled }: PricingCardProps
       `}
     >
       {/* Recommended Badge */}
-      {recommended && <RecommendedBadge />}
+      {recommended && (
+        <div className="mb-6 flex justify-center">
+          <RecommendedBadge />
+        </div>
+      )}
 
       {/* Plan Header */}
       <PlanHeader
@@ -56,7 +60,7 @@ export const PricingCard = ({ plan, onAction, actionDisabled }: PricingCardProps
 };
 
 const RecommendedBadge = () => (
-  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-brand-primary text-white font-mono text-xs font-bold px-4 py-1 uppercase tracking-widest border border-white">
+  <div className="bg-brand-primary text-white font-mono text-xs font-bold px-4 py-1 uppercase tracking-widest border border-white whitespace-nowrap">
     RECOMMENDED BUILD
   </div>
 );

@@ -2,14 +2,14 @@ import {
   Body,
   Controller,
   Delete,
-	FileTypeValidator,
+  FileTypeValidator,
   Get,
-	MaxFileSizeValidator,
-	ParseFilePipe,
+  MaxFileSizeValidator,
+  ParseFilePipe,
   Patch,
   Post,
-	UploadedFile,
-	UseInterceptors,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { UserProfile } from '@pytholit/contracts';
@@ -27,22 +27,22 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('me')
-  async getProfile(@CurrentUser() user: any): Promise<UserProfile> {
-    return this.usersService.getUserProfile(user.id);
+  async getProfile(@CurrentUser('id') userId: string): Promise<UserProfile> {
+    return this.usersService.getUserProfile(userId);
   }
 
   @Patch('me')
   async updateProfile(
-    @CurrentUser() user: any,
+    @CurrentUser('id') userId: string,
     @Body() updateUserDto: UpdateUserDto
   ): Promise<UserProfile> {
-    return this.usersService.updateProfile(user.id, updateUserDto);
+    return this.usersService.updateProfile(userId, updateUserDto);
   }
 
   @Post('me/avatar')
   @UseInterceptors(FileInterceptor('file'))
   async uploadAvatar(
-    @CurrentUser() user: any,
+    @CurrentUser('id') userId: string,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
@@ -53,11 +53,11 @@ export class UsersController {
     )
     file: Express.Multer.File
   ): Promise<UserProfile> {
-    return this.usersService.uploadAvatar(user.id, file);
+    return this.usersService.uploadAvatar(userId, file);
   }
 
   @Delete('me/avatar')
-  async deleteAvatar(@CurrentUser() user: any): Promise<UserProfile> {
-    return this.usersService.deleteAvatar(user.id);
+  async deleteAvatar(@CurrentUser('id') userId: string): Promise<UserProfile> {
+    return this.usersService.deleteAvatar(userId);
   }
 }

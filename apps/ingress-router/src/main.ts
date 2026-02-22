@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import helmet from '@fastify/helmet';
 import cors from '@fastify/cors';
 import jwt from 'jsonwebtoken';
+import { createHash, timingSafeEqual } from 'crypto';
 
 const app = Fastify({ logger: true });
 
@@ -35,6 +36,31 @@ function verifyProxyToken(token: string): ProxySessionClaims {
     throw new Error('Invalid token type');
   }
   return decoded;
+}
+
+function sha256Hex(value: string): string {
+  return createHash('sha256').update(value, 'utf8').digest('hex');
+}
+
+function constantTimeHexEquals(a: string, b: string): boolean {
+  const left = Buffer.from(a, 'hex');
+  const right = Buffer.from(b, 'hex');
+  if (left.length !== right.length) return false;
+  return timingSafeEqual(left, right);
+}
+
+function configuredApiKeyHashes(): string[] {
+  return (process.env.PYTHOLIT_PROXY_API_KEY_HASHES ?? '')
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter((value) => /^[a-f0-9]{64}$/.test(value));
+}
+
+function verifyApiKey(apiKey: string): boolean {
+  const hashes = configuredApiKeyHashes();
+  if (hashes.length === 0) return false;
+  const candidate = sha256Hex(apiKey);
+  return hashes.some((hash) => constantTimeHexEquals(candidate, hash));
 }
 
 async function bootstrap() {
@@ -73,6 +99,10 @@ async function bootstrap() {
 
       if (claims.serviceKey && claims.serviceKey !== '*' && claims.serviceKey !== serviceKey) {
         return reply.code(403).send({ detail: 'Proxy token is not allowed for this service' });
+      }
+    } else if (apiKey) {
+      if (!verifyApiKey(apiKey)) {
+        return reply.code(401).send({ detail: 'Invalid API key' });
       }
     }
 

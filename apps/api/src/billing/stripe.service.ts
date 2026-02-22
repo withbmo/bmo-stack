@@ -1,22 +1,20 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import Stripe from 'stripe';
 
-/**
- * Stripe Service
- * Wrapper for Stripe SDK
- */
+import { BillingConfigService } from './billing.config';
+
 @Injectable()
 export class StripeService implements OnModuleInit {
   private stripe?: Stripe;
+  private readonly logger = new Logger(StripeService.name);
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(private readonly billingConfig: BillingConfigService) {}
 
-  onModuleInit() {
-    const apiKey = this.configService.get<string>('STRIPE_SECRET_KEY');
+  onModuleInit(): void {
+    const apiKey = this.billingConfig.stripeSecretKey;
 
     if (!apiKey) {
-      console.warn('STRIPE_SECRET_KEY not configured - billing features disabled');
+      this.logger.warn('STRIPE_SECRET_KEY not configured - billing features disabled');
       return;
     }
 
@@ -32,9 +30,6 @@ export class StripeService implements OnModuleInit {
     return this.stripe;
   }
 
-  /**
-   * Create Stripe customer
-   */
   async createCustomer(params: {
     email: string;
     name?: string;
@@ -43,38 +38,50 @@ export class StripeService implements OnModuleInit {
     return this.getClient().customers.create(params);
   }
 
-  /**
-   * Create checkout session
-   */
-  async createCheckoutSession(params: {
+  async createSetupCheckoutSession(params: {
     customerId: string;
-    priceId: string;
     successUrl: string;
     cancelUrl: string;
     metadata?: Record<string, string>;
-    subscriptionMetadata?: Record<string, string>;
   }): Promise<Stripe.Checkout.Session> {
     return this.getClient().checkout.sessions.create({
       customer: params.customerId,
-      mode: 'subscription',
+      mode: 'setup',
+      success_url: params.successUrl,
+      cancel_url: params.cancelUrl,
+      metadata: params.metadata,
+    });
+  }
+
+  async createPaymentCheckoutSession(params: {
+    customerId: string;
+    amountCents: number;
+    productName: string;
+    successUrl: string;
+    cancelUrl: string;
+    metadata?: Record<string, string>;
+  }): Promise<Stripe.Checkout.Session> {
+    return this.getClient().checkout.sessions.create({
+      customer: params.customerId,
+      mode: 'payment',
       line_items: [
         {
-          price: params.priceId,
+          price_data: {
+            currency: 'usd',
+            unit_amount: params.amountCents,
+            product_data: {
+              name: params.productName,
+            },
+          },
           quantity: 1,
         },
       ],
       success_url: params.successUrl,
       cancel_url: params.cancelUrl,
       metadata: params.metadata,
-      subscription_data: params.subscriptionMetadata
-        ? { metadata: params.subscriptionMetadata }
-        : undefined,
     });
   }
 
-  /**
-   * Create billing portal session
-   */
   async createPortalSession(params: {
     customerId: string;
     returnUrl: string;
@@ -85,28 +92,15 @@ export class StripeService implements OnModuleInit {
     });
   }
 
-  /**
-   * Get subscription
-   */
   async getSubscription(subscriptionId: string): Promise<Stripe.Subscription> {
     return this.getClient().subscriptions.retrieve(subscriptionId);
   }
 
-  /**
-   * Cancel subscription
-   */
   async cancelSubscription(subscriptionId: string): Promise<Stripe.Subscription> {
     return this.getClient().subscriptions.cancel(subscriptionId);
   }
 
-  /**
-   * Construct webhook event
-   */
-  constructWebhookEvent(
-    payload: string | Buffer,
-    signature: string,
-    secret: string
-  ): Stripe.Event {
+  constructWebhookEvent(payload: string | Buffer, signature: string, secret: string): Stripe.Event {
     return this.getClient().webhooks.constructEvent(payload, signature, secret);
   }
 }

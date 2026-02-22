@@ -111,7 +111,7 @@ export interface ProjectWizardConfig {
   buildCommand: string;
   startCommand: string;
   dockerfilePath: string;
-  visibility: 'private' | 'public';
+  visibility: import('@pytholit/contracts').EnvironmentVisibility;
   region: string;
   autoDeploy: boolean;
   repoExportEnabled: boolean;
@@ -143,7 +143,7 @@ export const DEFAULT_PROJECT_CONFIG: ProjectWizardConfig = {
   buildCommand: '',
   startCommand: '',
   dockerfilePath: 'Dockerfile',
-  visibility: 'private',
+  visibility: 'private' as import('@pytholit/contracts').EnvironmentVisibility,
   region: 'us-east-1',
   autoDeploy: true,
   repoExportEnabled: false,

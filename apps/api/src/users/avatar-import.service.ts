@@ -4,6 +4,8 @@ import * as crypto from 'crypto';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
+import { readTrimmedStringOrDefault } from '../config/config-readers';
+import { UPLOAD_DIR_DEFAULT } from '../config/defaults';
 import { PrismaService } from '../database/prisma.service';
 
 const MAX_BYTES = 2 * 1024 * 1024; // 2MB (matches manual upload)
@@ -18,11 +20,6 @@ const ALLOWED_HOSTS = new Set([
   // GitHub avatars
   'avatars.githubusercontent.com',
 ]);
-
-function safeUploadDir(raw: string | undefined): string {
-  const trimmed = (raw || '').trim();
-  return trimmed !== '' ? trimmed : 'uploads';
-}
 
 function isAllowedUrl(url: URL): boolean {
   if (url.protocol !== 'https:') return false;
@@ -58,7 +55,7 @@ export class AvatarImportService {
     private readonly prisma: PrismaService,
     configService: ConfigService
   ) {
-    this.uploadDir = safeUploadDir(configService.get<string>('UPLOAD_DIR') || undefined);
+    this.uploadDir = readTrimmedStringOrDefault(configService, 'UPLOAD_DIR', UPLOAD_DIR_DEFAULT);
   }
 
   async importAvatarIfMissing(userId: string, avatarUrl: string): Promise<void> {
@@ -116,4 +113,3 @@ export class AvatarImportService {
     }
   }
 }
-

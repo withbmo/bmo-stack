@@ -1,3 +1,4 @@
+import { ENVIRONMENT_VISIBILITY } from '@pytholit/contracts';
 import { ArrowRight, Box, Plus, Settings2, Trash2 } from 'lucide-react';
 import { type ChangeEvent, useMemo, useState } from 'react';
 
@@ -125,7 +126,11 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                 Visibility
               </div>
               <div className="flex gap-2">
-                {(['private', 'public'] as const).map(vis => (
+                {(
+                  Object.values(ENVIRONMENT_VISIBILITY) as Array<
+                    (typeof ENVIRONMENT_VISIBILITY)[keyof typeof ENVIRONMENT_VISIBILITY]
+                  >
+                ).map(vis => (
                   <button
                     key={vis}
                     onClick={() => setConfig(c => ({ ...c, visibility: vis }))}
@@ -498,7 +503,7 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
         <div className="space-y-3">
           {config.envVars.map(env => (
             <div key={env.id} className="grid grid-cols-1 md:grid-cols-5 gap-3 items-center">
-              <input
+              <Input
                 value={env.key}
                 onChange={e =>
                   setConfig(c => ({
@@ -509,9 +514,12 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                   }))
                 }
                 placeholder="KEY"
-                className="md:col-span-2 bg-black/60 border border-border-dim text-white text-sm font-mono px-3 py-2 focus:outline-none focus:border-brand-primary"
+                className="md:col-span-2"
+                variant="panel"
+                intent="brand"
+                size="sm"
               />
-              <input
+              <Input
                 value={env.value}
                 onChange={e =>
                   setConfig(c => ({
@@ -522,7 +530,10 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                   }))
                 }
                 placeholder="value"
-                className="md:col-span-2 bg-black/60 border border-border-dim text-white text-sm font-mono px-3 py-2 focus:outline-none focus:border-brand-primary"
+                className="md:col-span-2"
+                variant="panel"
+                intent="brand"
+                size="sm"
               />
               <button
                 onClick={() =>

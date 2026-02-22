@@ -19,6 +19,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@pytholit/contracts": "workspace:*",
     "zod": "^3.24.1"
   },
   "devDependencies": {

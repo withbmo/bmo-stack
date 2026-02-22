@@ -1,3 +1,11 @@
+import type {
+  ConfigMode,
+  Ec2Architecture,
+  MarketType,
+  RootVolumeType,
+  ServerPreset,
+} from '@pytholit/contracts';
+
 export type EnvironmentConfig = EnvironmentConfig1 & EnvironmentConfig2;
 export type EnvironmentConfig1 = {
   [k: string]: unknown;
@@ -5,23 +13,22 @@ export type EnvironmentConfig1 = {
 
 export interface EnvironmentConfig2 {
   schema_version: 1;
-  instanceType: 'on-demand' | 'spot';
-  configMode: 'preset' | 'custom';
+  // Legacy key: originally used as market type. Keep for backward compatibility.
+  instanceType: MarketType;
+  // Preferred key: market type.
+  marketType?: MarketType;
+  configMode: ConfigMode;
   zone: 'us-east-1a' | 'us-east-1b' | 'eu-west-1a';
+  architecture?: Ec2Architecture;
+  /** Used in custom mode to launch exact EC2 instance type (e.g. "t3.small"). */
+  ec2InstanceType?: string | null;
+  rootVolume?: { sizeGiB: number; type: RootVolumeType };
   serverPresetId?: string | null;
   serverPreset?: ServerPreset | null;
   custom?: CustomConfig | null;
   envVars: EnvVar[];
 }
-export interface ServerPreset {
-  id: string;
-  label: string;
-  region: string;
-  cpu: string;
-  memory: string;
-  storage: string;
-  network: string;
-}
+
 export interface CustomConfig {
   cpuCores: number;
   memory: CustomMemory;

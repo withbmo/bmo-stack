@@ -21,9 +21,10 @@ import {
   Zap,
 } from 'lucide-react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useRef,useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import SwaggerUI from 'swagger-ui-react';
 
+import { Input } from '@/dashboard/components';
 import { useAuth } from '@/shared/auth';
 
 import {
@@ -313,7 +314,7 @@ export const IDERoute = () => {
                   className="border-t border-nexus-gray bg-[#0A0A0A]"
                 >
                   <div className="px-3 pt-3 pb-3">
-                    <input
+                    <Input
                       type="text"
                       value={chatInput}
                       onChange={e => setChatInput(e.target.value)}
@@ -322,7 +323,9 @@ export const IDERoute = () => {
                           ? `Ask ${LLM_OPTIONS.find(o => o.id === selectedLLM)?.label ?? 'AI'}...`
                           : 'Describe edit or paste code...'
                       }
-                      className="w-full bg-[#0D0D0D] border border-nexus-gray px-3 py-2 text-xs text-white font-mono placeholder:text-nexus-muted focus:border-nexus-purple outline-none"
+                      variant="ide"
+                      intent="brand"
+                      size="sm"
                     />
                     <div className="flex items-center gap-2 pt-2">
                       <div className="relative shrink-0">
@@ -479,7 +482,7 @@ export const IDERoute = () => {
                         key={ev.id}
                         className="flex gap-2 items-center border border-nexus-gray bg-[#080808] p-3"
                       >
-                        <input
+                        <Input
                           value={ev.key}
                           onChange={e => {
                             setProjectConfig(c => ({
@@ -490,9 +493,12 @@ export const IDERoute = () => {
                             }));
                           }}
                           placeholder="KEY"
-                          className="flex-1 min-w-0 bg-black border border-nexus-gray px-3 py-2 font-mono text-xs text-white placeholder-nexus-muted focus:border-nexus-purple outline-none"
+                          className="flex-1"
+                          variant="ide"
+                          intent="brand"
+                          size="sm"
                         />
-                        <input
+                        <Input
                           value={ev.value}
                           onChange={e => {
                             setProjectConfig(c => ({
@@ -503,7 +509,10 @@ export const IDERoute = () => {
                             }));
                           }}
                           placeholder="VALUE"
-                          className="flex-1 min-w-0 bg-black border border-nexus-gray px-3 py-2 font-mono text-xs text-white placeholder-nexus-muted focus:border-nexus-purple outline-none"
+                          className="flex-1"
+                          variant="ide"
+                          intent="brand"
+                          size="sm"
                         />
                         <button
                           type="button"

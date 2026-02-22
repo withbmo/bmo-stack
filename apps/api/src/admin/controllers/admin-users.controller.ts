@@ -1,13 +1,14 @@
 import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
+import { UseAbility } from 'nest-casl';
 
-import { CurrentUser } from '../../auth/decorators/current-user.decorator';
-import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
+import { UserSubject } from '../../auth-admin/casl/subjects';
+import { CurrentAdmin, type AdminAuthenticatedUser } from '../../auth-admin/decorators/current-admin.decorator';
 import { ListUsersDto } from '../dto/list-users.dto';
 import { UpdateAdminUserDto } from '../dto/update-admin-user.dto';
 import { AdminUsersService } from '../services/admin-users.service';
 
 @Controller('admin/users')
-@RequirePermissions('admin.access', 'admin.users.read')
+@UseAbility('read', UserSubject) // Replaces ADMIN_USERS_READ
 export class AdminUsersController {
   constructor(private readonly users: AdminUsersService) {}
 
@@ -22,13 +23,12 @@ export class AdminUsersController {
   }
 
   @Patch(':id')
-  @RequirePermissions('admin.access', 'admin.users.write')
+  @UseAbility('update', UserSubject) // Replaces ADMIN_USERS_WRITE
   async patch(
-    @CurrentUser() user: any,
+    @CurrentAdmin() user: AdminAuthenticatedUser,
     @Param('id') id: string,
     @Body() body: UpdateAdminUserDto
   ) {
     return this.users.updateUser(user.id, id, body);
   }
 }
-

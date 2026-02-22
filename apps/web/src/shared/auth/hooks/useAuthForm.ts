@@ -1,7 +1,7 @@
-import { useCallback,useState } from "react";
+import { AUTH_CONSTANTS } from "@pytholit/validation/zod";
+import { useCallback, useState } from "react";
 
 type AuthMode = "login" | "register";
-type LoginMethod = "password" | "otp";
 
 interface UseAuthFormOptions {
   /** Initial auth mode */
@@ -9,7 +9,7 @@ interface UseAuthFormOptions {
 }
 
 /** Username allowed: 3–30 chars, only a–z, A–Z, 0–9, _ */
-export const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/;
+export const USERNAME_REGEX = AUTH_CONSTANTS.USERNAME_REGEX;
 
 interface UseAuthFormReturn {
   // Form fields
@@ -21,8 +21,10 @@ interface UseAuthFormReturn {
   setConfirmPassword: (password: string) => void;
   username: string;
   setUsername: (username: string) => void;
-  fullName: string;
-  setFullName: (name: string) => void;
+  firstName: string;
+  setFirstName: (name: string) => void;
+  lastName: string;
+  setLastName: (name: string) => void;
 
   // Validation state
   passwordMismatch: boolean;
@@ -35,11 +37,6 @@ interface UseAuthFormReturn {
   setError: (error: string | null) => void;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
-
-  // Login method (password vs OTP)
-  loginMethod: LoginMethod;
-  setLoginMethod: (method: LoginMethod) => void;
-  toggleLoginMethod: () => void;
 
   // Validation helpers
   validatePasswords: () => boolean;
@@ -58,7 +55,8 @@ export function useAuthForm({ mode }: UseAuthFormOptions): UseAuthFormReturn {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [username, setUsername] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
 
   // Validation
   const [passwordMismatch, setPasswordMismatch] = useState(false);
@@ -67,13 +65,6 @@ export function useAuthForm({ mode }: UseAuthFormOptions): UseAuthFormReturn {
   // UI state
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Login method
-  const [loginMethod, setLoginMethod] = useState<LoginMethod>("password");
-
-  const toggleLoginMethod = useCallback(() => {
-    setLoginMethod((m) => (m === "password" ? "otp" : "password"));
-  }, []);
 
   const validatePasswords = useCallback(() => {
     if (mode === "register" && password !== confirmPassword) {
@@ -94,12 +85,12 @@ export function useAuthForm({ mode }: UseAuthFormOptions): UseAuthFormReturn {
       errors.username =
         "Username must be 3–30 characters, only letters, numbers, and underscore.";
     }
-    if (!fullName.trim()) {
-      errors.full_name = "Display name is required.";
+    if (!firstName.trim()) {
+      errors.firstName = "First name is required.";
     }
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
-  }, [mode, username, fullName]);
+  }, [mode, username, firstName]);
 
   const clearError = useCallback(() => {
     setError(null);
@@ -111,12 +102,12 @@ export function useAuthForm({ mode }: UseAuthFormOptions): UseAuthFormReturn {
     setPassword("");
     setConfirmPassword("");
     setUsername("");
-    setFullName("");
+    setFirstName("");
+    setLastName("");
     setPasswordMismatch(false);
     setFieldErrors({});
     setError(null);
     setIsLoading(false);
-    setLoginMethod("password");
   }, []);
 
   return {
@@ -128,8 +119,10 @@ export function useAuthForm({ mode }: UseAuthFormOptions): UseAuthFormReturn {
     setConfirmPassword,
     username,
     setUsername,
-    fullName,
-    setFullName,
+    firstName,
+    setFirstName,
+    lastName,
+    setLastName,
     passwordMismatch,
     setPasswordMismatch,
     fieldErrors,
@@ -138,9 +131,6 @@ export function useAuthForm({ mode }: UseAuthFormOptions): UseAuthFormReturn {
     setError,
     isLoading,
     setIsLoading,
-    loginMethod,
-    setLoginMethod,
-    toggleLoginMethod,
     validatePasswords,
     validateSignupFields,
     clearError,

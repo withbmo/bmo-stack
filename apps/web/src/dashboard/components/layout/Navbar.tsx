@@ -40,7 +40,8 @@ export const Navbar = () => {
       try {
         const [sub, plans] = await Promise.all([getSubscription(undefined), getPlans()]);
         if (cancelled) return;
-        const active = sub?.planId ? plans.find(p => p.id === sub.planId) : plans[0] || null;
+        const activePlanId = sub.subscription?.planId;
+        const active = activePlanId ? plans.find(p => p.id === activePlanId) : plans[0] || null;
         setPlanLabel((active?.name || 'FREE TIER').toUpperCase().replace(/_/g, ' '));
       } catch {
         if (!cancelled) setPlanLabel('FREE TIER');

@@ -19,27 +19,104 @@ services:
     ports:
       - '6379:6379'
 
-  env-orchestrator:
-    build:
-      context: .
-      dockerfile: docker/env-orchestrator.Dockerfile
-    container_name: pytholit-env-orchestrator-dev
+  lago-db:
+    image: getlago/postgres-partman:15.0-alpine
+    container_name: pytholit-lago-postgres-dev
     restart: unless-stopped
     environment:
-      PORT: '3401'
+      POSTGRES_DB: lago
+      POSTGRES_USER: lago
+      POSTGRES_PASSWORD: lago_dev_password
     ports:
-      - '3401:3401'
-    healthcheck:
-      test:
-        [
-          'CMD',
-          'node',
-          '-e',
-          "fetch('http://127.0.0.1:3401/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
-        ]
-      interval: 10s
-      timeout: 3s
-      retries: 10
+      - '5433:5432'
+    volumes:
+      - lago_postgres_dev:/var/lib/postgresql/data
+
+  lago-redis:
+    image: redis:7-alpine
+    container_name: pytholit-lago-redis-dev
+    restart: unless-stopped
+    ports:
+      - '6380:6379'
+
+  lago-api:
+    image: getlago/api:v1.42.0
+    container_name: pytholit-lago-api-dev
+    restart: unless-stopped
+    command: ["./scripts/start.api.sh"]
+    depends_on:
+      - lago-db
+      - lago-redis
+      - lago-migrate
+    environment:
+      DATABASE_URL: postgresql://lago:lago_dev_password@lago-db:5432/lago
+      REDIS_URL: redis://lago-redis:6379
+      LAGO_API_URL: http://lago-api:3000
+      LAGO_FRONT_URL: http://localhost:8080
+      SECRET_KEY_BASE: dev-secret-key-base-change-before-production
+      RAILS_ENV: production
+      LAGO_DISABLE_SEGMENT: "true"
+      LAGO_RSA_PRIVATE_KEY: ${LAGO_RSA_PRIVATE_KEY}
+      LAGO_ENCRYPTION_PRIMARY_KEY: dev-encryption-primary-key
+      LAGO_ENCRYPTION_DETERMINISTIC_KEY: dev-encryption-deterministic-key
+      LAGO_ENCRYPTION_KEY_DERIVATION_SALT: dev-encryption-derivation-salt
+      LAGO_CREATE_ORG: "true"
+      LAGO_ORG_NAME: Pytholit Dev
+      LAGO_ORG_USER_EMAIL: dev@pytholit.local
+      LAGO_ORG_USER_PASSWORD: DevPassword123!
+      LAGO_ORG_API_KEY: lago-dev-api-key
+    ports:
+      - '3010:3000'
+
+  lago-worker:
+    image: getlago/api:v1.42.0
+    container_name: pytholit-lago-worker-dev
+    restart: unless-stopped
+    command: ["./scripts/start.worker.sh"]
+    depends_on:
+      - lago-db
+      - lago-redis
+      - lago-migrate
+    environment:
+      DATABASE_URL: postgresql://lago:lago_dev_password@lago-db:5432/lago
+      REDIS_URL: redis://lago-redis:6379
+      SECRET_KEY_BASE: dev-secret-key-base-change-before-production
+      RAILS_ENV: production
+      LAGO_DISABLE_SEGMENT: "true"
+      LAGO_RSA_PRIVATE_KEY: ${LAGO_RSA_PRIVATE_KEY}
+      LAGO_ENCRYPTION_PRIMARY_KEY: dev-encryption-primary-key
+      LAGO_ENCRYPTION_DETERMINISTIC_KEY: dev-encryption-deterministic-key
+      LAGO_ENCRYPTION_KEY_DERIVATION_SALT: dev-encryption-derivation-salt
+
+  lago-migrate:
+    image: getlago/api:v1.42.0
+    container_name: pytholit-lago-migrate-dev
+    restart: "no"
+    depends_on:
+      - lago-db
+      - lago-redis
+    command: ["./scripts/migrate.sh"]
+    environment:
+      DATABASE_URL: postgresql://lago:lago_dev_password@lago-db:5432/lago
+      REDIS_URL: redis://lago-redis:6379
+      SECRET_KEY_BASE: dev-secret-key-base-change-before-production
+      RAILS_ENV: production
+      LAGO_DISABLE_SEGMENT: "true"
+      LAGO_RSA_PRIVATE_KEY: ${LAGO_RSA_PRIVATE_KEY}
+      LAGO_ENCRYPTION_PRIMARY_KEY: dev-encryption-primary-key
+      LAGO_ENCRYPTION_DETERMINISTIC_KEY: dev-encryption-deterministic-key
+      LAGO_ENCRYPTION_KEY_DERIVATION_SALT: dev-encryption-derivation-salt
+
+  lago-front:
+    image: getlago/front:v1.42.0
+    container_name: pytholit-lago-front-dev
+    restart: unless-stopped
+    depends_on:
+      - lago-api
+    environment:
+      API_URL: http://lago-api:3000
+    ports:
+      - '8080:80'
 
   api:
     profiles: ['api']
@@ -51,7 +128,6 @@ services:
     depends_on:
       - postgres
       - redis
-      - env-orchestrator
     environment:
       APP_ENV: localhost
       NODE_ENV: development
@@ -60,6 +136,9 @@ services:
       COOKIE_DOMAIN: ''
       UPLOAD_DIR: uploads
       REDIS_URL: redis://redis:6379
+      # env-orchestrator runs on the host in local dev (pnpm dev)
+      ORCHESTRATOR_URL: http://host.docker.internal:3003
+      INTERNAL_SECRET: dev-internal-secret
       DB_HOST: postgres
       DB_PORT: '5432'
       DB_NAME: pytholit
@@ -69,8 +148,14 @@ services:
       JWT_SECRET: dev-secret
       ENV_SESSION_SECRET: dev-env-session-secret
       ENV_SESSION_TTL_SECONDS: '120'
+      LAGO_API_URL: http://lago-api:3000
+      LAGO_API_KEY: lago-dev-api-key
+      LAGO_WEBHOOK_SECRET: lago-dev-webhook-secret
+      LAGO_ORGANIZATION_ID: 11111111-2222-3333-4444-555555555555
+      LAGO_ROLLOUT_PERCENT: '100'
     ports:
       - '3001:3001'
 
 volumes:
   pytholit_postgres_dev:
+  lago_postgres_dev:

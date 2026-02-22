@@ -1,20 +1,12 @@
-export type ExecutionMode = 'managed' | 'byo_aws';
-export type EnvironmentVisibility = 'public' | 'private';
-export type EnvironmentName = 'dev' | 'prod';
-
-export type EnvironmentOrchestratorStatus =
-  | 'queued'
-  | 'starting'
-  | 'ready'
-  | 'stopping'
-  | 'stopped'
-  | 'terminating'
-  | 'terminated'
-  | 'failed'
-  | 'unknown';
+export type {
+  EnvironmentClass as EnvironmentEnvType,
+  OrchestratorStatus as EnvironmentOrchestratorStatus,
+  EnvironmentVisibility,
+  ExecutionMode,
+} from '@pytholit/contracts';
 
 export interface EnvironmentOrchestratorInfo {
-  status: EnvironmentOrchestratorStatus;
+  status: import('@pytholit/contracts').OrchestratorStatus;
   message?: string | null;
   ts?: string | null;
   request_id?: string | null;
@@ -26,11 +18,11 @@ export interface EnvironmentOrchestratorInfo {
 
 export interface Environment {
   id: string;
-  name: EnvironmentName;
+  envType: import('@pytholit/contracts').EnvironmentClass;
   displayName: string;
-  executionMode: ExecutionMode;
+  executionMode: import('@pytholit/contracts').ExecutionMode;
   region?: string | null;
-  visibility: EnvironmentVisibility;
+  visibility: import('@pytholit/contracts').EnvironmentVisibility;
   config?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;

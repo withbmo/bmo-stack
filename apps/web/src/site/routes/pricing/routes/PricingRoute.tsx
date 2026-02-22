@@ -1,23 +1,42 @@
 'use client';
 
-import { getPlanCredits,getPublicPlans } from '@pytholit/config';
-import type { Plan } from '@pytholit/contracts';
+import type { PublicPlan } from '@pytholit/contracts';
 import { LoadingState,PricingCard, SectionHeader } from '@pytholit/ui';
 import { DollarSign } from 'lucide-react';
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
+
+import { getPlans } from '@/shared/lib/billing';
 
 export function PricingRoute() {
-  const plans = useMemo<Plan[]>(
-    () =>
-      getPublicPlans().map((p) => ({
-        ...p,
-        monthlyCredits: getPlanCredits(p.id, 'month'),
-        yearlyCredits: getPlanCredits(p.id, 'year'),
-      })),
-    []
-  );
-  const loading = false;
-  const error: string | null = null;
+  const [plans, setPlans] = useState<PublicPlan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const data = await getPlans();
+        if (!cancelled) {
+          setPlans(data);
+          setError(null);
+        }
+      } catch {
+        if (!cancelled) {
+          setError('Failed to load plans');
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-nexus-black">
@@ -58,8 +77,8 @@ export function PricingRoute() {
                   plan={{
                     id: plan.id,
                     name: plan.name,
-                    monthlyPrice: plan.monthlyPrice,
-                    yearlyPrice: plan.yearlyPrice,
+                    monthlyPrice: plan.monthlyPriceCents / 100,
+                    yearlyPrice: plan.yearlyPriceCents / 100,
                     description: plan.description || '',
                     features: plan.features?.map(f => ({
                       name: f.name,

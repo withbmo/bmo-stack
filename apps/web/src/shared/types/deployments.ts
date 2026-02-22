@@ -1,3 +1,4 @@
+import type { DeployJobStatus, DeployJobStepStatus } from '@pytholit/contracts';
 import type { ExecutionMode } from './environments';
 
 export type DeploymentStatus = 'deploying' | 'live' | 'failed' | 'stopped';
@@ -13,14 +14,13 @@ export interface Deployment {
   buildDuration?: number;
 }
 
-export type DeployJobStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'canceled';
-
-export type DeployStepStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'skipped';
+export type { DeployJobStatus, DeployJobStepStatus };
+export type DeployStepStatus = DeployJobStepStatus;
 
 export interface DeployJobStep {
   key: string;
   title: string;
-  status: DeployStepStatus;
+  status: DeployJobStepStatus;
 }
 
 export interface DeployJob {

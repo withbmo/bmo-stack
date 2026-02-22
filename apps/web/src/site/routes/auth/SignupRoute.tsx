@@ -5,27 +5,28 @@ import { Turnstile } from '@marsidev/react-turnstile';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback,useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { env } from '@/env';
 import { useAuth } from '@/shared/auth';
 import { useAuthForm } from '@/shared/auth/hooks/useAuthForm';
-import { getOtpMeta } from '@/shared/auth/utils/otp';
-import type { ApiError } from '@/shared/lib/auth';
+import { useOAuthProviders } from '@/shared/auth/hooks/useOAuthProviders';
 import {
+  type ApiError,
   getApiErrorMessage,
   getApiFieldErrors,
-  sendPublicSignupVerification,
   signup,
 } from '@/shared/lib/auth';
 import { AuthCard } from '@/site/components/auth/AuthCard';
 import { AuthHeader } from '@/site/components/auth/AuthHeader';
 import { AuthPageLayout } from '@/site/components/auth/AuthPageLayout';
+import { AuthPanelLoader } from '@/site/components/auth/AuthPanelLoader';
 import { AuthSubmitButton } from '@/site/components/auth/AuthSubmitButton';
 import {
   EmailField,
-  FullNameField,
+  FirstNameField,
+  LastNameField,
   PasswordField,
   UsernameField,
 } from '@/site/components/auth/FormFields';
@@ -50,8 +51,10 @@ export function SignupRoute() {
     setConfirmPassword,
     username,
     setUsername,
-    fullName,
-    setFullName,
+    firstName,
+    setFirstName,
+    lastName,
+    setLastName,
     passwordMismatch,
     setPasswordMismatch,
     fieldErrors,
@@ -65,6 +68,7 @@ export function SignupRoute() {
 
   // Turnstile (Cloudflare CAPTCHA)
   const [turnstileToken, setTurnstileToken] = useState('');
+  const { providers: oauthProviders, isLoading: isPanelLoading } = useOAuthProviders();
   const turnstileRef = useRef<TurnstileInstance | null>(null);
 
   const resetTurnstile = useCallback(() => {
@@ -91,37 +95,31 @@ export function SignupRoute() {
 
     try {
       // Create the account and sign in
-      await signup(
+      const response = await signup(
         email,
         password,
         username.trim(),
-        fullName.trim(),
-        turnstileToken
+        firstName.trim(),
+        turnstileToken,
+        lastName.trim() || undefined
       );
-      await refreshSession();
-      // Email verification is required before accessing the app.
-      try {
-        const otpResp = await sendPublicSignupVerification(email, turnstileToken);
-        const meta = getOtpMeta(otpResp);
+
+      if (response.status === 'otp_required') {
         const params = new URLSearchParams({
           type: 'email-verification',
           email,
           next: nextParam || '/dashboard',
+          expiresAt: response.otpExpiresAt,
+          nextRequestAt: response.nextRequestAt,
         });
-        if (meta.expiresAt) params.set('expiresAt', meta.expiresAt);
-        if (meta.nextRequestAt) params.set('nextRequestAt', meta.nextRequestAt);
-        toast.success('Account created. Verify your email to continue.');
+        toast.success('Account created. Verify your email OTP code to continue.');
         router.replace(`/auth/verify-otp?${params.toString()}`);
-      } catch {
-        const params = new URLSearchParams({
-          type: 'email-verification',
-          email,
-          next: nextParam || '/dashboard',
-          sendFailed: '1',
-        });
-        toast.success('Account created. Verify your email to continue.');
-        router.replace(`/auth/verify-otp?${params.toString()}`);
+        return;
       }
+
+      await refreshSession();
+      toast.success('Account created successfully.');
+      router.replace(nextParam || '/dashboard');
     } catch (err) {
       resetTurnstile();
       handleSubmitError(err as ApiError);
@@ -163,76 +161,84 @@ export function SignupRoute() {
   };
 
   return (
-    <AuthPageLayout
-      contentClassName="animate-scan"
-      contentStyle={{ animationDuration: '0.5s', animationIterationCount: 1 }}
-    >
-      <AuthHeader mode="register" showOtpStep={false} />
+    <AuthPageLayout>
+      <AuthHeader mode="register" />
 
       <AuthCard>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Email Field */}
-          <EmailField value={email} onChange={setEmail} />
+        {isPanelLoading ? (
+          <AuthPanelLoader label="Loading signup..." />
+        ) : (
+          <>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Email Field */}
+              <EmailField value={email} onChange={setEmail} />
 
-          {/* Username Field */}
-          <UsernameField
-            value={username}
-            onChange={setUsername}
-            error={fieldErrors.username}
-          />
-
-          {/* Full Name Field */}
-          <FullNameField
-            value={fullName}
-            onChange={setFullName}
-            error={fieldErrors.full_name}
-          />
-
-          {/* Password Field */}
-          <PasswordField value={password} onChange={setPassword} required />
-
-          {/* Confirm Password Field */}
-          <PasswordField
-            value={confirmPassword}
-            onChange={(val) => {
-              setConfirmPassword(val);
-              setPasswordMismatch(false);
-            }}
-            label="Confirm Password"
-            error={passwordMismatch}
-          />
-          {passwordMismatch && (
-            <p className="font-mono text-xs text-red-500">
-              Passwords do not match
-            </p>
-          )}
-
-          {/* Turnstile */}
-          {!IS_DEV && TURNSTILE_SITE_KEY && (
-            <div className="flex justify-center">
-              <Turnstile
-                ref={turnstileRef}
-                siteKey={TURNSTILE_SITE_KEY}
-                options={{ theme: 'dark' }}
-                onSuccess={(token) => setTurnstileToken(token)}
-                onExpire={() => setTurnstileToken('')}
+              {/* Username Field */}
+              <UsernameField
+                value={username}
+                onChange={setUsername}
+                error={fieldErrors.username}
               />
-            </div>
-          )}
 
-          {/* Submit Button */}
-          <AuthSubmitButton type="submit" disabled={isLoading}>
-            {isLoading ? (
-              'CREATING ACCOUNT...'
-            ) : (
-              <>
-                SIGN UP <ArrowRight size={16} />
-              </>
-            )}
-          </AuthSubmitButton>
-        </form>
+              {/* Name Fields */}
+              <FirstNameField
+                value={firstName}
+                onChange={setFirstName}
+                error={fieldErrors.firstName}
+              />
+              <LastNameField
+                value={lastName}
+                onChange={setLastName}
+                error={fieldErrors.lastName}
+              />
 
-        <SocialAuthButtons next={nextParam || '/dashboard'} />
+              {/* Password Field */}
+              <PasswordField value={password} onChange={setPassword} required />
+
+              {/* Confirm Password Field */}
+              <PasswordField
+                value={confirmPassword}
+                onChange={(val) => {
+                  setConfirmPassword(val);
+                  setPasswordMismatch(false);
+                }}
+                label="Confirm Password"
+                error={passwordMismatch}
+              />
+              {passwordMismatch && (
+                <p className="font-mono text-xs text-red-500">
+                  Passwords do not match
+                </p>
+              )}
+
+              {/* Turnstile */}
+              {!IS_DEV && TURNSTILE_SITE_KEY && (
+                <div className="flex justify-center">
+                  <Turnstile
+                    ref={turnstileRef}
+                    siteKey={TURNSTILE_SITE_KEY}
+                    options={{ theme: 'dark' }}
+                    onSuccess={(token) => setTurnstileToken(token)}
+                    onExpire={() => setTurnstileToken('')}
+                  />
+                </div>
+              )}
+
+              {/* Submit Button */}
+              <AuthSubmitButton type="submit" disabled={isLoading}>
+                {isLoading ? (
+                  'CREATING ACCOUNT...'
+                ) : (
+                  <>
+                    SIGN UP <ArrowRight size={16} />
+                  </>
+                )}
+              </AuthSubmitButton>
+            </form>
+
+            <SocialAuthButtons next={nextParam || '/dashboard'} providers={oauthProviders} />
+          </>
+        )}
       </AuthCard>
 
       {/* Footer Navigation */}

@@ -7,9 +7,9 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js"
     },
     "./styles": "./src/styles/index.css"
   },
@@ -20,6 +20,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@pytholit/contracts": "workspace:*",
     "clsx": "^2.1.1",
     "lucide-react": "^0.563.0",
     "tailwind-merge": "^3.4.0"

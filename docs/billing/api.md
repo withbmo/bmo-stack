@@ -1,40 +1,37 @@
 # Billing API
 
-All endpoints are in the API (`apps/api`) under the global prefix `api/v1` (`apps/api/src/main.ts`).
-
-Controller: `apps/api/src/billing/billing.controller.ts`
+All endpoints are under `api/v1` in `apps/api/src/billing/billing.controller.ts`.
 
 ## Public
 
 - `GET /api/v1/billing/plans`
-  - Lists active plans (from `@pytholit/config`)
+  - Returns active plans from `@pytholit/config`.
 - `POST /api/v1/billing/webhook`
-  - Stripe webhooks endpoint (requires raw body parsing + signature header)
+  - Stripe webhook endpoint used for credit purchases.
+- `POST /api/v1/billing/webhook/lago`
+  - Lago webhook endpoint for billing events.
 
 ## Authenticated
 
 - `POST /api/v1/billing/checkout`
   - Body: `{ planId: string, interval?: "month" | "year" }`
-  - Returns: `{ sessionId, url }`
-
+  - Lago-first subscription flow (rollout-gated).
 - `POST /api/v1/billing/portal`
-  - Returns: `{ url }` (Stripe Billing Portal session)
-
+  - Returns Stripe Billing Portal URL for payment method management.
 - `GET /api/v1/billing/subscription`
-  - Returns: subscription record + resolved plan details, or `null`
-
+  - Returns current subscription for the user (Lago-backed).
 - `GET /api/v1/billing/invoices?limit=10&offset=0`
-  - Returns: list of invoices from Postgres (not live from Stripe)
-
+  - Returns paginated invoices (Lago-backed).
 - `GET /api/v1/billing/payment-methods`
-  - Returns: list of card payment methods from Stripe (live)
-
+  - Returns live Stripe card payment methods.
 - `POST /api/v1/billing/validate-card`
   - Body: `{ paymentMethodId: string }`
-  - Validates the payment method belongs to the current user’s Stripe customer
-
+  - Verifies the card belongs to the current user’s Stripe customer.
+- `GET /api/v1/billing/credits`
+  - Returns Lago wallet credit balance.
+- `POST /api/v1/billing/credits/purchase`
+  - Body: `{ amount: number }` in USD.
+  - Creates one-time Stripe checkout session and credits Lago wallet on webhook completion.
 - `POST /api/v1/billing/usage`
   - Body: `{ metricName: string, value: number }`
-  - For metered usage; delegates to `EntitlementsService.recordUsage()`
-  - Requires `ENTITLEMENTS_ENABLED=true`
-
+  - Sends metered usage events to Lago.

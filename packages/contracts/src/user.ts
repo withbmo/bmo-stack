@@ -2,46 +2,34 @@
  * User-related types and contracts
  */
 
-export type UserRole = 'user' | 'admin' | 'support' | 'billing';
+export const ADMIN_LEVELS = ['owner', 'operator', 'viewer'] as const;
+
+export type AdminLevel = (typeof ADMIN_LEVELS)[number];
 
 export interface User {
   id: string;
   email: string;
   username: string;
-  fullName: string | null;
   firstName: string | null;
   lastName: string | null;
   bio: string | null;
   avatarUrl: string | null;
   isEmailVerified: boolean;
   isActive: boolean;
-  isSuperuser: boolean;
-  role: UserRole;
-  permissions: string[];
+  isAdmin: boolean;
+  adminLevel: AdminLevel | null;
   stripeCustomerId: string | null;
   novuSubscriberId: string | null;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface UserProfile {
-  id: string;
-  email: string;
-  username: string;
-  fullName: string | null;
-  firstName: string | null;
-  lastName: string | null;
-  bio: string | null;
-  avatarUrl: string | null;
-  isEmailVerified: boolean;
-  isActive: boolean;
-  isSuperuser: boolean;
-  role: UserRole;
-  permissions: string[];
-  createdAt: string;
-  updatedAt: string;
   plan: UserPlan | null;
 }
+
+/**
+ * User profile subset - use User type instead unless you need this specific shape
+ * @deprecated Use User instead
+ */
+export type UserProfile = User;
 
 export interface UserPlan {
   id: string;
@@ -58,7 +46,8 @@ export interface PlanFeature {
 }
 
 export interface UpdateProfileInput {
-  fullName?: string;
+  firstName?: string;
+  lastName?: string;
   bio?: string;
 }
 

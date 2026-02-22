@@ -29,7 +29,7 @@ export interface TemplateParts {
   cpu: number;
   memory: number;
   port: number;
-  visibility: 'private' | 'public';
+  visibility: import('@pytholit/contracts').EnvironmentVisibility;
   region: string;
   envVars: { key: string; value: string }[];
 }

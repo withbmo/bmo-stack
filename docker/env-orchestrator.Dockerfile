@@ -17,5 +17,5 @@ COPY --from=build /app/apps/env-orchestrator/package.json ./apps/env-orchestrato
 # so we must copy both the root node_modules and the app node_modules.
 COPY --from=build /app/apps/env-orchestrator/node_modules ./apps/env-orchestrator/node_modules
 COPY --from=build /app/node_modules ./node_modules
-EXPOSE 3401
+EXPOSE 3003
 CMD ["node", "apps/env-orchestrator/dist/main.js"]

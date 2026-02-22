@@ -46,8 +46,14 @@ export function getWebAppEnv(): WebAppEnv {
   const apiUrlProd = env.NEXT_PUBLIC_API_URL_PROD;
 
   let apiBase = '';
-  if (direct && direct.trim() !== '') apiBase = trimTrailingSlash(direct.trim());
-  else if (name === 'localhost') apiBase = 'http://localhost:3001';
+  // If explicit API URL is set (and not empty), use it
+  if (direct && direct.trim() !== '') {
+    apiBase = trimTrailingSlash(direct.trim());
+  }
+  // In localhost dev, use relative URLs to go through Next.js proxy (avoids CORS/cookie issues)
+  else if (name === 'localhost') {
+    apiBase = ''; // Empty = same origin, uses Next.js rewrites
+  }
   else if (name === 'development' && apiUrlDev && apiUrlDev.trim() !== '')
     apiBase = trimTrailingSlash(apiUrlDev.trim());
   else if (name === 'production' && apiUrlProd && apiUrlProd.trim() !== '')

@@ -19,8 +19,10 @@ export type Plan = {
   name: string;
   displayName: string;
   description: string | null;
+  currency: 'USD';
   monthlyPrice: number;
   yearlyPrice: number;
+  yearlyBonusCredits: number;
   stripePriceIdMonthly: string | null;
   stripePriceIdYearly: string | null;
   features: PlanFeature[];
@@ -125,7 +127,11 @@ export function getPlanCredits(planId: string, interval: BillingInterval): numbe
   const plan = getPlanById(planId);
   if (!plan) return 0;
   const priceUsd = interval === 'year' ? plan.yearlyPrice : plan.monthlyPrice;
-  return getCreditsForUsd(priceUsd);
+  const baseCredits = getCreditsForUsd(priceUsd);
+  if (interval === 'year') {
+    return baseCredits + plan.yearlyBonusCredits;
+  }
+  return baseCredits;
 }
 
 export function getDefaultPlan(): Plan {

@@ -9,16 +9,21 @@ export class EntitlementsController {
   constructor(private readonly entitlementsService: EntitlementsService) {}
 
   @Get('limits')
-  async getLimits(@CurrentUser() user: any) {
-    return this.entitlementsService.getLimits(user.id);
+  async getLimits(@CurrentUser('id') userId: string) {
+    return this.entitlementsService.getLimits(userId);
   }
 
   @Post('usage')
   @HttpCode(HttpStatus.CREATED)
   async recordUsage(
-    @CurrentUser() user: any,
+    @CurrentUser('id') userId: string,
     @Body() body: RecordEntitlementUsageDto
   ) {
-    return this.entitlementsService.recordUsage(user.id, body.featureId, body.amount);
+    return this.entitlementsService.recordUsage(
+      userId,
+      body.featureId,
+      body.amount,
+      body.operationId
+    );
   }
 }

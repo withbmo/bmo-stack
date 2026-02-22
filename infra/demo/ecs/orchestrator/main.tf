@@ -29,6 +29,11 @@ resource "aws_ecs_task_definition" "this" {
           awslogs-stream-prefix = "orchestrator"
         }
       }
+      environment = [
+        { name = "REDIS_URL", value = var.redis_url },
+        { name = "API_URL", value = var.api_url },
+        { name = "INTERNAL_SECRET", value = var.internal_secret },
+      ]
     }
   ])
 

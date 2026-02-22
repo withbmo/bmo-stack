@@ -1,14 +1,55 @@
-import { ValidationPipe } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
-import type { NextFunction,Request, Response } from 'express';
+
 import * as express from 'express';
 import helmet from 'helmet';
 import * as path from 'path';
 
 import { AppModule } from './app.module';
+import { setupBodyParsers } from './config/body-parser.setup';
 import { getApiAppEnv } from './config/app-env';
+import { PrismaService } from './database/prisma.service';
+
+async function bootstrapInitialAdmin(app: INestApplication) {
+  const configService = app.get(ConfigService);
+  const prismaService = app.get(PrismaService);
+  const initialAdminEmail = (configService.get<string>('INITIAL_ADMIN_EMAIL') ?? '').trim();
+
+  if (!initialAdminEmail) {
+    console.log('ℹ️ INITIAL_ADMIN_EMAIL not set; initial admin bootstrap skipped.');
+    return;
+  }
+
+  const adminCount = await prismaService.client.admin.count();
+  if (adminCount > 0) {
+    console.log('ℹ️ Admin bootstrap skipped: admins already exist.');
+    return;
+  }
+
+  const user = await prismaService.client.user.findUnique({
+    where: { email: initialAdminEmail },
+    select: { id: true },
+  });
+
+  if (!user) {
+    console.log(
+      `⚠️ Admin bootstrap skipped: no user found for INITIAL_ADMIN_EMAIL (${initialAdminEmail}).`
+    );
+    return;
+  }
+
+  await prismaService.client.admin.create({
+    data: {
+      userId: user.id,
+      level: 'owner',
+      grantedByUserId: null,
+    },
+  });
+
+  console.log(`✅ Bootstrapped initial owner admin for ${initialAdminEmail}.`);
+}
 
 async function bootstrap() {
   // Disable Nest's default body parser so we can:
@@ -27,10 +68,10 @@ async function bootstrap() {
       hsts: enableHsts
         ? undefined
         : {
-            maxAge: 0,
-            includeSubDomains: false,
-            preload: false,
-          },
+          maxAge: 0,
+          includeSubDomains: false,
+          preload: false,
+        },
       // Avatars are served from the API host and rendered by the web app.
       // Allow cross-origin embedding of these static images.
       crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -54,7 +95,7 @@ async function bootstrap() {
   const appEnv = getApiAppEnv(configService);
   const isNodeDev = (configService.get<string>('NODE_ENV') ?? process.env.NODE_ENV) === 'development';
   app.enableCors({
-    origin: isNodeDev ? true : appEnv.frontendOrigins,
+    origin: isNodeDev || appEnv.isLocalhost ? true : appEnv.frontendOrigins,
     credentials: true,
   });
 
@@ -65,21 +106,10 @@ async function bootstrap() {
   const globalPrefix = 'api/v1';
   app.setGlobalPrefix(globalPrefix);
 
-  // Stripe webhook must receive the raw request body for signature verification.
-  // We parse it as raw only for this endpoint.
-  const stripeWebhookPath = `/${globalPrefix}/billing/webhook`;
-  const jsonParser = express.json();
-  const urlencodedParser = express.urlencoded({ extended: true });
+  await bootstrapInitialAdmin(app);
 
-  app.use(stripeWebhookPath, express.raw({ type: 'application/json' }));
-  app.use((req: Request, res: Response, next: NextFunction) => {
-    if (req.originalUrl?.startsWith(stripeWebhookPath)) return next();
-    return jsonParser(req, res, next);
-  });
-  app.use((req: Request, res: Response, next: NextFunction) => {
-    if (req.originalUrl?.startsWith(stripeWebhookPath)) return next();
-    return urlencodedParser(req, res, next);
-  });
+  // Setup specialized body parsing for webhooks and auth
+  setupBodyParsers(app, globalPrefix);
 
   const port = process.env.PORT || 3001;
   await app.listen(port);

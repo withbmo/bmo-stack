@@ -1,16 +1,28 @@
 import { IsString, IsOptional, IsIn, IsObject, MinLength, MaxLength } from 'class-validator';
+import {
+  ACCESS_MODE,
+  ENVIRONMENT_CLASS,
+  ENVIRONMENT_REGION,
+  ENVIRONMENT_VISIBILITY,
+  EXECUTION_MODE,
+  TIER_POLICY,
+} from '@pytholit/contracts';
 
 /**
- * Environment validation constants
+ * Environment validation constants — derived from @pytholit/contracts enums.
+ * Add new values to the contracts package, not here.
  */
 export const ENVIRONMENT_CONSTANTS = {
-  MIN_NAME_LENGTH: 1,
-  MAX_NAME_LENGTH: 100,
-  EXECUTION_MODES: ['managed', 'byo_aws'] as const,
-  VISIBILITY_OPTIONS: ['public', 'private'] as const,
-  ENVIRONMENT_CLASSES: ['dev', 'prod'] as const,
-  TIER_POLICIES: ['free', 'pro', 'enterprise'] as const,
-  REGIONS: ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1'] as const,
+  MIN_ENV_TYPE_LENGTH: 1,
+  MAX_ENV_TYPE_LENGTH: 100,
+  MIN_DISPLAY_NAME_LENGTH: 1,
+  MAX_DISPLAY_NAME_LENGTH: 100,
+  EXECUTION_MODES: Object.values(EXECUTION_MODE) as [string, ...string[]],
+  VISIBILITY_OPTIONS: Object.values(ENVIRONMENT_VISIBILITY) as [string, ...string[]],
+  ENVIRONMENT_CLASSES: Object.values(ENVIRONMENT_CLASS) as [string, ...string[]],
+  TIER_POLICIES: Object.values(TIER_POLICY) as [string, ...string[]],
+  REGIONS: Object.values(ENVIRONMENT_REGION) as [string, ...string[]],
+  ACCESS_MODES: Object.values(ACCESS_MODE) as [string, ...string[]],
 };
 
 /**
@@ -18,13 +30,13 @@ export const ENVIRONMENT_CONSTANTS = {
  */
 export class CreateEnvironmentDto {
   @IsString()
-  @MinLength(ENVIRONMENT_CONSTANTS.MIN_NAME_LENGTH)
-  @MaxLength(ENVIRONMENT_CONSTANTS.MAX_NAME_LENGTH)
-  name!: string;
+  @MinLength(ENVIRONMENT_CONSTANTS.MIN_ENV_TYPE_LENGTH)
+  @MaxLength(ENVIRONMENT_CONSTANTS.MAX_ENV_TYPE_LENGTH)
+  envType!: string;
 
   @IsString()
-  @MinLength(ENVIRONMENT_CONSTANTS.MIN_NAME_LENGTH)
-  @MaxLength(ENVIRONMENT_CONSTANTS.MAX_NAME_LENGTH)
+  @MinLength(ENVIRONMENT_CONSTANTS.MIN_DISPLAY_NAME_LENGTH)
+  @MaxLength(ENVIRONMENT_CONSTANTS.MAX_DISPLAY_NAME_LENGTH)
   displayName!: string;
 
   /**
@@ -66,14 +78,14 @@ export class CreateEnvironmentDto {
 export class UpdateEnvironmentDto {
   @IsOptional()
   @IsString()
-  @MinLength(ENVIRONMENT_CONSTANTS.MIN_NAME_LENGTH)
-  @MaxLength(ENVIRONMENT_CONSTANTS.MAX_NAME_LENGTH)
-  name?: string;
+  @MinLength(ENVIRONMENT_CONSTANTS.MIN_ENV_TYPE_LENGTH)
+  @MaxLength(ENVIRONMENT_CONSTANTS.MAX_ENV_TYPE_LENGTH)
+  envType?: string;
 
   @IsOptional()
   @IsString()
-  @MinLength(ENVIRONMENT_CONSTANTS.MIN_NAME_LENGTH)
-  @MaxLength(ENVIRONMENT_CONSTANTS.MAX_NAME_LENGTH)
+  @MinLength(ENVIRONMENT_CONSTANTS.MIN_DISPLAY_NAME_LENGTH)
+  @MaxLength(ENVIRONMENT_CONSTANTS.MAX_DISPLAY_NAME_LENGTH)
   displayName?: string;
 
   @IsOptional()
@@ -110,6 +122,6 @@ export class CreateEnvironmentSessionDto {
 
 export class SetEnvironmentAccessModeDto {
   @IsString()
-  @IsIn(['site_only', 'api_key_enabled'])
+  @IsIn(ENVIRONMENT_CONSTANTS.ACCESS_MODES)
   mode!: 'site_only' | 'api_key_enabled';
 }

@@ -16,3 +16,20 @@ variable "tags" {
   type    = map(string)
   default = {}
 }
+
+variable "redis_url" {
+  type        = string
+  default     = ""
+  description = "Redis URL for BullMQ background jobs."
+}
+variable "api_url" {
+  type        = string
+  default     = ""
+  description = "Internal base URL of the API service, used for orchestrator → API callbacks."
+}
+variable "internal_secret" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Shared secret for authenticating internal orchestrator callbacks."
+}

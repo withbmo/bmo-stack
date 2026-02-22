@@ -2,6 +2,15 @@
  * Shared configuration and constants
  */
 
+import { ENVIRONMENT_REGION, EXECUTION_MODE } from '@pytholit/contracts';
+
+const REGION_LABELS: Record<(typeof ENVIRONMENT_REGION)[keyof typeof ENVIRONMENT_REGION], string> = {
+  [ENVIRONMENT_REGION.US_EAST_1]: 'US East (N. Virginia)',
+  [ENVIRONMENT_REGION.US_WEST_2]: 'US West (Oregon)',
+  [ENVIRONMENT_REGION.EU_WEST_1]: 'EU (Ireland)',
+  [ENVIRONMENT_REGION.AP_SOUTHEAST_1]: 'Asia Pacific (Singapore)',
+};
+
 export const APP_CONFIG = {
   name: 'Pytholit',
   description: 'Cloud-based Python environment management platform',
@@ -44,15 +53,12 @@ export const DEPLOYMENT_CONFIG = {
 } as const;
 
 export const ENVIRONMENT_CONFIG = {
-  regions: [
-    { value: 'us-east-1', label: 'US East (N. Virginia)' },
-    { value: 'us-west-2', label: 'US West (Oregon)' },
-    { value: 'eu-west-1', label: 'EU (Ireland)' },
-    { value: 'ap-southeast-1', label: 'Asia Pacific (Singapore)' },
-  ],
+  regions: (Object.values(ENVIRONMENT_REGION) as (typeof ENVIRONMENT_REGION)[keyof typeof ENVIRONMENT_REGION][]).map(
+    (value) => ({ value, label: REGION_LABELS[value] })
+  ),
   executionModes: [
-    { value: 'managed', label: 'Managed (Pytholit Infrastructure)' },
-    { value: 'byo_aws', label: 'Bring Your Own AWS' },
+    { value: EXECUTION_MODE.MANAGED, label: 'Managed (Pytholit Infrastructure)' },
+    { value: EXECUTION_MODE.BYO_AWS, label: 'Bring Your Own AWS' },
   ],
 } as const;
 

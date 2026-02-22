@@ -79,7 +79,7 @@ export function EnvironmentsRoute() {
                 envQ.data!.items.map((e) => (
                   <tr key={e.id} className="border-b border-nexus-gray/60">
                     <td className="p-3 font-mono text-xs">{e.displayName}</td>
-                    <td className="p-3 font-mono text-xs text-nexus-muted">{e.name}</td>
+                    <td className="p-3 font-mono text-xs text-nexus-muted">{e.envType}</td>
                     <td className="p-3 font-mono text-xs text-nexus-muted">{e.ownerId}</td>
                     <td className="p-3 font-mono text-xs">{e.tierPolicy}</td>
                     <td className="p-3 font-mono text-xs">{e.executionMode}</td>
@@ -94,4 +94,3 @@ export function EnvironmentsRoute() {
     </AdminPage>
   );
 }
-

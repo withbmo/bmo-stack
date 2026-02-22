@@ -7,6 +7,10 @@
 
 import { PrismaClient } from './generated/client';
 
+const DEFAULT_DB_PORT = '5432';
+const DEFAULT_SSL_MODE = 'require';
+const DB_SCHEMA = 'public';
+
 function resolveDatabaseUrl(): string | undefined {
   if (process.env.DATABASE_URL) {
     return process.env.DATABASE_URL;
@@ -16,8 +20,8 @@ function resolveDatabaseUrl(): string | undefined {
   const user = process.env.DB_USER;
   const password = process.env.DB_PASSWORD;
   const dbName = process.env.DB_NAME;
-  const port = process.env.DB_PORT || '5432';
-  const sslMode = process.env.DB_SSLMODE;
+  const port = process.env.DB_PORT || DEFAULT_DB_PORT;
+  const sslMode = process.env.DB_SSLMODE || DEFAULT_SSL_MODE;
 
   if (!host || !user || !password || !dbName) {
     return undefined;
@@ -25,11 +29,7 @@ function resolveDatabaseUrl(): string | undefined {
 
   const encodedUser = encodeURIComponent(user);
   const encodedPassword = encodeURIComponent(password);
-  const params = new URLSearchParams({ schema: 'public' });
-
-  if (sslMode) {
-    params.set('sslmode', sslMode);
-  }
+  const params = new URLSearchParams({ schema: DB_SCHEMA, sslmode: sslMode });
 
   const url = `postgresql://${encodedUser}:${encodedPassword}@${host}:${port}/${dbName}?${params.toString()}`;
   process.env.DATABASE_URL = url;
@@ -47,10 +47,7 @@ export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
     datasources: databaseUrl ? { db: { url: databaseUrl } } : undefined,
-    log:
-      process.env.NODE_ENV === 'development'
-        ? ['query', 'error', 'warn']
-        : ['error'],
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   });
 
 if (process.env.NODE_ENV !== 'production') {

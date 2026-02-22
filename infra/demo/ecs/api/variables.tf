@@ -127,3 +127,16 @@ variable "tags" {
   type    = map(string)
   default = {}
 }
+
+variable "orchestrator_url" {
+  type        = string
+  default     = ""
+  description = "Internal URL of the env-orchestrator service (e.g. http://<private-ip>:3401)."
+}
+
+variable "internal_secret" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Shared secret for internal orchestrator → API callbacks."
+}

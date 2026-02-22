@@ -1,12 +1,13 @@
 import { Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { UseAbility } from 'nest-casl';
 
-import { CurrentUser } from '../../auth/decorators/current-user.decorator';
-import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
+import { DeployJobSubject } from '../../auth-admin/casl/subjects';
+import { CurrentAdmin, type AdminAuthenticatedUser } from '../../auth-admin/decorators/current-admin.decorator';
 import { ListDeployJobsDto } from '../dto/list-deploy-jobs.dto';
 import { AdminDeployJobsService } from '../services/admin-deploy-jobs.service';
 
 @Controller('admin/deploy-jobs')
-@RequirePermissions('admin.access', 'admin.deployJobs.read')
+@UseAbility('read', DeployJobSubject) // Replaces ADMIN_DEPLOY_JOBS_READ
 export class AdminDeployJobsController {
   constructor(private readonly jobs: AdminDeployJobsService) {}
 
@@ -16,9 +17,8 @@ export class AdminDeployJobsController {
   }
 
   @Post(':id/cancel')
-  @RequirePermissions('admin.access', 'admin.deployJobs.write')
-  async cancel(@CurrentUser() user: any, @Param('id') id: string) {
+  @UseAbility('update', DeployJobSubject) // Replaces ADMIN_DEPLOY_JOBS_WRITE (cancel is an update operation)
+  async cancel(@CurrentAdmin() user: AdminAuthenticatedUser, @Param('id') id: string) {
     return this.jobs.cancel(user.id, id);
   }
 }
-

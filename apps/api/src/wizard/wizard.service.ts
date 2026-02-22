@@ -11,12 +11,19 @@ import {
 import { ConfigService } from '@nestjs/config';
 import type { Prisma } from '@pytholit/db';
 
+import { readTrimmedStringOrDefault } from '../config/config-readers';
+import {
+  WIZARD_DEFAULT_TEMPLATE_ID_DEFAULT,
+  WIZARD_DEFAULT_VERSION_DEFAULT,
+  WIZARD_LEGACY_TEMPLATE_ID_DEFAULT,
+} from '../config/defaults';
 import { PrismaService } from '../database/prisma.service';
 import type {
   BlueprintLock,
   WizardInput,
   WizardManifest,
   WizardSchema,
+  WizardTemplateSummary,
 } from './wizard.types';
 
 interface ValidationResult {
@@ -30,8 +37,6 @@ interface RenderResult {
 }
 
 function templateInterpolate(raw: string, inputs: WizardInput): string {
-  // Minimal {{key}} interpolation for the current blueprint set.
-  // (We intentionally avoid AWS + avoid bringing a templating dependency.)
   return raw.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, key: string) => {
     const value = inputs[key];
     if (value === undefined || value === null) return '';
@@ -136,25 +141,52 @@ export class WizardService {
   ) {}
 
   private getDefaultVersion(): string {
-    return this.configService.get<string>('WIZARD_DEFAULT_VERSION') || '2026.02.08';
+    return readTrimmedStringOrDefault(
+      this.configService,
+      'WIZARD_DEFAULT_VERSION',
+      WIZARD_DEFAULT_VERSION_DEFAULT
+    );
   }
 
-  private resolveVersion(version: string): string {
-    return version === 'latest' ? this.getDefaultVersion() : version;
+  private getDefaultTemplateIdSync(): string {
+    return readTrimmedStringOrDefault(
+      this.configService,
+      'WIZARD_DEFAULT_TEMPLATE_ID',
+      WIZARD_DEFAULT_TEMPLATE_ID_DEFAULT
+    );
+  }
+
+  private getLegacyTemplateId(): string {
+    return readTrimmedStringOrDefault(
+      this.configService,
+      'WIZARD_LEGACY_TEMPLATE_ID',
+      WIZARD_LEGACY_TEMPLATE_ID_DEFAULT
+    );
+  }
+
+  private sortVersionsDesc(versions: string[]): string[] {
+    return [...versions].sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
+  }
+
+  private async resolveVersion(templateId: string, version: string): Promise<string> {
+    if (version !== 'latest') return version;
+
+    const catalog = await this.listTemplates();
+    const template = catalog.find((t) => t.templateId === templateId);
+
+    if (!template || template.versions.length === 0) {
+      return this.getDefaultVersion();
+    }
+
+    return template.latestVersion;
   }
 
   private async getBlueprintRootDir(): Promise<string> {
-    // We support both dev (src) and prod (dist) layouts.
     const candidates = [
-      // Monorepo root cwd (e.g. when started via turbo from repo root)
       path.join(process.cwd(), 'apps', 'api', 'dist', 'wizard', 'blueprints'),
       path.join(process.cwd(), 'apps', 'api', 'src', 'wizard', 'blueprints'),
-
-      // apps/api cwd
       path.join(process.cwd(), 'dist', 'wizard', 'blueprints'),
       path.join(process.cwd(), 'src', 'wizard', 'blueprints'),
-
-      // dist-relative (compiled file location)
       path.join(__dirname, 'blueprints'),
     ];
 
@@ -172,28 +204,45 @@ export class WizardService {
     );
   }
 
+  private async exists(filePath: string): Promise<boolean> {
+    try {
+      await fs.access(filePath);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   private async readBlueprintFile(
+    templateId: string,
     version: string,
     relativePath: string
   ): Promise<string> {
-    // Prevent path traversal: disallow absolute paths and "..".
     if (path.isAbsolute(relativePath) || relativePath.includes('..')) {
       throw new BadRequestException('Invalid blueprint path');
     }
 
     const root = await this.getBlueprintRootDir();
-    const fullPath = path.join(root, version, relativePath);
+    const candidates = [
+      path.join(root, templateId, version, relativePath),
+    ];
 
-    try {
-      return await fs.readFile(fullPath, 'utf8');
-    } catch {
-      throw new NotFoundException(`Blueprint file not found: ${relativePath}`);
+    if (templateId === this.getLegacyTemplateId()) {
+      candidates.push(path.join(root, version, relativePath));
     }
+
+    for (const fullPath of candidates) {
+      if (await this.exists(fullPath)) {
+        return fs.readFile(fullPath, 'utf8');
+      }
+    }
+
+    throw new NotFoundException(`Blueprint file not found: ${relativePath}`);
   }
 
-  async getSchema(requestedVersion: string): Promise<WizardSchema> {
-    const version = this.resolveVersion(requestedVersion);
-    const raw = await this.readBlueprintFile(version, 'blueprint.schema.json');
+  private async loadSchema(templateId: string, requestedVersion: string): Promise<WizardSchema> {
+    const version = await this.resolveVersion(templateId, requestedVersion);
+    const raw = await this.readBlueprintFile(templateId, version, 'blueprint.schema.json');
     try {
       return JSON.parse(raw) as WizardSchema;
     } catch {
@@ -201,8 +250,71 @@ export class WizardService {
     }
   }
 
+  async listTemplates(): Promise<WizardTemplateSummary[]> {
+    const root = await this.getBlueprintRootDir();
+    const entries = await fs.readdir(root, { withFileTypes: true });
+    const templateVersions = new Map<string, Set<string>>();
+
+    const ensureTemplate = (templateId: string) => {
+      if (!templateVersions.has(templateId)) {
+        templateVersions.set(templateId, new Set<string>());
+      }
+      return templateVersions.get(templateId)!;
+    };
+
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+
+      const legacySchemaPath = path.join(root, entry.name, 'blueprint.schema.json');
+      if (await this.exists(legacySchemaPath)) {
+        ensureTemplate(this.getLegacyTemplateId()).add(entry.name);
+        continue;
+      }
+
+      const templateDir = path.join(root, entry.name);
+      const versionEntries = await fs.readdir(templateDir, { withFileTypes: true });
+      for (const versionEntry of versionEntries) {
+        if (!versionEntry.isDirectory()) continue;
+        const schemaPath = path.join(templateDir, versionEntry.name, 'blueprint.schema.json');
+        if (await this.exists(schemaPath)) {
+          ensureTemplate(entry.name).add(versionEntry.name);
+        }
+      }
+    }
+
+    const templates: WizardTemplateSummary[] = [];
+
+    for (const [templateId, versionsSet] of templateVersions.entries()) {
+      const versions = this.sortVersionsDesc([...versionsSet]);
+      if (versions.length === 0) continue;
+
+      const latestVersion = versions[0]!;
+      let title = templateId;
+      try {
+        const schema = await this.loadSchema(templateId, latestVersion);
+        title = schema.title;
+      } catch {
+        // Keep templateId as fallback title.
+      }
+
+      templates.push({ templateId, title, versions, latestVersion });
+    }
+
+    return templates.sort((a, b) => a.templateId.localeCompare(b.templateId));
+  }
+
+  async getSchema(requestedVersion: string): Promise<WizardSchema> {
+    const templateId = this.getDefaultTemplateIdSync();
+    return this.loadSchema(templateId, requestedVersion);
+  }
+
+  async getSchemaForTemplate(templateId: string, requestedVersion: string): Promise<WizardSchema> {
+    return this.loadSchema(templateId, requestedVersion);
+  }
+
   private async renderWizard(
     schema: WizardSchema,
+    templateId: string,
     version: string,
     inputs: WizardInput
   ): Promise<RenderResult> {
@@ -223,7 +335,7 @@ export class WizardService {
 
       const renderedPieces: string[] = [];
       for (const part of parts) {
-        const rawPart = await this.readBlueprintFile(version, part);
+        const rawPart = await this.readBlueprintFile(templateId, version, part);
         renderedPieces.push(templateInterpolate(rawPart, inputs));
       }
 
@@ -263,6 +375,17 @@ export class WizardService {
     projectId: string,
     rawInputs: WizardInput
   ): Promise<{ manifestId: string; id: string }> {
+    const templateId = this.getDefaultTemplateIdSync();
+    return this.generateForTemplate(userId, templateId, requestedVersion, projectId, rawInputs);
+  }
+
+  async generateForTemplate(
+    userId: string,
+    templateId: string,
+    requestedVersion: string,
+    projectId: string,
+    rawInputs: WizardInput
+  ): Promise<{ manifestId: string; id: string }> {
     const project = await this.prisma.client.project.findUnique({
       where: { id: projectId },
       select: { id: true, ownerId: true },
@@ -272,14 +395,14 @@ export class WizardService {
     if (project.ownerId !== userId)
       throw new ForbiddenException('Access denied to this project');
 
-    const schema = await this.getSchema(requestedVersion);
+    const schema = await this.loadSchema(templateId, requestedVersion);
     const { inputs, errors } = validateAndApplyDefaults(schema, rawInputs);
     if (errors.length > 0) {
       throw new BadRequestException({ errors });
     }
 
-    const version = this.resolveVersion(requestedVersion);
-    const { manifest, lock } = await this.renderWizard(schema, version, inputs);
+    const version = await this.resolveVersion(templateId, requestedVersion);
+    const { manifest, lock } = await this.renderWizard(schema, templateId, version, inputs);
 
     await this.prisma.client.wizardBuild.create({
       data: {
@@ -308,4 +431,3 @@ export class WizardService {
     return build.manifest as unknown as WizardManifest;
   }
 }
-

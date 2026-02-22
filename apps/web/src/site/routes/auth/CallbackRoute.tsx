@@ -14,7 +14,16 @@ export function CallbackRoute() {
   const { refreshSession } = useAuth();
   const [error, setError] = useState<string | null>(null);
 
-  const nextTarget = useMemo(() => searchParams.get('next') || '/dashboard', [searchParams]);
+  const nextTarget = useMemo(() => {
+    const raw = searchParams.get('next');
+    if (!raw) return '/dashboard';
+    const trimmed = raw.trim();
+    if (!trimmed) return '/dashboard';
+    if (!trimmed.startsWith('/')) return '/dashboard';
+    if (trimmed.startsWith('//')) return '/dashboard';
+    if (trimmed.includes('://')) return '/dashboard';
+    return trimmed;
+  }, [searchParams]);
   const errorParam = useMemo(() => searchParams.get('error'), [searchParams]);
 
   useEffect(() => {
@@ -23,7 +32,24 @@ export function CallbackRoute() {
       try {
         if (cancelled) return;
         if (errorParam) {
-          throw { detail: errorParam, status: 400 };
+          const messages: Record<string, string> = {
+            oauth_state_invalid: 'Security check failed. Please try signing in again.',
+            oauth_profile_invalid: 'OAuth profile data was invalid. Please try again.',
+            oauth_email_required:
+              'A verified email address is required. Please add/verify an email on your provider account.',
+            oauth_provider_rate_limited:
+              'OAuth provider rate-limited this request. Please try again in a few minutes.',
+            oauth_provider_unreachable:
+              'OAuth provider could not be reached. Please try again shortly.',
+            oauth_email_unverified:
+              'Your email is not verified with the OAuth provider. Please verify it and try again.',
+            oauth_login_failed: 'OAuth login failed. Please try again.',
+            oauth_failed: 'OAuth login failed. Please try again.',
+          };
+          const msg = messages[errorParam] ?? 'OAuth login failed. Please try again.';
+          setError(msg);
+          toast.error(msg);
+          return;
         }
         const me = await refreshSession();
         if (!me) {

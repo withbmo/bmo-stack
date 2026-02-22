@@ -1,4 +1,10 @@
-import type { Environment as ContractEnvironment } from '@pytholit/contracts';
+import type {
+  AccessMode,
+  Ec2Architecture,
+  Environment as ContractEnvironment,
+  EnvironmentClass,
+  ServerPreset,
+} from '@pytholit/contracts';
 
 import type { Environment } from '../types';
 import { API_V1, apiRequest, snakeToCamel } from './client';
@@ -7,7 +13,7 @@ import { API_V1, apiRequest, snakeToCamel } from './client';
 // Prefer @pytholit/contracts when API shapes match.
 const mapEnvironment = (env: ContractEnvironment): Environment => ({
   id: env.id,
-  name: env.name as Environment['name'],
+  envType: env.envType as Environment['envType'],
   displayName: env.displayName,
   executionMode: env.executionMode as Environment['executionMode'],
   region: env.region ?? null,
@@ -27,6 +33,61 @@ export async function listEnvironments(token?: string): Promise<Environment[]> {
   return environments.map(mapEnvironment);
 }
 
+export async function fetchEnvironmentRegions(
+  token?: string
+): Promise<{ region: string }[]> {
+  return apiRequest<{ region: string }[]>(`${API_V1}/environments/regions`, {
+    method: 'GET',
+    token,
+  });
+}
+
+export async function fetchInstanceTypes(
+  token: string | undefined,
+  params: {
+    region: string;
+    arch: Ec2Architecture;
+    q?: string;
+    limit?: number;
+  }
+): Promise<{ instanceType: string; vcpu: number; memoryMiB: number }[]> {
+  const qs = new URLSearchParams();
+  qs.set('region', params.region);
+  qs.set('arch', params.arch);
+  if (params.q) qs.set('q', params.q);
+  if (params.limit) qs.set('limit', String(params.limit));
+
+  return apiRequest<{ instanceType: string; vcpu: number; memoryMiB: number }[]>(
+    `${API_V1}/environments/instance-types?${qs.toString()}`,
+    {
+      method: 'GET',
+      token,
+    }
+  );
+}
+
+export async function fetchInstanceType(
+  token: string | undefined,
+  params: {
+    region: string;
+    arch: Ec2Architecture;
+    instanceType: string;
+  }
+): Promise<{ instanceType: string; vcpu: number; memoryMiB: number }> {
+  const qs = new URLSearchParams();
+  qs.set('region', params.region);
+  qs.set('arch', params.arch);
+  qs.set('instanceType', params.instanceType);
+
+  return apiRequest<{ instanceType: string; vcpu: number; memoryMiB: number }>(
+    `${API_V1}/environments/instance-type?${qs.toString()}`,
+    {
+      method: 'GET',
+      token,
+    }
+  );
+}
+
 export async function getEnvironment(token: string | undefined, envId: string): Promise<Environment> {
   const env = snakeToCamel(
     await apiRequest<ContractEnvironment>(`${API_V1}/environments/${envId}`, {
@@ -40,13 +101,13 @@ export async function getEnvironment(token: string | undefined, envId: string): 
 export async function createEnvironment(
   token: string | undefined,
   payload: {
-    name: Environment['name'];
+    envType: Environment['envType'];
     displayName: string;
     executionMode: Environment['executionMode'];
     visibility: Environment['visibility'];
     region?: string | null;
     config?: Record<string, unknown> | null;
-    environmentClass: 'dev' | 'prod';
+    environmentClass: EnvironmentClass;
   }
 ): Promise<Environment> {
   const env = snakeToCamel(
@@ -78,6 +139,16 @@ export async function updateEnvironment(
     })
   );
   return mapEnvironment(env);
+}
+
+export async function deleteEnvironment(
+  token: string | undefined,
+  envId: string
+): Promise<{ message: string }> {
+  return apiRequest<{ message: string }>(`${API_V1}/environments/${envId}`, {
+    method: 'DELETE',
+    token,
+  });
 }
 
 export async function startEnvironment(token: string | undefined, envId: string): Promise<{ message: string }> {
@@ -125,11 +196,89 @@ export async function getEnvironmentStatus(
 
 export async function createTerminalSession(
   token: string | undefined,
-  envId: string
+  envId: string,
+  tabId: string
 ): Promise<{ token: string; expiresAt: string; wsUrl: string }> {
   return apiRequest(`${API_V1}/environments/${envId}/terminal/session`, {
     method: 'POST',
     token,
+    body: JSON.stringify({ tabId }),
+  });
+}
+
+export type TerminalTabSummary = {
+  id: string;
+  title: string;
+  isActive: boolean;
+  tmuxEnabled: boolean;
+  updatedAt: string;
+  lastActiveAt?: string | null;
+  archivedAt?: string | null;
+};
+
+export type TerminalTabDetail = TerminalTabSummary & {
+  transcript: string;
+  lastSeq: number;
+  tmuxSessionName?: string | null;
+  tmuxExpiresAt?: string | null;
+};
+
+export async function listTerminalTabs(
+  token: string | undefined,
+  envId: string
+): Promise<TerminalTabSummary[]> {
+  return apiRequest(`${API_V1}/environments/${envId}/terminal/tabs`, { method: 'GET', token });
+}
+
+export async function createTerminalTab(
+  token: string | undefined,
+  envId: string
+): Promise<TerminalTabSummary> {
+  return apiRequest(`${API_V1}/environments/${envId}/terminal/tabs`, { method: 'POST', token });
+}
+
+export async function getTerminalTab(
+  token: string | undefined,
+  envId: string,
+  tabId: string
+): Promise<TerminalTabDetail> {
+  return apiRequest(`${API_V1}/environments/${envId}/terminal/tabs/${tabId}`, { method: 'GET', token });
+}
+
+export async function updateTerminalTab(
+  token: string | undefined,
+  envId: string,
+  tabId: string,
+  payload: { title?: string; tmuxEnabled?: boolean; isActive?: boolean }
+): Promise<TerminalTabSummary> {
+  return apiRequest(`${API_V1}/environments/${envId}/terminal/tabs/${tabId}`, {
+    method: 'PATCH',
+    token,
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteTerminalTab(
+  token: string | undefined,
+  envId: string,
+  tabId: string
+): Promise<{ ok: true }> {
+  return apiRequest(`${API_V1}/environments/${envId}/terminal/tabs/${tabId}`, {
+    method: 'DELETE',
+    token,
+  });
+}
+
+export async function appendTerminalTranscript(
+  token: string | undefined,
+  envId: string,
+  tabId: string,
+  payload: { delta: string; seq: number }
+): Promise<{ ok: true; applied: boolean }> {
+  return apiRequest(`${API_V1}/environments/${envId}/terminal/tabs/${tabId}/append`, {
+    method: 'POST',
+    token,
+    body: JSON.stringify(payload),
   });
 }
 
@@ -158,7 +307,7 @@ export async function listEnvironmentServices(
 export async function setEnvironmentAccessMode(
   token: string | undefined,
   envId: string,
-  mode: 'site_only' | 'api_key_enabled'
+  mode: AccessMode
 ): Promise<Environment> {
   const env = snakeToCamel(
     await apiRequest<ContractEnvironment>(`${API_V1}/environments/${envId}/access-mode`, {
@@ -177,6 +326,13 @@ export async function rotateProdApiKey(
 ): Promise<{ apiKey: string; rotatedAt: string }> {
   return apiRequest(`${API_V1}/environments/${envId}/prod-api-key/rotate`, {
     method: 'POST',
+    token,
+  });
+}
+
+export async function fetchServerPresets(token?: string): Promise<ServerPreset[]> {
+  return apiRequest<ServerPreset[]>(`${API_V1}/environments/presets`, {
+    method: 'GET',
     token,
   });
 }
