@@ -196,89 +196,12 @@ export async function getEnvironmentStatus(
 
 export async function createTerminalSession(
   token: string | undefined,
-  envId: string,
-  tabId: string
+  envId: string
 ): Promise<{ token: string; expiresAt: string; wsUrl: string }> {
   return apiRequest(`${API_V1}/environments/${envId}/terminal/session`, {
     method: 'POST',
     token,
-    body: JSON.stringify({ tabId }),
-  });
-}
-
-export type TerminalTabSummary = {
-  id: string;
-  title: string;
-  isActive: boolean;
-  tmuxEnabled: boolean;
-  updatedAt: string;
-  lastActiveAt?: string | null;
-  archivedAt?: string | null;
-};
-
-export type TerminalTabDetail = TerminalTabSummary & {
-  transcript: string;
-  lastSeq: number;
-  tmuxSessionName?: string | null;
-  tmuxExpiresAt?: string | null;
-};
-
-export async function listTerminalTabs(
-  token: string | undefined,
-  envId: string
-): Promise<TerminalTabSummary[]> {
-  return apiRequest(`${API_V1}/environments/${envId}/terminal/tabs`, { method: 'GET', token });
-}
-
-export async function createTerminalTab(
-  token: string | undefined,
-  envId: string
-): Promise<TerminalTabSummary> {
-  return apiRequest(`${API_V1}/environments/${envId}/terminal/tabs`, { method: 'POST', token });
-}
-
-export async function getTerminalTab(
-  token: string | undefined,
-  envId: string,
-  tabId: string
-): Promise<TerminalTabDetail> {
-  return apiRequest(`${API_V1}/environments/${envId}/terminal/tabs/${tabId}`, { method: 'GET', token });
-}
-
-export async function updateTerminalTab(
-  token: string | undefined,
-  envId: string,
-  tabId: string,
-  payload: { title?: string; tmuxEnabled?: boolean; isActive?: boolean }
-): Promise<TerminalTabSummary> {
-  return apiRequest(`${API_V1}/environments/${envId}/terminal/tabs/${tabId}`, {
-    method: 'PATCH',
-    token,
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function deleteTerminalTab(
-  token: string | undefined,
-  envId: string,
-  tabId: string
-): Promise<{ ok: true }> {
-  return apiRequest(`${API_V1}/environments/${envId}/terminal/tabs/${tabId}`, {
-    method: 'DELETE',
-    token,
-  });
-}
-
-export async function appendTerminalTranscript(
-  token: string | undefined,
-  envId: string,
-  tabId: string,
-  payload: { delta: string; seq: number }
-): Promise<{ ok: true; applied: boolean }> {
-  return apiRequest(`${API_V1}/environments/${envId}/terminal/tabs/${tabId}/append`, {
-    method: 'POST',
-    token,
-    body: JSON.stringify(payload),
+    body: JSON.stringify({}),
   });
 }
 

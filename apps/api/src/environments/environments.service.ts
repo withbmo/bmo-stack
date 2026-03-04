@@ -7,7 +7,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import type { AccessMode, Environment, ServerPreset } from '@pytholit/contracts';
 import { ACCESS_MODE, ENVIRONMENT_REGION, ORCHESTRATOR_STATUS } from '@pytholit/contracts';
-import type { Environment as PrismaEnvironment, Prisma } from '@pytholit/db';
+import type { Environment as PrismaEnvironment } from '@pytholit/db';
 import { randomBytes } from 'crypto';
 
 import { PrismaService } from '../database/prisma.service';
@@ -22,23 +22,6 @@ import { EnvironmentsCrudService } from './services/environments-crud.service';
 import { EnvironmentsLifecycleService } from './services/environments-lifecycle.service';
 
 // Orchestrator and config types moved to lifecycle service
-
-interface TerminalTabSummary {
-  id: string;
-  title: string;
-  isActive: boolean;
-  tmuxEnabled: boolean;
-  updatedAt: string;
-  lastActiveAt?: string | null;
-  archivedAt?: string | null;
-}
-
-interface TerminalTabDetail extends TerminalTabSummary {
-  transcript: string;
-  lastSeq: number;
-  tmuxSessionName?: string | null;
-  tmuxExpiresAt?: string | null;
-}
 
 /**
  * Implements environment CRUD, lifecycle (start/stop/terminate via env-orchestrator),
@@ -109,34 +92,12 @@ export class EnvironmentsService {
     status: string,
     details: Record<string, unknown>
   ): Promise<void> {
-    const expectedSecret = this.envConfig.internalSecret;
-    if (!expectedSecret || !this.constantTimeCompare(incomingSecret, expectedSecret)) {
-      throw new ForbiddenException('Invalid internal secret');
-    }
-
-    const env = await this.prisma.client.environment.findUnique({
-      where: { id: environmentId },
-    });
-    if (!env) throw new NotFoundException('Environment not found');
-
-    const config = this.getConfig(env);
-    const current = this.getOrchestratorConfig(config);
-
-    await this.prisma.client.environment.update({
-      where: { id: environmentId },
-      data: {
-        config: {
-          ...config,
-          orchestrator: {
-            ...current,
-            status,
-            message: this.readString(details.message) ?? `Status updated to ${status}`,
-            ts: new Date().toISOString(),
-            details: { ...((current.details as Record<string, unknown>) ?? {}), ...details },
-          },
-        } as unknown as Prisma.InputJsonValue,
-      },
-    });
+    return this.lifecycleService.applyOrchestratorCallback(
+      environmentId,
+      incomingSecret,
+      status,
+      details
+    );
   }
 
   /**
@@ -184,101 +145,64 @@ export class EnvironmentsService {
    * Issue short-lived JWT (typ terminal_session) and return token, expiresAt, wsUrl.
    * Requires environment status READY and a known instanceId. Includes instanceId and
    * region in the JWT so the terminal gateway can call SSM without a DynamoDB lookup.
-   * Appends nonce to config.access.issuedTerminalNonces (keeps last 20).
    */
   async createTerminalSession(
     userId: string,
-    environmentId: string,
-    tabId: string
+    environmentId: string
   ): Promise<{ token: string; expiresAt: string; wsUrl: string }> {
     const ttl = this.envConfig.sessionTtlSeconds;
     const expiresAt = new Date(Date.now() + ttl * 1000).toISOString();
     const nonce = randomBytes(12).toString('hex');
 
-    const { instanceId, region, tmuxEnabled, tmuxSessionName } =
-      await this.prisma.client.$transaction(async (tx) => {
-        const env = await tx.environment.findUnique({
-          where: { id: environmentId },
-          select: { ownerId: true, region: true, config: true },
-        });
+    const { instanceId, region } = await this.prisma.client.$transaction(async (tx) => {
+      const env = await tx.environment.findUnique({
+        where: { id: environmentId },
+        select: { ownerId: true, region: true, config: true },
+      });
 
-        if (!env) throw new NotFoundException('Environment not found');
-        if (env.ownerId !== userId) throw new ForbiddenException('Access denied to this environment');
+      if (!env) throw new NotFoundException('Environment not found');
+      if (env.ownerId !== userId) throw new ForbiddenException('Access denied to this environment');
 
-        const tab = await tx.terminalTab.findFirst({
-          where: { id: tabId, ownerId: userId, environmentId, archivedAt: null },
-          select: { id: true, tmuxEnabled: true, tmuxSessionName: true },
-        });
-        if (!tab) throw new NotFoundException('Terminal tab not found');
+      const cfg = this.getConfig(env);
+      const orchestrator = this.getOrchestratorConfig(cfg);
+      const orchestratorStatus = this.readString(orchestrator.status);
+      if (orchestratorStatus !== ORCHESTRATOR_STATUS.READY) {
+        throw new BadRequestException(
+          `Environment is not ready for terminal access (status: ${orchestratorStatus ?? ORCHESTRATOR_STATUS.UNKNOWN})`
+        );
+      }
+      const details = (orchestrator.details as Record<string, unknown>) ?? {};
+      const instId = this.readString(details.instanceId);
+      if (!instId) {
+        throw new BadRequestException(
+          'Instance ID is not available; the environment may still be starting'
+        );
+      }
 
-        const cfg = this.getConfig(env);
-        const orchestrator = this.getOrchestratorConfig(cfg);
-        const orchestratorStatus = this.readString(orchestrator.status);
-        if (orchestratorStatus !== ORCHESTRATOR_STATUS.READY) {
-          throw new BadRequestException(
-            `Environment is not ready for terminal access (status: ${orchestratorStatus ?? ORCHESTRATOR_STATUS.UNKNOWN})`
-          );
-        }
-        const details = (orchestrator.details as Record<string, unknown>) ?? {};
-        const instId = this.readString(details.instanceId);
-        if (!instId) {
-          throw new BadRequestException(
-            'Instance ID is not available; the environment may still be starting'
-          );
-        }
+      const access = this.getAccessConfig(cfg);
+      const sessions = (
+        Array.isArray(access.issuedTerminalNonces) ? access.issuedTerminalNonces : []
+      ) as string[];
 
-        const access = this.getAccessConfig(cfg);
-        const sessions = (
-          Array.isArray(access.issuedTerminalNonces) ? access.issuedTerminalNonces : []
-        ) as string[];
-
-        await tx.environment.update({
-          where: { id: environmentId },
-          data: {
-            config: {
-              ...cfg,
-              access: {
-                ...access,
-                issuedTerminalNonces: [...sessions.slice(-TERMINAL_NONCE_LIST_SIZE), nonce],
-                terminalSessionIssuedAt: new Date().toISOString(),
-              },
+      await tx.environment.update({
+        where: { id: environmentId },
+        data: {
+          config: {
+            ...cfg,
+            access: {
+              ...access,
+              issuedTerminalNonces: [...sessions.slice(-TERMINAL_NONCE_LIST_SIZE), nonce],
+              terminalSessionIssuedAt: new Date().toISOString(),
             },
           },
-        });
-
-        const now = new Date();
-        let effectiveTmuxSessionName: string | null = this.readString(tab.tmuxSessionName);
-        if (tab.tmuxEnabled && !effectiveTmuxSessionName) {
-          effectiveTmuxSessionName = this.generateTmuxSessionName(environmentId, tabId);
-          await tx.terminalTab.update({
-            where: { id: tab.id },
-            data: { tmuxSessionName: effectiveTmuxSessionName },
-          });
-        }
-
-        if (tab.tmuxEnabled) {
-          await tx.terminalTab.update({
-            where: { id: tab.id },
-            data: {
-              tmuxLastUsedAt: now,
-              tmuxExpiresAt: new Date(now.getTime() + this.envConfig.tmuxTtlMinutes * 60_000),
-              lastActiveAt: now,
-            },
-          });
-        } else {
-          await tx.terminalTab.update({
-            where: { id: tab.id },
-            data: { lastActiveAt: now },
-          });
-        }
-
-        return {
-          instanceId: instId,
-          region: this.readString(env.region) ?? ENVIRONMENT_REGION.US_EAST_1,
-          tmuxEnabled: tab.tmuxEnabled,
-          tmuxSessionName: effectiveTmuxSessionName,
-        };
+        },
       });
+
+      return {
+        instanceId: instId,
+        region: this.readString(env.region) ?? ENVIRONMENT_REGION.US_EAST_1,
+      };
+    });
 
     const token = this.jwtService.sign(
       {
@@ -286,10 +210,8 @@ export class EnvironmentsService {
         sub: userId,
         envId: environmentId,
         nonce,
-        tabId,
         instanceId,
         region,
-        ...(tmuxEnabled ? { tmuxEnabled: true, tmuxSessionName } : {}),
       },
       {
         secret: this.requireSessionSecret(),
@@ -304,196 +226,6 @@ export class EnvironmentsService {
     };
   }
 
-  async listTerminalTabs(userId: string, environmentId: string): Promise<TerminalTabSummary[]> {
-    await this.crudService.findOne(userId, environmentId);
-    const tabs = await this.prisma.client.terminalTab.findMany({
-      where: { ownerId: userId, environmentId, archivedAt: null },
-      orderBy: [{ isActive: 'desc' }, { updatedAt: 'desc' }],
-    });
-    return tabs.map((t) => ({
-      id: t.id,
-      title: t.title,
-      isActive: t.isActive,
-      tmuxEnabled: t.tmuxEnabled,
-      updatedAt: t.updatedAt.toISOString(),
-      lastActiveAt: t.lastActiveAt?.toISOString() ?? null,
-      archivedAt: t.archivedAt?.toISOString() ?? null,
-    }));
-  }
-
-  async createTerminalTab(userId: string, environmentId: string): Promise<TerminalTabSummary> {
-    await this.crudService.findOne(userId, environmentId);
-
-    return this.prisma.client.$transaction(async (tx) => {
-      const count = await tx.terminalTab.count({
-        where: { ownerId: userId, environmentId, archivedAt: null },
-      });
-
-      await tx.terminalTab.updateMany({
-        where: { ownerId: userId, environmentId, archivedAt: null },
-        data: { isActive: false },
-      });
-
-      const now = new Date();
-      const created = await tx.terminalTab.create({
-        data: {
-          ownerId: userId,
-          environmentId,
-          title: `Terminal ${count + 1}`,
-          isActive: true,
-          lastActiveAt: now,
-        },
-      });
-
-      return {
-        id: created.id,
-        title: created.title,
-        isActive: created.isActive,
-        tmuxEnabled: created.tmuxEnabled,
-        updatedAt: created.updatedAt.toISOString(),
-        lastActiveAt: created.lastActiveAt?.toISOString() ?? null,
-        archivedAt: created.archivedAt?.toISOString() ?? null,
-      };
-    });
-  }
-
-  async getTerminalTab(
-    userId: string,
-    environmentId: string,
-    tabId: string
-  ): Promise<TerminalTabDetail> {
-    await this.crudService.findOne(userId, environmentId);
-    const tab = await this.prisma.client.terminalTab.findFirst({
-      where: { id: tabId, ownerId: userId, environmentId, archivedAt: null },
-    });
-    if (!tab) throw new NotFoundException('Terminal tab not found');
-    return {
-      id: tab.id,
-      title: tab.title,
-      isActive: tab.isActive,
-      tmuxEnabled: tab.tmuxEnabled,
-      updatedAt: tab.updatedAt.toISOString(),
-      lastActiveAt: tab.lastActiveAt?.toISOString() ?? null,
-      archivedAt: tab.archivedAt?.toISOString() ?? null,
-      transcript: tab.transcript,
-      lastSeq: Number(tab.lastSeq),
-      tmuxSessionName: tab.tmuxSessionName ?? null,
-      tmuxExpiresAt: tab.tmuxExpiresAt?.toISOString() ?? null,
-    };
-  }
-
-  async updateTerminalTab(
-    userId: string,
-    environmentId: string,
-    tabId: string,
-    updates: { title?: string; tmuxEnabled?: boolean; isActive?: boolean }
-  ): Promise<TerminalTabSummary> {
-    await this.crudService.findOne(userId, environmentId);
-    const now = new Date();
-
-    return this.prisma.client.$transaction(async (tx) => {
-      const tab = await tx.terminalTab.findFirst({
-        where: { id: tabId, ownerId: userId, environmentId, archivedAt: null },
-      });
-      if (!tab) throw new NotFoundException('Terminal tab not found');
-
-      if (updates.isActive) {
-        await tx.terminalTab.updateMany({
-          where: { ownerId: userId, environmentId, archivedAt: null },
-          data: { isActive: false },
-        });
-      }
-
-      let tmuxSessionName = tab.tmuxSessionName;
-      if (typeof updates.tmuxEnabled === 'boolean' && updates.tmuxEnabled && !tmuxSessionName) {
-        tmuxSessionName = this.generateTmuxSessionName(environmentId, tabId);
-      }
-
-      const updated = await tx.terminalTab.update({
-        where: { id: tab.id },
-        data: {
-          ...(updates.title ? { title: updates.title } : {}),
-          ...(typeof updates.tmuxEnabled === 'boolean' ? { tmuxEnabled: updates.tmuxEnabled } : {}),
-          ...(updates.isActive ? { isActive: true, lastActiveAt: now } : {}),
-          ...(tmuxSessionName !== tab.tmuxSessionName ? { tmuxSessionName } : {}),
-          ...(typeof updates.tmuxEnabled === 'boolean' && updates.tmuxEnabled
-            ? { tmuxExpiresAt: new Date(now.getTime() + this.envConfig.tmuxTtlMinutes * 60_000) }
-            : {}),
-        },
-      });
-
-      return {
-        id: updated.id,
-        title: updated.title,
-        isActive: updated.isActive,
-        tmuxEnabled: updated.tmuxEnabled,
-        updatedAt: updated.updatedAt.toISOString(),
-        lastActiveAt: updated.lastActiveAt?.toISOString() ?? null,
-        archivedAt: updated.archivedAt?.toISOString() ?? null,
-      };
-    });
-  }
-
-  async deleteTerminalTab(
-    userId: string,
-    environmentId: string,
-    tabId: string
-  ): Promise<{ ok: true }> {
-    await this.crudService.findOne(userId, environmentId);
-    const tab = await this.prisma.client.terminalTab.findFirst({
-      where: { id: tabId, ownerId: userId, environmentId, archivedAt: null },
-      select: { id: true },
-    });
-    if (!tab) throw new NotFoundException('Terminal tab not found');
-    await this.prisma.client.terminalTab.update({
-      where: { id: tab.id },
-      data: { archivedAt: new Date(), isActive: false },
-    });
-    return { ok: true };
-  }
-
-  async appendTerminalTranscript(
-    userId: string,
-    environmentId: string,
-    tabId: string,
-    delta: string,
-    seq: number
-  ): Promise<{ ok: true; applied: boolean }> {
-    await this.crudService.findOne(userId, environmentId);
-
-    // Postgres text cannot store NUL bytes; SSM output can occasionally contain them.
-    const sanitizedDelta = delta.replace(/\u0000/g, '');
-
-    if (sanitizedDelta.length > this.envConfig.terminalTranscriptMaxDeltaChars) {
-      throw new BadRequestException(
-        `delta too large (max ${this.envConfig.terminalTranscriptMaxDeltaChars} chars)`
-      );
-    }
-    if (!Number.isSafeInteger(seq) || seq <= 0) throw new BadRequestException('Invalid seq');
-
-    const maxChars = this.envConfig.terminalTranscriptMaxChars;
-    const seqBigInt = BigInt(seq);
-
-    const updatedCount = await this.prisma.client.$executeRaw`
-      UPDATE terminal_tabs
-      SET transcript = RIGHT(COALESCE(transcript, '') || ${sanitizedDelta}, ${maxChars}),
-          last_seq = ${seqBigInt},
-          updated_at = NOW()
-      WHERE id = ${tabId}
-        AND owner_id = ${userId}
-        AND environment_id = ${environmentId}
-        AND archived_at IS NULL
-        AND last_seq < ${seqBigInt};
-    `;
-
-    return { ok: true, applied: Number(updatedCount) > 0 };
-  }
-
-  private generateTmuxSessionName(environmentId: string, tabId: string): string {
-    const env = environmentId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8);
-    const tab = tabId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8);
-    return `pytholit_${env}_${tab}`;
-  }
 
   /** Issue proxy session JWT (typ proxy_session, serviceKey or '*'). Returns token and expiresAt; no DB config change. */
   async createProxySession(
@@ -619,21 +351,19 @@ export class EnvironmentsService {
     await this.crudService.findOne(userId, environmentId);
 
     const now = new Date().toISOString();
-    await this.prisma.client.$transaction(async (tx) => {
-      const current = await tx.environment.findUnique({
-        where: { id: environmentId },
-        select: { config: true },
-      });
+    const current = await this.prisma.client.environment.findUnique({
+      where: { id: environmentId },
+      select: { config: true },
+    });
 
-      await tx.environment.update({
-        where: { id: environmentId },
-        data: {
-          config: {
-            ...((current?.config as Record<string, unknown>) ?? {}),
-            lastActivityAt: now,
-          },
+    await this.prisma.client.environment.update({
+      where: { id: environmentId },
+      data: {
+        config: {
+          ...((current?.config as Record<string, unknown>) ?? {}),
+          lastActivityAt: now,
         },
-      });
+      },
     });
 
     return now;
@@ -655,10 +385,6 @@ export class EnvironmentsService {
   }
 
   // Orchestrator utility methods moved to EnvironmentsLifecycleService
-
-  private constantTimeCompare(a: string, b: string): boolean {
-    return EnvironmentsUtils.constantTimeCompare(a, b);
-  }
 
   private getConfig(env: { config?: unknown }): Record<string, unknown> {
     return EnvironmentsUtils.getConfig(env);

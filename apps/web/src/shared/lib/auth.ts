@@ -9,6 +9,8 @@ import {
 const AUTH_PREFIX = `${API_V1}/auth`;
 const AUTH_FLOW_PREFIX = `${API_V1}/auth-flow`;
 export type OAuthProvider = "google" | "github";
+const OTP_TTL_MS = 10 * 60 * 1000;
+const OTP_COOLDOWN_MS = 60 * 1000;
 
 /**
  * Initiate OAuth login with Better Auth.
@@ -71,20 +73,46 @@ export type OtpSendResponse = {
   nextRequestAt: string;
 };
 
+function buildOtpWindow(now = Date.now()): Pick<OtpSendResponse, "otpExpiresAt" | "nextRequestAt"> {
+  return {
+    otpExpiresAt: new Date(now + OTP_TTL_MS).toISOString(),
+    nextRequestAt: new Date(now + OTP_COOLDOWN_MS).toISOString(),
+  };
+}
+
+function isEmailNotVerifiedError(error: unknown): boolean {
+  const apiErr = error as ApiError;
+  if (apiErr?.code === "EMAIL_NOT_VERIFIED") return true;
+  const detail = typeof apiErr?.detail === "string" ? apiErr.detail.toLowerCase() : "";
+  return detail.includes("verify") && detail.includes("email");
+}
+
 /** Login: email + password → token. */
 export async function login(
   email: string,
   password: string,
   captchaToken: string
 ): Promise<AuthFlowStatus> {
-  return apiRequest<AuthFlowStatus>(`${AUTH_FLOW_PREFIX}/login-password`, {
-    method: "POST",
-    body: JSON.stringify({
-      email,
-      password,
-      captchaToken: captchaToken || "",
-    }),
-  });
+  try {
+    await apiRequest<unknown>(`${AUTH_PREFIX}/sign-in/email`, {
+      method: "POST",
+      body: JSON.stringify({
+        email,
+        password,
+        rememberMe: true,
+        captchaToken: captchaToken || "",
+      }),
+    });
+    return { status: "authenticated" };
+  } catch (error) {
+    if (!isEmailNotVerifiedError(error)) throw error;
+    const otpWindow = buildOtpWindow();
+    return {
+      status: "otp_required",
+      otpExpiresAt: otpWindow.otpExpiresAt,
+      nextRequestAt: otpWindow.nextRequestAt,
+    };
+  }
 }
 
 /** Sign up: always returns OTP requirement for email verification flow. */
@@ -96,61 +124,76 @@ export async function signup(
   captchaToken: string,
   lastName?: string
 ): Promise<AuthFlowStatus> {
-  return apiRequest<AuthFlowStatus>(`${AUTH_FLOW_PREFIX}/signup-password`, {
+  await apiRequest<unknown>(`${AUTH_PREFIX}/sign-up/email`, {
     method: "POST",
     body: JSON.stringify({
       email,
       password,
+      name: [firstName, lastName].filter(Boolean).join(" ").trim() || email,
       username,
       firstName,
       lastName,
       captchaToken: captchaToken || "",
     }),
   });
+  const otp = await sendOtp(email, captchaToken);
+  return {
+    status: "otp_required",
+    otpExpiresAt: otp.otpExpiresAt,
+    nextRequestAt: otp.nextRequestAt,
+  };
 }
 
 export async function sendOtp(
   email: string,
   captchaToken: string
 ): Promise<OtpSendResponse> {
-  return apiRequest<OtpSendResponse>(`${AUTH_FLOW_PREFIX}/otp/send`, {
+  await apiRequest<unknown>(`${AUTH_PREFIX}/email-otp/send-verification-otp`, {
     method: "POST",
     body: JSON.stringify({
       email,
-      purpose: "email_verification",
+      type: "email-verification",
       captchaToken: captchaToken || "",
     }),
   });
+  const otpWindow = buildOtpWindow();
+  return {
+    status: "sent",
+    otpExpiresAt: otpWindow.otpExpiresAt,
+    nextRequestAt: otpWindow.nextRequestAt,
+  };
 }
 
 export async function verifyOtp(email: string, code: string): Promise<AuthFlowStatus> {
-  return apiRequest<AuthFlowStatus>(`${AUTH_FLOW_PREFIX}/otp/verify`, {
+  await apiRequest<unknown>(`${AUTH_PREFIX}/email-otp/verify-email`, {
     method: "POST",
     body: JSON.stringify({
       email,
-      code,
-      purpose: "email_verification",
+      otp: code,
     }),
   });
+  return { status: "authenticated" };
 }
 
 export async function forgotPassword(email: string, redirectTo?: string): Promise<{ status: boolean; message: string }> {
-  return apiRequest<{ status: boolean; message: string }>(`${AUTH_FLOW_PREFIX}/password/forgot`, {
+  await apiRequest<unknown>(`${AUTH_PREFIX}/forget-password`, {
     method: "POST",
     body: JSON.stringify({ email, redirectTo }),
   });
+  return { status: true, message: "If that email exists, a reset message has been sent." };
 }
 
 export async function resetPassword(token: string, newPassword: string): Promise<{ status: boolean }> {
-  return apiRequest<{ status: boolean }>(`${AUTH_FLOW_PREFIX}/password/reset`, {
+  await apiRequest<unknown>(`${AUTH_PREFIX}/reset-password`, {
     method: "POST",
     body: JSON.stringify({ token, newPassword }),
   });
+  return { status: true };
 }
 
 /** Logout: clears server session cookie. */
 export async function logout(): Promise<{ message: string }> {
-  return apiRequest<{ message: string }>(`${AUTH_PREFIX}/logout`, {
+  return apiRequest<{ message: string }>(`${AUTH_PREFIX}/sign-out`, {
     method: "POST",
   });
 }

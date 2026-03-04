@@ -11,11 +11,13 @@ This folder contains the client-side state and hooks used by the auth pages. The
 - **OAuth callback**: `apps/web/src/app/(site)/auth/callback/page.tsx`
 
 ## Backend endpoints used by the web app
-- **Password login/signup (session-first + OTP)** (`apps/api/src/auth/auth.controller.ts`)
-  - `POST /api/v1/auth-flow/signup-password`
-  - `POST /api/v1/auth-flow/login-password`
-  - `POST /api/v1/auth-flow/otp/send`
-  - `POST /api/v1/auth-flow/otp/verify`
+- **Password login/signup/reset + OTP** (native Better Auth)
+  - `POST /api/v1/auth/sign-up/email`
+  - `POST /api/v1/auth/sign-in/email`
+  - `POST /api/v1/auth/email-otp/send-verification-otp`
+  - `POST /api/v1/auth/email-otp/verify-email`
+  - `POST /api/v1/auth/forget-password`
+  - `POST /api/v1/auth/reset-password`
 - **OAuth** (Better Auth)
   - `POST /api/v1/auth/sign-in/social` → returns redirect URL
   - Callback handled by Better Auth, redirects to frontend
@@ -27,8 +29,8 @@ This folder contains the client-side state and hooks used by the auth pages. The
 sequenceDiagram
   participant Web
   participant API
-  Web->>API: POST /auth-flow/login-password
-  API-->>Web: { status: \"authenticated\" } + Set-Cookie
+  Web->>API: POST /auth/sign-in/email
+  API-->>Web: success + Set-Cookie
   Web->>API: GET /users/me
   API-->>Web: { user }
   Web->>Web: redirect /dashboard

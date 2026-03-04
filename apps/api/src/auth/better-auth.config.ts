@@ -1,20 +1,39 @@
 import type { ConfigService } from '@nestjs/config';
-import { getPasswordStrength } from '@pytholit/validation';
+import { validatePasswordStrength } from '@pytholit/validation';
+import { randomUUID } from 'crypto';
 
+import { TurnstileService } from '../common/services/turnstile.service';
 import { readTrimmedStringOrDefault, readTrimmedStringOrEmpty } from '../config/config-readers';
+import { OAUTH_PROVIDERS, type OAuthProviderKey } from './auth-providers.config';
 import {
   API_URL_DEFAULT,
   AUTH_SESSION_TTL_SECONDS,
   AUTH_SESSION_UPDATE_AGE_SECONDS,
   FRONTEND_URL_DEFAULT,
 } from '../config/defaults';
+import { PrismaService } from '../database/prisma.service';
+import { EmailService } from '../email/email.service';
 import { getJwtSecret } from './auth.config';
+
+const OTP_COOLDOWN_SECONDS = 60;
+const OTP_HOURLY_LIMIT = 5;
+const OTP_DAILY_LIMIT = 10;
+const OTP_LOCK_MINUTES = 15;
+
+type BetterAuthServices = {
+  prisma: PrismaService;
+  turnstile: TurnstileService;
+  email: EmailService;
+};
+
+type ApiErrorConstructor = new (...args: any[]) => Error;
 
 function validatePasswordField(body: unknown, key: 'password' | 'newPassword'): void {
   if (!body || typeof body !== 'object') return;
   const value = (body as Record<string, unknown>)[key];
   if (typeof value === 'string') {
-    getPasswordStrength(value);
+    // Fix #7B: Use validatePasswordStrength (throws on weak password) instead of getPasswordStrength (info-only)
+    validatePasswordStrength(value);
   }
 }
 
@@ -52,28 +71,34 @@ function validatePasswordField(body: unknown, key: 'password' | 'newPassword'): 
  * @see {@link https://www.better-auth.com/docs/reference/options Better Auth Options}
  * @see {@link AuthModule}
  */
-export async function createBetterAuth(configService: ConfigService) {
+export async function createBetterAuth(configService: ConfigService, services: BetterAuthServices) {
   // Dynamic imports to avoid loading during module initialization
-  const { betterAuth } = await import('better-auth');
+  const { APIError, betterAuth } = await import('better-auth');
   const { createAuthMiddleware } = await import('better-auth/api');
-  const { emailOTP } = await import('better-auth/plugins');
+  const { emailOTP, username } = await import('better-auth/plugins');
   const { PostgresDialect } = await import('kysely');
   const { Pool } = await import('pg');
 
   // Configuration from environment variables with fallbacks
   const databaseUrl = configService.get<string>('DATABASE_URL');
-  const frontendUrl = readTrimmedStringOrDefault(configService, 'FRONTEND_URL', FRONTEND_URL_DEFAULT);
+  const frontendUrl = readTrimmedStringOrDefault(
+    configService,
+    'FRONTEND_URL',
+    FRONTEND_URL_DEFAULT
+  );
   const apiUrl = readTrimmedStringOrDefault(configService, 'API_URL', API_URL_DEFAULT);
 
   // Define a tiny BetterAuth plugin for the hooks since the config type definition doesn't contain a before array.
   // We're essentially writing an inline plugin.
   const passwordValidatorPlugin = {
-    id: "password-validator",
+    id: 'password-validator',
     hooks: {
       before: [
         {
           matcher(context: any) {
-            return context.path.includes('/sign-up/email') || context.path.includes('/reset-password');
+            return (
+              context.path.includes('/sign-up/email') || context.path.includes('/reset-password')
+            );
           },
           handler: createAuthMiddleware(async (ctx: any) => {
             if (ctx.path.includes('/sign-up/email')) {
@@ -85,7 +110,92 @@ export async function createBetterAuth(configService: ConfigService) {
           }),
         },
       ],
+    },
+  };
+
+  const readIpFromCtx = (ctx: any): string | undefined => {
+    const headers = ctx?.request?.headers as
+      | Headers
+      | { [key: string]: string | string[] | undefined }
+      | undefined;
+    if (!headers) return undefined;
+    if (typeof (headers as Headers).get === 'function') {
+      const forwarded = (headers as Headers).get('x-forwarded-for')?.split(',')[0]?.trim();
+      const cf = (headers as Headers).get('cf-connecting-ip')?.trim();
+      const real = (headers as Headers).get('x-real-ip')?.trim();
+      return forwarded || cf || real || undefined;
     }
+    const headerMap = headers as { [key: string]: string | string[] | undefined };
+    const first = (value: string | string[] | undefined): string | undefined =>
+      Array.isArray(value) ? value[0] : value;
+    const forwarded = first(headerMap['x-forwarded-for'])?.split(',')[0]?.trim();
+    const cf = first(headerMap['cf-connecting-ip'])?.trim();
+    const real = first(headerMap['x-real-ip'])?.trim();
+    return forwarded || cf || real || undefined;
+  };
+
+  const readCaptchaToken = (ctx: any): string | null => {
+    const bodyToken = typeof ctx?.body?.captchaToken === 'string' ? ctx.body.captchaToken.trim() : '';
+    if (bodyToken) return bodyToken;
+
+    const headers = ctx?.request?.headers as
+      | Headers
+      | { [key: string]: string | string[] | undefined }
+      | undefined;
+    if (!headers) return null;
+    if (typeof (headers as Headers).get === 'function') {
+      const token = (headers as Headers).get('x-captcha-token');
+      return token?.trim() || null;
+    }
+
+    const raw = (headers as { [key: string]: string | string[] | undefined })['x-captcha-token'];
+    if (Array.isArray(raw)) return raw[0]?.trim() || null;
+    return typeof raw === 'string' ? raw.trim() || null : null;
+  };
+
+  const captchaPlugin = {
+    id: 'captcha-gate',
+    hooks: {
+      before: [
+        {
+          matcher(context: any) {
+            return (
+              context.path === '/sign-up/email' ||
+              context.path === '/sign-in/email' ||
+              context.path === '/email-otp/send-verification-otp'
+            );
+          },
+          handler: createAuthMiddleware(async (ctx: any) => {
+            if (services.turnstile.isDevelopmentMode()) {
+              return { context: ctx };
+            }
+            const token = readCaptchaToken(ctx);
+            if (!token) {
+              throw new APIError('BAD_REQUEST', {
+                code: 'AUTH_CAPTCHA_REQUIRED',
+                detail: 'CAPTCHA token is required.',
+              });
+            }
+            const valid = await services.turnstile.verifyToken(token, readIpFromCtx(ctx));
+            if (!valid) {
+              throw new APIError('BAD_REQUEST', {
+                code: 'AUTH_CAPTCHA_INVALID',
+                detail: 'Invalid CAPTCHA token.',
+              });
+            }
+            return { context: ctx };
+          }),
+        },
+      ],
+    },
+  };
+
+  const isProviderEnabled = (key: OAuthProviderKey): boolean => {
+    const def = OAUTH_PROVIDERS[key];
+    return (
+      Boolean(readTrimmedStringOrEmpty(configService, def.clientIdKey)) &&
+      Boolean(readTrimmedStringOrEmpty(configService, def.clientSecretKey))
+    );
   };
 
   const providerGatePlugin = {
@@ -98,16 +208,10 @@ export async function createBetterAuth(configService: ConfigService) {
           },
           handler: createAuthMiddleware(async (ctx: any) => {
             const provider = typeof ctx?.body?.provider === 'string' ? ctx.body.provider : '';
-            const hasGoogle =
-              Boolean(readTrimmedStringOrEmpty(configService, 'GOOGLE_CLIENT_ID')) &&
-              Boolean(readTrimmedStringOrEmpty(configService, 'GOOGLE_CLIENT_SECRET'));
-            const hasGithub =
-              Boolean(readTrimmedStringOrEmpty(configService, 'GITHUB_CLIENT_ID')) &&
-              Boolean(readTrimmedStringOrEmpty(configService, 'GITHUB_CLIENT_SECRET'));
+            const isKnown = Object.prototype.hasOwnProperty.call(OAUTH_PROVIDERS, provider);
 
-            if ((provider === 'google' && !hasGoogle) || (provider === 'github' && !hasGithub)) {
-              const authApi = await import('better-auth');
-              throw new authApi.APIError('BAD_REQUEST', {
+            if (!isKnown || !isProviderEnabled(provider as OAuthProviderKey)) {
+              throw new APIError('BAD_REQUEST', {
                 code: 'AUTH_OAUTH_PROVIDER_DISABLED',
                 detail: `OAuth provider '${provider}' is disabled.`,
               });
@@ -166,7 +270,9 @@ export async function createBetterAuth(configService: ConfigService) {
       sendOnSignUp: true,
       // Keep resend explicit to enforce cooldown via /send-verification-email hook.
       sendOnSignIn: false,
-      autoSignInAfterVerification: false,
+      // Fix #6: Enable autoSignInAfterVerification so users are signed in after OTP verification
+      // Without this, verifyEmailOTP doesn't create a session, leaving users unauthenticated
+      autoSignInAfterVerification: true,
     },
 
     /**
@@ -183,21 +289,23 @@ export async function createBetterAuth(configService: ConfigService) {
     },
 
     /**
-     * OAuth provider configuration.
-     * Supports Google and GitHub OAuth.
+     * OAuth provider configuration — derived from OAUTH_PROVIDERS registry.
+     * To add/remove a provider, update auth-providers.config.ts only.
      */
-    socialProviders: {
-      google: {
-        clientId: readTrimmedStringOrEmpty(configService, 'GOOGLE_CLIENT_ID'),
-        clientSecret: readTrimmedStringOrEmpty(configService, 'GOOGLE_CLIENT_SECRET'),
-        redirectURI: `${apiUrl}/api/v1/auth/callback/google`,
-      },
-      github: {
-        clientId: readTrimmedStringOrEmpty(configService, 'GITHUB_CLIENT_ID'),
-        clientSecret: readTrimmedStringOrEmpty(configService, 'GITHUB_CLIENT_SECRET'),
-        redirectURI: `${apiUrl}/api/v1/auth/callback/github`,
-      },
-    },
+    socialProviders: Object.fromEntries(
+      (Object.entries(OAUTH_PROVIDERS) as [OAuthProviderKey, (typeof OAUTH_PROVIDERS)[OAuthProviderKey]][]).map(
+        ([key, def]) => [
+          key,
+          {
+            clientId: readTrimmedStringOrEmpty(configService, def.clientIdKey),
+            clientSecret: readTrimmedStringOrEmpty(configService, def.clientSecretKey),
+            ...(def.callbackUrlKey
+              ? { redirectURI: readTrimmedStringOrEmpty(configService, def.callbackUrlKey) || `${apiUrl}/api/v1/auth/callback/${key}` }
+              : { redirectURI: `${apiUrl}/api/v1/auth/callback/${key}` }),
+          },
+        ]
+      )
+    ),
 
     /**
      * Account linking policy.
@@ -207,7 +315,7 @@ export async function createBetterAuth(configService: ConfigService) {
       accountLinking: {
         enabled: true,
         disableImplicitLinking: false,
-        trustedProviders: ['google', 'github', 'email-password'],
+        trustedProviders: [...(Object.keys(OAUTH_PROVIDERS) as OAuthProviderKey[]), 'email-password'],
         allowDifferentEmails: false,
       },
     },
@@ -217,6 +325,24 @@ export async function createBetterAuth(configService: ConfigService) {
      * Email changes are disabled by business decision.
      */
     user: {
+      additionalFields: {
+        firstName: {
+          type: 'string',
+          required: false,
+          fieldName: 'first_name',
+        },
+        lastName: {
+          type: 'string',
+          required: false,
+          fieldName: 'last_name',
+        },
+        isActive: {
+          type: 'boolean',
+          required: false,
+          defaultValue: true,
+          fieldName: 'is_active',
+        },
+      },
       changeEmail: {
         enabled: false,
       },
@@ -239,7 +365,9 @@ export async function createBetterAuth(configService: ConfigService) {
      */
     plugins: [
       passwordValidatorPlugin,
+      captchaPlugin,
       providerGatePlugin,
+      username(),
       emailOTP({
         otpLength: 6,
         expiresIn: 10 * 60,
@@ -247,21 +375,153 @@ export async function createBetterAuth(configService: ConfigService) {
         sendVerificationOnSignUp: false,
         overrideDefaultEmailVerification: true,
         storeOTP: 'hashed',
-        sendVerificationOTP: async ({ email, otp, type }) => {
-          const nodeEnv = (configService.get<string>('NODE_ENV') ?? '').toLowerCase();
-          if (nodeEnv !== 'production') {
-            // Development-only visibility for direct Better Auth OTP sends.
-            console.warn(`DEV_ONLY_OTP email=${email} type=${type} otp=${otp}`);
-            return;
-          }
+        sendVerificationOTP: async ({ email, otp, type }, ctx) => {
+          void type;
+          const ip = readIpFromCtx(ctx);
+          const ipKey = ip?.trim().slice(0, 120) || 'unknown';
+          const normalizedEmail = email.trim().toLowerCase();
 
-          // In production, OTP delivery must go through AuthFlowService + EmailService
-          // so rate limits/cooldown and audit rules stay consistent.
-          throw new Error(
-            'Native Better Auth OTP sending is disabled in production. Use /api/v1/auth-flow/otp/send.'
-          );
+          await enforceSendLimits(services.prisma, normalizedEmail, ipKey, APIError);
+
+          await services.email.sendOtpVerificationEmail({
+            toEmail: normalizedEmail,
+            toName: deriveNameFromEmail(normalizedEmail),
+            code: otp,
+            expiresInMinutes: 10,
+          });
         },
       }),
     ],
   });
+}
+
+async function enforceSendLimits(
+  prisma: PrismaService,
+  email: string,
+  ip: string,
+  APIErrorCtor: ApiErrorConstructor
+): Promise<void> {
+  await enforceThrottleWindow(prisma, email, ip, 'send_hourly', 3600, OTP_HOURLY_LIMIT, APIErrorCtor);
+  await enforceThrottleWindow(prisma, email, ip, 'send_daily', 86400, OTP_DAILY_LIMIT, APIErrorCtor);
+  await enforceSendCooldown(prisma, email, ip, APIErrorCtor);
+}
+
+async function enforceThrottleWindow(
+  prisma: PrismaService,
+  email: string,
+  ip: string,
+  action: string,
+  windowSec: number,
+  maxAttempts: number,
+  APIErrorCtor: ApiErrorConstructor
+): Promise<void> {
+  const now = new Date();
+  const windowMs = windowSec * 1000;
+  const windowStart = new Date(Math.floor(now.getTime() / windowMs) * windowMs);
+  const lockUntil = new Date(now.getTime() + OTP_LOCK_MINUTES * 60 * 1000);
+
+  const lockedRow = await prisma.client.authOtpThrottle.findFirst({
+    where: {
+      email,
+      ip,
+      action,
+      lockedUntil: { gt: now },
+    },
+    orderBy: { lockedUntil: 'desc' },
+    select: { lockedUntil: true },
+  });
+
+  if (lockedRow?.lockedUntil) {
+    throw new APIErrorCtor('TOO_MANY_REQUESTS', {
+      code: 'AUTH_OTP_LOCKED',
+      detail: `Too many OTP attempts. Try again after ${lockedRow.lockedUntil.toISOString()}.`,
+    });
+  }
+
+  const record = await prisma.client.authOtpThrottle.upsert({
+    where: {
+      email_ip_action_windowStart_windowSec: {
+        email,
+        ip,
+        action,
+        windowStart,
+        windowSec,
+      },
+    },
+    update: {
+      attempts: { increment: 1 },
+    },
+    create: {
+      id: randomUUID(),
+      email,
+      ip,
+      action,
+      windowStart,
+      windowSec,
+      attempts: 1,
+    },
+    select: { attempts: true },
+  });
+
+  const attempts = Number(record.attempts ?? 0);
+  if (attempts > maxAttempts) {
+    await prisma.client.authOtpThrottle.updateMany({
+      where: { email, ip, action, windowStart, windowSec },
+      data: { lockedUntil: lockUntil },
+    });
+    throw new APIErrorCtor('TOO_MANY_REQUESTS', {
+      code: 'AUTH_OTP_LOCKED',
+      detail: `Too many OTP attempts. Try again after ${lockUntil.toISOString()}.`,
+    });
+  }
+}
+
+async function enforceSendCooldown(
+  prisma: PrismaService,
+  email: string,
+  ip: string,
+  APIErrorCtor: ApiErrorConstructor
+): Promise<void> {
+  const now = Date.now();
+  const windowMs = OTP_COOLDOWN_SECONDS * 1000;
+  const windowStart = new Date(Math.floor(now / windowMs) * windowMs);
+
+  const record = await prisma.client.authOtpThrottle.upsert({
+    where: {
+      email_ip_action_windowStart_windowSec: {
+        email,
+        ip,
+        action: 'send_cooldown',
+        windowStart,
+        windowSec: OTP_COOLDOWN_SECONDS,
+      },
+    },
+    update: {
+      attempts: { increment: 1 },
+    },
+    create: {
+      id: randomUUID(),
+      email,
+      ip,
+      action: 'send_cooldown',
+      windowStart,
+      windowSec: OTP_COOLDOWN_SECONDS,
+      attempts: 1,
+    },
+    select: { attempts: true },
+  });
+
+  const attempts = Number(record.attempts ?? 0);
+  if (attempts > 1) {
+    const retryAt = new Date(windowStart.getTime() + OTP_COOLDOWN_SECONDS * 1000).toISOString();
+    throw new APIErrorCtor('TOO_MANY_REQUESTS', {
+      code: 'AUTH_OTP_COOLDOWN',
+      detail: `OTP already sent. Try again after ${retryAt}.`,
+    });
+  }
+}
+
+function deriveNameFromEmail(email: string): string {
+  const local = email.split('@')[0]?.trim() || 'there';
+  return local.replace(/[._-]/g, ' ').slice(0, 40) || 'there';
 }

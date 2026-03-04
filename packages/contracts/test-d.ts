@@ -1,11 +1,11 @@
 import { expectType } from 'tsd';
-import type { Plan, PublicPlan, PlanFeatureValue } from './src/billing';
+import type { Plan, PlanFeatureValue } from './src/billing';
 
-const featureValue: PlanFeatureValue = 'unlimited';
+const featureValue: PlanFeatureValue = 'basic';
 expectType<PlanFeatureValue>(featureValue);
 
 declare const plan: Plan;
-expectType<PublicPlan>({
+expectType<Plan>({
   id: plan.id,
   name: plan.name,
   displayName: plan.displayName,
@@ -16,7 +16,6 @@ expectType<PublicPlan>({
   monthlyIncludedCredits: plan.monthlyIncludedCredits,
   yearlyIncludedCredits: plan.yearlyIncludedCredits,
   yearlyBonusCredits: plan.yearlyBonusCredits,
-  yearlyDiscountPercent: plan.yearlyDiscountPercent,
   features: plan.features,
   isActive: plan.isActive,
 });

@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "id": "max",
+  "name": "max",
+  "displayName": "Max",
+  "description": "For scale and power users running serious workloads.",
+  "currency": "USD",
+  "billing": {
+    "monthly": {
+      "code": "max_month",
+      "price": 80,
+      "includedCredits": 800,
+      "bonusCredits": 0
+    },
+    "yearly": {
+      "code": "max_year",
+      "price": 800,
+      "includedCredits": 8000,
+      "bonusCredits": 1600
+    }
+  },
+  "isDefault": false,
+  "features": [
+    {
+      "id": "projects_active",
+      "name": "Active projects",
+      "description": "Simultaneous projects you can manage",
+      "value": 150,
+      "type": "number"
+    },
+    {
+      "id": "environments_running",
+      "name": "Running environments",
+      "description": "Parallel environment deployments",
+      "value": 10,
+      "type": "number"
+    },
+    {
+      "id": "exports_cycle",
+      "name": "Exports / cycle",
+      "description": "Maximum exports per billing cycle",
+      "value": 5000,
+      "type": "number"
+    },
+    {
+      "id": "ai_model_tier",
+      "name": "AI model tier access",
+      "description": "Model capabilities and API access level",
+      "value": "all",
+      "type": "string"
+    },
+    {
+      "id": "custom_domains",
+      "name": "Custom domains",
+      "description": "Number of custom domains you can configure",
+      "value": 10,
+      "type": "number"
+    },
+    {
+      "id": "priority_queue",
+      "name": "Priority queue",
+      "description": null,
+      "value": true,
+      "type": "boolean"
+    },
+    {
+      "id": "can_purchase_credits",
+      "name": "Extra credit purchases",
+      "description": null,
+      "value": true,
+      "type": "boolean"
+    },
+    {
+      "id": "env_max_vcpu",
+      "name": "Max env vCPU",
+      "description": null,
+      "value": 16,
+      "type": "number"
+    },
+    {
+      "id": "env_max_ram_gb",
+      "name": "Max env RAM (GB)",
+      "description": null,
+      "value": 64,
+      "type": "number"
+    },
+    {
+      "id": "env_max_disk_gb",
+      "name": "Max env disk (GB)",
+      "description": null,
+      "value": 1000,
+      "type": "number"
+    },
+    {
+      "id": "env_allow_spot",
+      "name": "Allow spot instances",
+      "description": null,
+      "value": true,
+      "type": "boolean"
+    }
+  ],
+  "isActive": true
+}

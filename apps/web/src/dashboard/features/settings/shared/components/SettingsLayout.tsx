@@ -17,8 +17,8 @@ export const SettingsLayout = ({ children }: SettingsLayoutProps) => {
   const { logout } = useAuth();
   const basePath = '/dashboard/settings';
 
-  const handleLogout = () => {
-    void logout();
+  const handleLogout = async () => {
+    await logout();
     router.push('/auth/login');
   };
 

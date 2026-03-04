@@ -5,7 +5,7 @@ export interface EntitlementFeatureUsage {
   name: string;
   value: PlanFeatureValue;
   used: number;
-  remaining: number | 'unlimited';
+  remaining: number;
 }
 
 export interface EntitlementLimitsResponse {

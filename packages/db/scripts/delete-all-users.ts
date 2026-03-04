@@ -3,8 +3,8 @@
  * Run with: pnpm --filter @pytholit/db db:delete-all-users
  *
  * This will cascade delete: Account, Session, Otp, Project, Environment,
- * DeployJob (triggeredBy set to null), WizardBuild, UserPaymentMethod,
- * Payment, Invoice, Subscription, LagoWebhookEvent, AuditLog
+ * DeployJob (triggeredBy set to null), WizardBuild, Invoice, Subscription,
+ * CreditLedgerEntry, AuditLog
  */
 
 import { PrismaClient } from '../src/generated/client';

@@ -1,4 +1,5 @@
 import { ExecutionContext } from '@nestjs/common';
+
 import type { AuthenticatedUser } from '../auth.types';
 
 /**

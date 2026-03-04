@@ -1,73 +1,93 @@
-import { InjectQueue } from '@nestjs/bullmq';
-import { Injectable, Logger } from '@nestjs/common';
-import { Queue } from 'bullmq';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+  ServiceUnavailableException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Job, Queue, Worker } from 'bullmq';
 
-import type { LagoWebhookEvent } from './lago.types';
-
-export type WebhookJobData = {
-  source: 'lago';
-  event: LagoWebhookEvent;
-  receivedAt: string;
-};
+import { BillingJobName, BillingQueue } from './billing.constants';
+import { BillingProcessor } from './billing.processor';
+import { BILLING_ERROR_CODE } from './billing-error-codes';
 
 @Injectable()
-export class WebhookQueue {
-  private readonly logger = new Logger(WebhookQueue.name);
+export class WebhookQueueService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(WebhookQueueService.name);
+  private queue: Queue | undefined;
+  private worker: Worker | undefined;
 
-  constructor(@InjectQueue('billing-webhooks') private queue: Queue<WebhookJobData>) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly processor: BillingProcessor
+  ) {}
 
-  /**
-   * Queue a Lago webhook for async processing
-   */
-  async queueLagoWebhook(event: LagoWebhookEvent): Promise<void> {
-    const jobId = `lago-${event.lago_id || event.id || Date.now()}`;
+  async onModuleInit(): Promise<void> {
+    const redisUrl = (this.configService.get<string>('REDIS_URL') ?? '').trim();
+    if (!redisUrl) {
+      this.logger.warn('Billing queue is disabled because REDIS_URL is not configured.');
+      return;
+    }
 
-    await this.queue.add(
-      'lago-webhook',
-      {
-        source: 'lago',
-        event,
-        receivedAt: new Date().toISOString(),
+    const connection = { url: redisUrl };
+
+    this.queue = new Queue(BillingQueue.Name, {
+      connection,
+      defaultJobOptions: {
+        attempts: 8,
+        backoff: { type: 'exponential', delay: 1000 },
+        removeOnComplete: { count: 1000, age: 24 * 3600 },
+        removeOnFail: { count: 5000 },
       },
-      {
-        jobId,
-        attempts: 3,
-        backoff: {
-          type: 'exponential',
-          delay: 2000, // Start with 2s, then 4s, then 8s
-        },
-        removeOnComplete: {
-          count: 100, // Keep last 100 successful jobs
-          age: 24 * 3600, // Remove after 24 hours
-        },
-        removeOnFail: {
-          count: 500, // Keep last 500 failed jobs for debugging
-        },
-      }
-    );
+    });
 
-    this.logger.log(`Queued Lago webhook: ${jobId} (${event.type})`);
+    this.worker = new Worker(BillingQueue.Name, async (job: Job) => this.processor.process(job), {
+      connection,
+      concurrency: 10,
+    });
+
+    this.worker.on('failed', (job, error) => {
+      this.logger.error('billing_worker_failed', {
+        jobId: job?.id,
+        name: job?.name,
+        attemptsMade: job?.attemptsMade,
+        error: error.message,
+      });
+    });
   }
 
-  /**
-   * Get queue metrics for monitoring
-   */
-  async getQueueMetrics() {
-    const [waiting, active, completed, failed, delayed] = await Promise.all([
-      this.queue.getWaitingCount(),
-      this.queue.getActiveCount(),
-      this.queue.getCompletedCount(),
-      this.queue.getFailedCount(),
-      this.queue.getDelayedCount(),
-    ]);
+  async onModuleDestroy(): Promise<void> {
+    if (this.worker) {
+      await this.worker.close();
+      this.worker = undefined;
+    }
+    if (this.queue) {
+      await this.queue.close();
+      this.queue = undefined;
+    }
+  }
 
-    return {
-      waiting,
-      active,
-      completed,
-      failed,
-      delayed,
-      total: waiting + active + delayed,
-    };
+  async enqueueStripeWebhookEvent(stripeEventId: string): Promise<void> {
+    if (!this.queue) {
+      throw new ServiceUnavailableException({
+        code: BILLING_ERROR_CODE.BILLING_QUEUE_NOT_INITIALIZED,
+        detail:
+          'Billing queue is not initialized. Configure REDIS_URL to enable webhook processing.',
+      });
+    }
+
+    try {
+      await this.queue.add(
+        BillingJobName.StripeWebhookEvent,
+        { stripeEventId },
+        { jobId: stripeEventId }
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      // Stripe can retry the same event many times; BullMQ will reject duplicate jobIds while the job exists.
+      if (message.toLowerCase().includes('job') && message.toLowerCase().includes('exists')) return;
+      throw err;
+    }
   }
 }

@@ -13,6 +13,7 @@ import { AdminEnvironmentsService } from './services/admin-environments.service'
 import { AdminMembershipsService } from './services/admin-memberships.service';
 import { AdminOverviewService } from './services/admin-overview.service';
 import { AdminUsersService } from './services/admin-users.service';
+import { StripeService } from '../stripe/stripe.service';
 
 @Module({
   controllers: [
@@ -24,6 +25,7 @@ import { AdminUsersService } from './services/admin-users.service';
     AdminBillingController,
   ],
   providers: [
+    StripeService,
     AdminOverviewService,
     AdminAuditService,
     AdminUsersService,

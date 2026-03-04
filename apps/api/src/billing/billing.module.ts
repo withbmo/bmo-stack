@@ -1,54 +1,51 @@
-import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
+import { DiscoveryModule } from '@nestjs/core';
 
-import { BillingConfigService } from './billing.config';
+import { StripeService } from '../stripe/stripe.service';
+import { StripeUtilsService } from '../stripe/stripe-utils.service';
 import { BillingController } from './billing.controller';
+import { BillingProcessor } from './billing.processor';
+import { BillingAccessService } from './billing-access.service';
 import { BillingFacadeService } from './billing-facade.service';
-import { LagoService } from './lago.service';
-import { LagoWebhookHandler } from './lago-webhook.handler';
-import { SignupBonusRetryProcessor } from './signup-bonus-retry.processor';
-import { SignupBonusRetryScheduler } from './signup-bonus-retry.scheduler';
-import { SignupCreditsService } from './signup-credits.service';
-import { WebhookProcessor } from './webhook.processor';
-import { WebhookQueue } from './webhook.queue';
+import { BillingPlansService } from './billing-plans.service';
+import { BillingStateService } from './billing-state.service';
+import { StripeCustomerService } from './stripe-customer.service';
+import { StripeUsageService } from './stripe-usage.service';
+import { StripeWebhookProcessorService } from './stripe-webhook.processor.service';
+import { StripeWebhookService } from './stripe-webhook.service';
+import { StripeWebhookWorkerService } from './stripe-webhook.worker.service';
+import { StripeWebhookExplorerService } from './stripe-webhook-explorer.service';
+import { WebhookQueueService } from './webhook.queue';
 
 @Module({
-  imports: [
-    BullModule.registerQueue({
-      name: 'billing-webhooks',
-      defaultJobOptions: {
-        attempts: 3,
-        backoff: {
-          type: 'exponential',
-          delay: 2000,
-        },
-      },
-    }),
-    BullModule.registerQueue({
-      name: 'billing-signup-bonus-retry',
-      defaultJobOptions: {
-        attempts: 1,
-      },
-    }),
-  ],
+  imports: [DiscoveryModule],
   controllers: [BillingController],
   providers: [
-    BillingConfigService,
+    StripeService,
+    StripeUtilsService,
     BillingFacadeService,
-    LagoService,
-    LagoWebhookHandler,
-    SignupCreditsService,
-    SignupBonusRetryScheduler,
-    SignupBonusRetryProcessor,
-    WebhookQueue,
-    WebhookProcessor,
+
+    StripeCustomerService,
+    StripeUsageService,
+
+    BillingPlansService,
+    BillingAccessService,
+    BillingStateService,
+
+    StripeWebhookService,
+    StripeWebhookProcessorService,
+    StripeWebhookExplorerService,
+    StripeWebhookWorkerService,
+
+    BillingProcessor,
+    WebhookQueueService,
   ],
   exports: [
-    BillingConfigService,
     BillingFacadeService,
-    LagoService,
-    SignupCreditsService,
-    WebhookQueue,
+    BillingAccessService,
+    StripeUtilsService,
+    StripeCustomerService,
+    StripeUsageService,
   ],
 })
 export class BillingModule {}

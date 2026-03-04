@@ -1,0 +1,42 @@
+name: Sync Billing Plans
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+    paths:
+      - 'packages/config/src/plans/**'
+      - 'scripts/sync-plans-to-providers.mjs'
+      - '.github/workflows/sync-billing-plans.yml'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate plans
+        run: pnpm validate:plans
+
+      - name: Sync plans to Stripe + Orb
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          ORB_API_KEY: ${{ secrets.ORB_API_KEY }}
+        run: pnpm plans:sync:providers

@@ -9,6 +9,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -28,6 +29,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const initialSessionCheckDone = useRef(false);
   const pathname = usePathname() ?? '/';
 
   const refreshSession = useCallback(async (): Promise<UserProfile | null> => {
@@ -59,20 +61,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       pathname.startsWith('/editor') ||
       pathname.startsWith('/admin');
 
-    // Avoid noisy `/users/me -> 401` calls on public pages.
-    // We only hydrate the session when the user enters a protected area.
-    if (!isProtectedRoute) {
-      setHydrated(true);
-      return;
-    }
-
     if (user) {
       setHydrated(true);
       return;
     }
 
-    setHydrated(false);
-    void refreshSession();
+    // One initial hydration on app load keeps public-site auth UI accurate
+    // (e.g. "GO TO DASHBOARD" vs "START BUILDING") without polling on every public route.
+    if (!initialSessionCheckDone.current) {
+      initialSessionCheckDone.current = true;
+      setHydrated(false);
+      void refreshSession();
+      return;
+    }
+
+    // Avoid noisy `/users/me -> 401` calls on every public navigation.
+    // Protected routes still force refresh to enforce access correctly.
+    if (isProtectedRoute) {
+      setHydrated(false);
+      void refreshSession();
+      return;
+    }
+
+    setHydrated(true);
   }, [pathname, refreshSession, user]);
 
   const value = useMemo(

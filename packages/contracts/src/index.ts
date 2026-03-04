@@ -63,7 +63,14 @@ export type {
 export type {
   BillingCurrency,
   BillingInterval,
-  CreditBalanceResponse,
+  PlanId,
+  PaidPlanId,
+  BillingReasonCode,
+  BillingScope,
+  LedgerEntryType,
+  StripeWebhookProcessingStatus,
+  UsageCategory,
+  UsageEventStatus,
   FeatureAccessState,
   InvoiceListResponse,
   PlanFeature as BillingPlanFeature,
@@ -71,19 +78,20 @@ export type {
   PlanChangeApplyResponse,
   PlanChangePreviewInput,
   PlanChangePreviewResponse,
-  PurchaseCreditsResponse,
   CheckoutSessionResponse,
   FinalizeCheckoutInput,
   CreateCheckoutSessionInput,
   Invoice,
-  PaymentMethod,
   PaymentStatus,
+  WalletBalanceResponse,
+  BillingCheckInput,
+  BillingCheckResponse,
   Plan,
   PlanFeatureValue,
-  PublicPlan,
   Subscription,
   SubscriptionStatus,
 } from './billing';
+export type { BillingRateKey } from './billing-rate-keys';
 export type {
   CreateDeployJobInput,
   DeployJob,
@@ -111,5 +119,24 @@ export {
   SERVER_PRESETS,
   TIER_POLICY,
 } from './environment';
+export {
+  BILLING_CURRENCY,
+  BILLING_INTERVAL,
+  BILLING_INTERVALS,
+  BILLING_REASON_CODE,
+  BILLING_SCOPE,
+  FEATURE_ACCESS_STATE,
+  isPlanId,
+  isPaidPlanId,
+  LEDGER_ENTRY_TYPE,
+  PAID_PLAN_IDS,
+  PLAN_ID,
+  PLAN_IDS,
+  STRIPE_WEBHOOK_PROCESSING_STATUS,
+  SUBSCRIPTION_STATUS,
+  USAGE_CATEGORY,
+  USAGE_EVENT_STATUS,
+} from './billing';
+export { BILLING_RATE_KEYS, BILLING_RATE_KEYS_ALL, isRateKeyForCategory } from './billing-rate-keys';
 export { DEPLOY_JOB_STATUS, DEPLOY_JOB_STEP_STATUS } from './deployment';
 export { ADMIN_LEVELS } from './user';

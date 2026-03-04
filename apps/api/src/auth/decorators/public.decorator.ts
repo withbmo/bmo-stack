@@ -29,7 +29,7 @@ import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
  *
  * **Common Use Cases:**
  * - Authentication endpoints (login, signup, password reset)
- * - Webhook endpoints (Stripe, external services)
+ * - Webhook endpoints (billing providers, external services)
  * - Health check endpoints
  * - Public API endpoints
  *

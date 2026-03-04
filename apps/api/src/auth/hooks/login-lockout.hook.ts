@@ -1,12 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@pytholit/db';
 import { AfterHook, type AuthHookContext, BeforeHook, Hook } from '@thallesp/nestjs-better-auth';
+
+import { DistributedLockService } from '../../common/services/distributed-lock.service';
 import { PrismaService } from '../../database/prisma.service';
 import { extractNormalizedEmail } from './auth-hook.utils';
 
 const MAX_FAILED_ATTEMPTS = 5;
 const WINDOW_MS = 10 * 60 * 1000; // 10 minutes
 const LOCKOUT_MS = 10 * 60 * 1000; // 10 minutes
+const LOGIN_LOCK_LOCK_TTL_MS = 5 * 1000;
 
 type ApiErrorLike = {
   statusCode?: number;
@@ -20,7 +23,10 @@ type ApiErrorLike = {
 export class LoginLockoutHook {
   private readonly logger = new Logger(LoginLockoutHook.name);
 
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly lockService: DistributedLockService
+  ) {}
 
   @BeforeHook('/sign-in/email')
   async checkLock(ctx: AuthHookContext): Promise<void> {
@@ -36,7 +42,8 @@ export class LoginLockoutHook {
     // Auto-clean expired lock / stale attempt window.
     if (
       (attempt.lockedUntil && attempt.lockedUntil <= now) ||
-      (attempt.firstFailedAt && now.getTime() - attempt.firstFailedAt.getTime() > WINDOW_MS)
+      ((attempt.lastFailedAt ?? attempt.firstFailedAt) &&
+        now.getTime() - (attempt.lastFailedAt ?? attempt.firstFailedAt)!.getTime() > WINDOW_MS)
     ) {
       await this.resetAttempt(email);
       return;
@@ -74,6 +81,17 @@ export class LoginLockoutHook {
   }
 
   private async incrementFailure(email: string): Promise<void> {
+    const lock = await this.lockService.runWithLock(
+      this.loginLockResource(email),
+      LOGIN_LOCK_LOCK_TTL_MS,
+      () => this.incrementFailureInsideLock(email)
+    );
+    if (!lock.acquired) {
+      this.logger.debug(`login_lockout_increment_skipped lock_unavailable email=${email}`);
+    }
+  }
+
+  private async incrementFailureInsideLock(email: string): Promise<void> {
     const now = new Date();
     const existing = await this.prisma.client.authLoginAttempt.findUnique({
       where: { email },
@@ -106,11 +124,11 @@ export class LoginLockoutHook {
       }));
     if (!current) return;
 
-    const windowExpired =
-      !current.firstFailedAt || now.getTime() - current.firstFailedAt.getTime() > WINDOW_MS;
+    const windowAnchor = current.lastFailedAt ?? current.firstFailedAt;
+    const windowExpired = !windowAnchor || now.getTime() - windowAnchor.getTime() > WINDOW_MS;
 
     const failedAttempts = windowExpired ? 1 : current.failedAttempts + 1;
-    const firstFailedAt = windowExpired ? now : current.firstFailedAt;
+    const firstFailedAt = windowExpired ? now : current.firstFailedAt ?? now;
     const lockedUntil =
       failedAttempts >= MAX_FAILED_ATTEMPTS ? new Date(now.getTime() + LOCKOUT_MS) : null;
 
@@ -132,15 +150,24 @@ export class LoginLockoutHook {
   }
 
   private async resetAttempt(email: string): Promise<void> {
-    await this.prisma.client.authLoginAttempt.updateMany({
-      where: { email },
-      data: {
-        failedAttempts: 0,
-        firstFailedAt: null,
-        lastFailedAt: null,
-        lockedUntil: null,
-      },
-    });
+    const lock = await this.lockService.runWithLock(
+      this.loginLockResource(email),
+      LOGIN_LOCK_LOCK_TTL_MS,
+      async () => {
+        await this.prisma.client.authLoginAttempt.updateMany({
+          where: { email },
+          data: {
+            failedAttempts: 0,
+            firstFailedAt: null,
+            lastFailedAt: null,
+            lockedUntil: null,
+          },
+        });
+      }
+    );
+    if (!lock.acquired) {
+      this.logger.debug(`login_lockout_reset_skipped lock_unavailable email=${email}`);
+    }
   }
 
   private isApiErrorLike(value: unknown): value is ApiErrorLike {
@@ -150,5 +177,9 @@ export class LoginLockoutHook {
       'statusCode' in value &&
       typeof (value as { statusCode?: unknown }).statusCode === 'number'
     );
+  }
+
+  private loginLockResource(email: string): string {
+    return `lock:auth:login-lockout:${email}`;
   }
 }

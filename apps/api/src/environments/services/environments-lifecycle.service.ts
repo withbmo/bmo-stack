@@ -1,5 +1,6 @@
 import {
     BadRequestException,
+    ConflictException,
     ForbiddenException,
     Injectable,
     NotFoundException,
@@ -16,7 +17,10 @@ import {
     SERVER_PRESETS,
 } from '@pytholit/contracts';
 import type { Environment, Prisma } from '@pytholit/db';
+import { BillingAccessService } from '../../billing/billing-access.service';
+import { DistributedLockService } from '../../common/services/distributed-lock.service';
 import { PrismaService } from '../../database/prisma.service';
+import { PrismaTxService } from '../../database/prisma-tx.service';
 import { EnvironmentsConfigService } from '../environments.config';
 import { SimpleCircuitBreaker } from '../orchestrator-circuit-breaker';
 import {
@@ -27,6 +31,7 @@ import {
     MSG_TERMINATE_REQUESTED,
 } from '../environments.constants';
 import { EnvironmentsCrudService } from './environments-crud.service';
+import { EnvironmentsStatusReconcileService } from './environments-status-reconcile.service';
 import * as EnvironmentsUtils from '../environments.utils';
 
 // Types moved from the main service file
@@ -84,12 +89,17 @@ type OrchestratorBasicRequest = {
 
 @Injectable()
 export class EnvironmentsLifecycleService {
+    private static readonly LIFECYCLE_LOCK_TTL_MS = 30 * 1000;
     private readonly orchestratorBreaker: SimpleCircuitBreaker;
 
     constructor(
         private readonly prisma: PrismaService,
+        private readonly prismaTx: PrismaTxService,
         private readonly envConfig: EnvironmentsConfigService,
-        private readonly crudService: EnvironmentsCrudService
+        private readonly billingAccess: BillingAccessService,
+        private readonly statusReconcile: EnvironmentsStatusReconcileService,
+        private readonly crudService: EnvironmentsCrudService,
+        private readonly lockService: DistributedLockService
     ) {
         this.orchestratorBreaker = new SimpleCircuitBreaker({
             failureThreshold: this.envConfig.circuitFailureThreshold,
@@ -101,6 +111,34 @@ export class EnvironmentsLifecycleService {
         userId: string,
         environmentId: string
     ): Promise<{ message: string; status: string }> {
+        const userLock = await this.lockService.runWithLock(
+            this.userStartLockResource(userId),
+            EnvironmentsLifecycleService.LIFECYCLE_LOCK_TTL_MS,
+            async () => {
+                const lock = await this.lockService.runWithLock(
+                    this.lifecycleLockResource(environmentId),
+                    EnvironmentsLifecycleService.LIFECYCLE_LOCK_TTL_MS,
+                    () => this.startEnvironmentInsideLock(userId, environmentId)
+                );
+                if (!lock.acquired) {
+                    throw new ConflictException('Another environment lifecycle operation is already in progress');
+                }
+                return lock.result;
+            }
+        );
+        if (!userLock.acquired) {
+            throw new ConflictException('Another environment start is already in progress');
+        }
+        return userLock.result;
+    }
+
+    private async startEnvironmentInsideLock(
+        userId: string,
+        environmentId: string
+    ): Promise<{ message: string; status: string }> {
+        const env = await this.getOwnedEnvironmentOrThrow(userId, environmentId);
+        await this.assertRunningEnvironmentsWithinPlan(userId, environmentId, env.orchestratorStatus);
+
         await this.updateOrchestrator(userId, environmentId, {
             status: ORCHESTRATOR_STATUS.QUEUED,
             message: MSG_START_REQUESTED,
@@ -108,7 +146,6 @@ export class EnvironmentsLifecycleService {
 
         let resp: Record<string, unknown> | null = null;
         try {
-            const env = (await this.crudService.findOne(userId, environmentId)) as unknown as Environment;
             const body = await this.buildOrchestratorStartRequest(userId, env);
 
             resp = await this.callOrchestrator('POST', `/internal/environments/${environmentId}/start`, {
@@ -124,19 +161,21 @@ export class EnvironmentsLifecycleService {
         }
 
         const instanceId = EnvironmentsUtils.readString(resp?.instanceId) ?? undefined;
-        const env = await this.crudService.findOne(userId, environmentId);
         const config = EnvironmentsUtils.getConfig(env);
         const current = EnvironmentsUtils.getOrchestratorConfig(config);
+        const now = new Date();
         await this.prisma.client.environment.update({
             where: { id: environmentId },
             data: {
+                orchestratorStatus: ORCHESTRATOR_STATUS.STARTING,
+                orchestratorStatusUpdatedAt: now,
                 config: {
                     ...config,
                     orchestrator: {
                         ...current,
                         status: ORCHESTRATOR_STATUS.STARTING,
                         message: MSG_LAUNCH_INITIATED,
-                        ts: new Date().toISOString(),
+                        ts: now.toISOString(),
                         details: {
                             ...((current.details as Record<string, unknown>) ?? {}),
                             ...(instanceId ? { instanceId } : {}),
@@ -150,6 +189,21 @@ export class EnvironmentsLifecycleService {
     }
 
     async stopEnvironment(
+        userId: string,
+        environmentId: string
+    ): Promise<{ message: string; status: string }> {
+        const lock = await this.lockService.runWithLock(
+            this.lifecycleLockResource(environmentId),
+            EnvironmentsLifecycleService.LIFECYCLE_LOCK_TTL_MS,
+            () => this.stopEnvironmentInsideLock(userId, environmentId)
+        );
+        if (!lock.acquired) {
+            throw new ConflictException('Another environment lifecycle operation is already in progress');
+        }
+        return lock.result;
+    }
+
+    private async stopEnvironmentInsideLock(
         userId: string,
         environmentId: string
     ): Promise<{ message: string; status: string }> {
@@ -177,6 +231,21 @@ export class EnvironmentsLifecycleService {
     }
 
     async terminateEnvironment(
+        userId: string,
+        environmentId: string
+    ): Promise<{ message: string; status: string }> {
+        const lock = await this.lockService.runWithLock(
+            this.lifecycleLockResource(environmentId),
+            EnvironmentsLifecycleService.LIFECYCLE_LOCK_TTL_MS,
+            () => this.terminateEnvironmentInsideLock(userId, environmentId)
+        );
+        if (!lock.acquired) {
+            throw new ConflictException('Another environment lifecycle operation is already in progress');
+        }
+        return lock.result;
+    }
+
+    private async terminateEnvironmentInsideLock(
         userId: string,
         environmentId: string
     ): Promise<{ message: string; status: string }> {
@@ -224,17 +293,21 @@ export class EnvironmentsLifecycleService {
 
         const config = EnvironmentsUtils.getConfig(env);
         const current = EnvironmentsUtils.getOrchestratorConfig(config);
+        const nextStatus = this.normalizeOrchestratorStatus(status);
+        const now = new Date();
 
         await this.prisma.client.environment.update({
             where: { id: environmentId },
             data: {
+                orchestratorStatus: nextStatus,
+                orchestratorStatusUpdatedAt: now,
                 config: {
                     ...config,
                     orchestrator: {
                         ...current,
-                        status,
+                        status: nextStatus,
                         message: EnvironmentsUtils.readString(details.message) ?? `Status updated to ${status}`,
-                        ts: new Date().toISOString(),
+                        ts: now.toISOString(),
                         details: { ...((current.details as Record<string, unknown>) ?? {}), ...details },
                     },
                 } as unknown as Prisma.InputJsonValue,
@@ -283,7 +356,7 @@ export class EnvironmentsLifecycleService {
         await this.crudService.findOne(userId, environmentId);
 
         const now = new Date().toISOString();
-        await this.prisma.client.$transaction(async (tx) => {
+        await this.prismaTx.runInTransaction(async (tx) => {
             const current = await tx.environment.findUnique({
                 where: { id: environmentId },
                 select: { config: true },
@@ -322,23 +395,84 @@ export class EnvironmentsLifecycleService {
         environmentId: string,
         data: { status: OrchestratorStatus; message: string }
     ): Promise<void> {
-        const env = await this.crudService.findOne(userId, environmentId);
+        const env = await this.getOwnedEnvironmentOrThrow(userId, environmentId);
         const config = EnvironmentsUtils.getConfig(env);
         const current = EnvironmentsUtils.getOrchestratorConfig(config);
+        const now = new Date();
 
         await this.prisma.client.environment.update({
             where: { id: environmentId },
             data: {
+                orchestratorStatus: data.status,
+                orchestratorStatusUpdatedAt: now,
                 config: {
                     ...config,
                     orchestrator: {
                         ...current,
                         status: data.status,
                         message: data.message,
-                        ts: new Date().toISOString(),
+                        ts: now.toISOString(),
                     },
                 },
             },
+        });
+    }
+
+    private async getOwnedEnvironmentOrThrow(userId: string, environmentId: string): Promise<Environment> {
+        const env = await this.prisma.client.environment.findUnique({ where: { id: environmentId } });
+        if (!env) {
+            throw new NotFoundException('Environment not found');
+        }
+        if (env.ownerId !== userId) {
+            throw new ForbiddenException('Access denied to this environment');
+        }
+        return env as unknown as Environment;
+    }
+
+    private userStartLockResource(userId: string): string {
+        return `env:lifecycle:user:${userId}:start`;
+    }
+
+    private normalizeOrchestratorStatus(status: string): OrchestratorStatus {
+        const allowed = new Set<string>(Object.values(ORCHESTRATOR_STATUS));
+        return allowed.has(status) ? (status as OrchestratorStatus) : ORCHESTRATOR_STATUS.UNKNOWN;
+    }
+
+    private async assertRunningEnvironmentsWithinPlan(
+        userId: string,
+        environmentId: string,
+        currentEnvStatus: string
+    ): Promise<void> {
+        await this.billingAccess.assertNotHardLocked(userId);
+        const limit = await this.billingAccess.getLimit(userId, 'environments_running', 1);
+
+        const runningStatuses = [
+            ORCHESTRATOR_STATUS.STARTING,
+            ORCHESTRATOR_STATUS.READY,
+            ORCHESTRATOR_STATUS.STOPPING,
+        ];
+
+        const alreadyRunning = new Set<string>(runningStatuses).has(currentEnvStatus);
+        const delta = alreadyRunning ? 0 : 1;
+
+        const where = {
+            ownerId: userId,
+            id: { not: environmentId },
+            orchestratorStatus: { in: runningStatuses },
+        };
+
+        let current = await this.prisma.client.environment.count({ where });
+
+        if (current + delta <= limit) return;
+
+        await this.statusReconcile.reconcileStaleEnvironmentsForOwner(userId).catch(() => undefined);
+        current = await this.prisma.client.environment.count({ where });
+
+        if (current + delta <= limit) return;
+
+        throw new ForbiddenException({
+            code: 'PLAN_LIMIT_REACHED',
+            detail: `Running environments limit reached (${current + delta}/${limit}). Stop an environment or upgrade your plan.`,
         });
     }
 
@@ -714,33 +848,32 @@ export class EnvironmentsLifecycleService {
         userId: string,
         req: { vcpu: number; ramGb: number; diskGiB: number; marketType: (typeof MARKET_TYPE)[keyof typeof MARKET_TYPE] }
     ): Promise<void> {
-        const plan = await EnvironmentsUtils.resolveUserPlan(userId, this.prisma);
+        await this.billingAccess.assertNotHardLocked(userId);
 
-        const maxVcpu = EnvironmentsUtils.featureNumberOrUnlimited(plan, 'env_max_vcpu', 2);
-        const maxRamGb = EnvironmentsUtils.featureNumberOrUnlimited(plan, 'env_max_ram_gb', 4);
-        const maxDisk = EnvironmentsUtils.featureNumberOrUnlimited(plan, 'env_max_disk_gb', 80);
-        const allowSpot = EnvironmentsUtils.featureBool(plan, 'env_allow_spot', false);
-
-        const exceeds = (
-            max: number | 'unlimited',
-            actual: number
-        ) => max !== 'unlimited' && actual > max;
+        const maxVcpu = await this.billingAccess.getLimit(userId, 'env_max_vcpu', 2);
+        const maxRamGb = await this.billingAccess.getLimit(userId, 'env_max_ram_gb', 4);
+        const maxDisk = await this.billingAccess.getLimit(userId, 'env_max_disk_gb', 80);
+        const allowSpot = (await this.billingAccess.getLimit(userId, 'env_allow_spot', 0)) > 0;
 
         if (req.marketType === MARKET_TYPE.SPOT && !allowSpot) {
             throw new ForbiddenException('Your plan does not allow spot instances');
         }
-        if (exceeds(maxVcpu, req.vcpu)) {
+        if (req.vcpu > maxVcpu) {
             throw new ForbiddenException(`Requested vCPU (${req.vcpu}) exceeds plan limit (${maxVcpu})`);
         }
-        if (exceeds(maxRamGb, req.ramGb)) {
+        if (req.ramGb > maxRamGb) {
             throw new ForbiddenException(
                 `Requested RAM (${req.ramGb} GB) exceeds plan limit (${maxRamGb} GB)`
             );
         }
-        if (exceeds(maxDisk, req.diskGiB)) {
+        if (req.diskGiB > maxDisk) {
             throw new ForbiddenException(
                 `Requested disk (${req.diskGiB} GB) exceeds plan limit (${maxDisk} GB)`
             );
         }
+    }
+
+    private lifecycleLockResource(environmentId: string): string {
+        return `lock:environment:lifecycle:${environmentId}`;
     }
 }

@@ -8,12 +8,6 @@ import {
   ORCHESTRATOR_TIMEOUT_MS_DEFAULT,
   ORCHESTRATOR_URL_DEFAULT,
   TERMINAL_GATEWAY_WS_URL_DEFAULT,
-  TERMINAL_TRANSCRIPT_MAX_CHARS_DEFAULT,
-  TERMINAL_TRANSCRIPT_MAX_DELTA_CHARS_DEFAULT,
-  TMUX_CLEANUP_ENABLED_DEFAULT,
-  TMUX_CLEANUP_INTERVAL_SECONDS_DEFAULT,
-  TMUX_CLEANUP_MAX_TABS_PER_CYCLE_DEFAULT,
-  TMUX_TTL_MINUTES_DEFAULT,
 } from '../config/defaults';
 
 /**
@@ -31,12 +25,6 @@ export class EnvironmentsConfigService {
   readonly sessionTtlSeconds: number;
   readonly terminalWsBaseUrl: string;
   readonly externalApiKeyModeEnabled: boolean;
-  readonly terminalTranscriptMaxChars: number;
-  readonly terminalTranscriptMaxDeltaChars: number;
-  readonly tmuxTtlMinutes: number;
-  readonly tmuxCleanupEnabled: boolean;
-  readonly tmuxCleanupIntervalSeconds: number;
-  readonly tmuxCleanupMaxTabsPerCycle: number;
 
   constructor(configService: ConfigService) {
     const orchestratorUrlRaw = configService.get<string>('ORCHESTRATOR_URL')?.trim();
@@ -87,45 +75,5 @@ export class EnvironmentsConfigService {
         : String(externalApiKeyModeEnabledRaw ?? '')
             .trim()
             .toLowerCase() === 'true';
-
-    const transcriptMax = configService.get<number>('TERMINAL_TRANSCRIPT_MAX_CHARS');
-    this.terminalTranscriptMaxChars =
-      typeof transcriptMax === 'number' && Number.isFinite(transcriptMax) && transcriptMax > 1_000
-        ? transcriptMax
-        : TERMINAL_TRANSCRIPT_MAX_CHARS_DEFAULT;
-
-    const deltaMax = configService.get<number>('TERMINAL_TRANSCRIPT_MAX_DELTA_CHARS');
-    this.terminalTranscriptMaxDeltaChars =
-      typeof deltaMax === 'number' && Number.isFinite(deltaMax) && deltaMax >= 256
-        ? deltaMax
-        : TERMINAL_TRANSCRIPT_MAX_DELTA_CHARS_DEFAULT;
-
-    const tmuxTtl = configService.get<number>('TMUX_TTL_MINUTES');
-    this.tmuxTtlMinutes =
-      typeof tmuxTtl === 'number' && Number.isFinite(tmuxTtl) && tmuxTtl > 0
-        ? tmuxTtl
-        : TMUX_TTL_MINUTES_DEFAULT;
-
-    const tmuxCleanupEnabledRaw = configService.get<boolean | string>('TMUX_CLEANUP_ENABLED');
-    this.tmuxCleanupEnabled =
-      typeof tmuxCleanupEnabledRaw === 'boolean'
-        ? tmuxCleanupEnabledRaw
-        : String(tmuxCleanupEnabledRaw ?? '')
-            .trim()
-            .toLowerCase() === 'true'
-          ? true
-          : TMUX_CLEANUP_ENABLED_DEFAULT;
-
-    const cleanupInterval = configService.get<number>('TMUX_CLEANUP_INTERVAL_SECONDS');
-    this.tmuxCleanupIntervalSeconds =
-      typeof cleanupInterval === 'number' && Number.isFinite(cleanupInterval) && cleanupInterval > 0
-        ? cleanupInterval
-        : TMUX_CLEANUP_INTERVAL_SECONDS_DEFAULT;
-
-    const maxTabs = configService.get<number>('TMUX_CLEANUP_MAX_TABS_PER_CYCLE');
-    this.tmuxCleanupMaxTabsPerCycle =
-      typeof maxTabs === 'number' && Number.isFinite(maxTabs) && maxTabs > 0
-        ? maxTabs
-        : TMUX_CLEANUP_MAX_TABS_PER_CYCLE_DEFAULT;
   }
 }

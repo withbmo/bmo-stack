@@ -18,12 +18,6 @@ import {
   ORCHESTRATOR_TIMEOUT_MS_DEFAULT,
   ORCHESTRATOR_URL_DEFAULT,
   TERMINAL_GATEWAY_WS_URL_DEFAULT,
-  TERMINAL_TRANSCRIPT_MAX_CHARS_DEFAULT,
-  TERMINAL_TRANSCRIPT_MAX_DELTA_CHARS_DEFAULT,
-  TMUX_CLEANUP_ENABLED_DEFAULT,
-  TMUX_CLEANUP_INTERVAL_SECONDS_DEFAULT,
-  TMUX_CLEANUP_MAX_TABS_PER_CYCLE_DEFAULT,
-  TMUX_TTL_MINUTES_DEFAULT,
   UPLOAD_DIR_DEFAULT,
   WIZARD_DEFAULT_TEMPLATE_ID_DEFAULT,
   WIZARD_DEFAULT_VERSION_DEFAULT,
@@ -31,7 +25,7 @@ import {
 } from './defaults';
 
 export function validateEnv() {
-  return cleanEnv(process.env, {
+  const env = cleanEnv(process.env, {
     APP_ENV: str({ default: '' }),
     NODE_ENV: str({ default: 'development' }),
     PORT: num({ default: 3001 }),
@@ -39,13 +33,6 @@ export function validateEnv() {
     FRONTEND_URL: str({ default: FRONTEND_URL_DEFAULT }),
     COOKIE_DOMAIN: str({ default: '' }),
     DATABASE_URL: str({ default: '' }),
-    STRIPE_SECRET_KEY: str({ default: '' }),
-    STRIPE_WEBHOOK_SECRET: str({ default: '' }),
-    LAGO_API_URL: str({ default: '' }),
-    LAGO_API_KEY: str({ default: '' }),
-    LAGO_WEBHOOK_SECRET: str({ default: '' }),
-    LAGO_ORGANIZATION_ID: str({ default: '' }),
-    LAGO_ROLLOUT_PERCENT: num({ default: 0 }),
     TURNSTILE_SECRET_KEY: str({ default: '' }),
     REDIS_URL: str({ default: '' }),
     JWT_EXPIRES_IN: str({ default: JWT_EXPIRES_IN_DEFAULT }),
@@ -87,13 +74,20 @@ export function validateEnv() {
     ENV_SESSION_SECRET: str({ default: '' }),
     ENV_SESSION_TTL_SECONDS: num({ default: ENV_SESSION_TTL_SECONDS_DEFAULT }),
     TERMINAL_GATEWAY_WS_URL: str({ default: TERMINAL_GATEWAY_WS_URL_DEFAULT }),
-    TERMINAL_TRANSCRIPT_MAX_CHARS: num({ default: TERMINAL_TRANSCRIPT_MAX_CHARS_DEFAULT }),
-    TERMINAL_TRANSCRIPT_MAX_DELTA_CHARS: num({ default: TERMINAL_TRANSCRIPT_MAX_DELTA_CHARS_DEFAULT }),
-    TMUX_TTL_MINUTES: num({ default: TMUX_TTL_MINUTES_DEFAULT }),
-    TMUX_CLEANUP_ENABLED: bool({ default: TMUX_CLEANUP_ENABLED_DEFAULT }),
-    TMUX_CLEANUP_INTERVAL_SECONDS: num({ default: TMUX_CLEANUP_INTERVAL_SECONDS_DEFAULT }),
-    TMUX_CLEANUP_MAX_TABS_PER_CYCLE: num({ default: TMUX_CLEANUP_MAX_TABS_PER_CYCLE_DEFAULT }),
     ENABLE_EXTERNAL_PROD_API_KEY_MODE: bool({ default: false }),
-    ENTITLEMENTS_ENABLED: bool({ default: false }),
+
+    // Billing — Stripe (payments + subscriptions)
+    STRIPE_SECRET_KEY: str({ default: '' }),
+    STRIPE_WEBHOOK_SECRET: str({ default: '' }),
+    BILLING_USE_STRIPE_USAGE: bool({ default: true }),
+    BILLING_USE_STRIPE_CREDITS: bool({ default: true }),
   });
+
+  // Normalize whitespace once at boot so feature config services can consume stable values.
+  return Object.fromEntries(
+    Object.entries(env).map(([key, value]) => [
+      key,
+      typeof value === 'string' ? value.trim() : value,
+    ])
+  );
 }

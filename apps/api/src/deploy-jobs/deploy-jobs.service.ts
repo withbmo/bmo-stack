@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -9,6 +10,7 @@ import { DEPLOY_JOB_STATUS, DEPLOY_JOB_STEP_STATUS } from '@pytholit/contracts';
 import type { Prisma } from '@pytholit/db';
 import { CreateDeployJobDto } from '@pytholit/validation/class-validator';
 
+import { DistributedLockService } from '../common/services/distributed-lock.service';
 import { PrismaService } from '../database/prisma.service';
 import { EnvironmentsCrudService } from '../environments/services/environments-crud.service';
 import { ProjectsService } from '../projects/projects.service';
@@ -19,6 +21,8 @@ import { ProjectsService } from '../projects/projects.service';
  */
 @Injectable()
 export class DeployJobsService {
+  private static readonly DEPLOY_CREATE_LOCK_TTL_MS = 30 * 1000;
+
   private readonly defaultSteps: DeployJobStep[] = [
     { key: 'validate', title: 'Validate config', status: DEPLOY_JOB_STEP_STATUS.QUEUED },
     { key: 'prepare', title: 'Prepare build context', status: DEPLOY_JOB_STEP_STATUS.QUEUED },
@@ -30,10 +34,26 @@ export class DeployJobsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly projectsService: ProjectsService,
-    private readonly environmentsCrudService: EnvironmentsCrudService
+    private readonly environmentsCrudService: EnvironmentsCrudService,
+    private readonly lockService: DistributedLockService
   ) { }
 
   async create(
+    userId: string,
+    createDeployJobDto: CreateDeployJobDto
+  ): Promise<DeployJob> {
+    const lock = await this.lockService.runWithLock(
+      this.deployCreateLockResource(createDeployJobDto.environmentId),
+      DeployJobsService.DEPLOY_CREATE_LOCK_TTL_MS,
+      () => this.createInsideLock(userId, createDeployJobDto)
+    );
+    if (!lock.acquired) {
+      throw new ConflictException('Another deploy job request is already in progress for this environment');
+    }
+    return lock.result;
+  }
+
+  private async createInsideLock(
     userId: string,
     createDeployJobDto: CreateDeployJobDto
   ): Promise<DeployJob> {
@@ -202,5 +222,9 @@ export class DeployJobsService {
         }
         : undefined,
     };
+  }
+
+  private deployCreateLockResource(environmentId: string): string {
+    return `lock:deploy:create:${environmentId}`;
   }
 }

@@ -1,25 +1,103 @@
 {
+  "version": 1,
   "id": "free",
   "name": "free",
   "displayName": "Free",
   "description": "For getting started and personal projects.",
   "currency": "USD",
-  "monthlyPrice": 0,
-  "yearlyPrice": 0,
-  "yearlyBonusCredits": 0,
-  "stripePriceIdMonthly": null,
-  "stripePriceIdYearly": null,
+  "billing": {
+    "monthly": {
+      "code": "free_month",
+      "price": 0,
+      "includedCredits": 20,
+      "bonusCredits": 0
+    },
+    "yearly": {
+      "code": "free_year",
+      "price": 0,
+      "includedCredits": 240,
+      "bonusCredits": 0
+    }
+  },
   "isDefault": true,
   "features": [
-    { "id": "projects", "name": "Projects", "description": null, "value": 3 },
-    { "id": "environments", "name": "Environments", "description": null, "value": 2 },
-    { "id": "deployments", "name": "Monthly deployments", "description": null, "value": 10 },
-    { "id": "storage", "name": "Storage (GB)", "description": null, "value": 1 },
-    { "id": "env_max_vcpu", "name": "Max env vCPU", "description": null, "value": 2 },
-    { "id": "env_max_ram_gb", "name": "Max env RAM (GB)", "description": null, "value": 4 },
-    { "id": "env_max_disk_gb", "name": "Max env disk (GB)", "description": null, "value": 80 },
-    { "id": "env_allow_spot", "name": "Allow spot instances", "description": null, "value": false },
-    { "id": "support", "name": "Support", "description": null, "value": "community" }
+    {
+      "id": "projects_active",
+      "name": "Active projects",
+      "description": "Simultaneous projects you can manage",
+      "value": 3,
+      "type": "number"
+    },
+    {
+      "id": "environments_running",
+      "name": "Running environments",
+      "description": "Parallel environment deployments",
+      "value": 1,
+      "type": "number"
+    },
+    {
+      "id": "exports_cycle",
+      "name": "Exports / cycle",
+      "description": "Maximum exports per billing cycle",
+      "value": 20,
+      "type": "number"
+    },
+    {
+      "id": "ai_model_tier",
+      "name": "AI model tier access",
+      "description": "Model capabilities and API access level",
+      "value": "basic",
+      "type": "string"
+    },
+    {
+      "id": "custom_domains",
+      "name": "Custom domains",
+      "description": "Number of custom domains you can configure",
+      "value": 0,
+      "type": "number"
+    },
+    {
+      "id": "priority_queue",
+      "name": "Priority queue",
+      "description": null,
+      "value": false,
+      "type": "boolean"
+    },
+    {
+      "id": "can_purchase_credits",
+      "name": "Extra credit purchases",
+      "description": null,
+      "value": false,
+      "type": "boolean"
+    },
+    {
+      "id": "env_max_vcpu",
+      "name": "Max env vCPU",
+      "description": null,
+      "value": 2,
+      "type": "number"
+    },
+    {
+      "id": "env_max_ram_gb",
+      "name": "Max env RAM (GB)",
+      "description": null,
+      "value": 4,
+      "type": "number"
+    },
+    {
+      "id": "env_max_disk_gb",
+      "name": "Max env disk (GB)",
+      "description": null,
+      "value": 80,
+      "type": "number"
+    },
+    {
+      "id": "env_allow_spot",
+      "name": "Allow spot instances",
+      "description": null,
+      "value": false,
+      "type": "boolean"
+    }
   ],
   "isActive": true
 }

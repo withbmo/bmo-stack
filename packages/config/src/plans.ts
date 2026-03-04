@@ -1,42 +1,67 @@
 import { PlanSchema, PlansSchema } from './plans.schema';
-import enterprisePlan from './plans/enterprise.json';
 import freePlan from './plans/free.json';
+import maxPlan from './plans/max.json';
 import proPlan from './plans/pro.json';
 
-export type BillingInterval = 'month' | 'year';
+import { BILLING_INTERVAL, PLAN_ID, type BillingInterval, type PlanId } from '@pytholit/contracts';
 
-export type PlanFeatureValue = string | number | boolean | 'unlimited';
+export type PlanFeatureValue = string | number | boolean;
 
 export type PlanFeature = {
   id: string;
   name: string;
   description: string | null;
+  type: 'number' | 'boolean' | 'string';
   value: PlanFeatureValue;
 };
 
+export type PlanBillingVariant = {
+  code: string;
+  price: number;
+  includedCredits: number;
+  bonusCredits: number;
+};
+
 export type Plan = {
-  id: string;
+  version: number;
+  id: PlanId;
   name: string;
   displayName: string;
   description: string | null;
   currency: 'USD';
-  monthlyPrice: number;
-  yearlyPrice: number;
-  yearlyBonusCredits: number;
-  stripePriceIdMonthly: string | null;
-  stripePriceIdYearly: string | null;
+  billing: {
+    monthly: PlanBillingVariant;
+    yearly: PlanBillingVariant;
+  };
   features: PlanFeature[];
   isActive: boolean;
   isDefault: boolean;
 };
 
-export const PLANS = PlansSchema.parse([
+const RAW_PLANS = PlansSchema.parse([
   PlanSchema.parse(freePlan),
   PlanSchema.parse(proPlan),
-  PlanSchema.parse(enterprisePlan),
-]) as Plan[];
+  PlanSchema.parse(maxPlan),
+]) as Array<{
+  version: number;
+  id: PlanId;
+  name: string;
+  displayName: string;
+  description: string | null;
+  currency: 'USD';
+  billing: {
+    monthly: PlanBillingVariant;
+    yearly: PlanBillingVariant;
+  };
+  features: PlanFeature[];
+  isActive: boolean;
+  isDefault: boolean;
+}>;
 
-export const DEFAULT_PLAN_ID = 'free' as const;
+export const PLANS = RAW_PLANS.map((plan): Plan => ({ ...plan }));
+
+export const DEFAULT_PLAN_ID: PlanId = PLAN_ID.FREE;
+export const PLAN_CATALOG_VERSION = PLANS[0]?.version ?? 1;
 
 /**
  * Credits awarded per USD paid.
@@ -56,6 +81,7 @@ export function getCreditsForUsd(priceUsd: number): number {
 export function validatePlans(plans: Plan[]): void {
   const errors: string[] = [];
   const ids = new Set<string>();
+  const versions = new Set<number>();
   let defaultCount = 0;
   let featureIdSet: Set<string> | null = null;
   plans.forEach((plan, index) => {
@@ -63,6 +89,7 @@ export function validatePlans(plans: Plan[]): void {
       errors.push(`plans[${index}].id must be unique: ${plan.id}`);
     }
     ids.add(plan.id);
+    versions.add(plan.version);
     if (plan.isDefault === true) {
       defaultCount += 1;
     }
@@ -89,6 +116,11 @@ export function validatePlans(plans: Plan[]): void {
   if (defaultCount > 1) {
     errors.push('Only one plan can have isDefault=true');
   }
+  if (versions.size > 1) {
+    errors.push(
+      `All plans must share one catalog version (found: ${Array.from(versions).sort((a, b) => a - b).join(', ')})`
+    );
+  }
 
   if (errors.length > 0) {
     throw new Error(`Invalid plan config:\\n${errors.join('\\n')}`);
@@ -101,70 +133,68 @@ export function getPlans(): Plan[] {
   return PLANS.filter((plan) => plan.isActive);
 }
 
-export type PublicPlan = Omit<
-  Plan,
-  'stripePriceIdMonthly' | 'stripePriceIdYearly'
->;
-
-export function getPublicPlans(): PublicPlan[] {
-  return getPlans().map(
-    ({
-      stripePriceIdMonthly: _stripePriceIdMonthly,
-      stripePriceIdYearly: _stripePriceIdYearly,
-      ...rest
-    }) => ({ ...rest })
-  );
-}
-
 export function getPlanById(planId: string): Plan | null {
   return PLANS.find((plan) => plan.id === planId) ?? null;
+}
+
+export function getPlanVariant(
+  planId: PlanId | string,
+  interval: BillingInterval
+): PlanBillingVariant | null {
+  const plan = getPlanById(planId);
+  if (!plan) return null;
+  return interval === BILLING_INTERVAL.YEAR ? plan.billing.yearly : plan.billing.monthly;
+}
+
+export function getPlanByCode(planCode: string): {
+  plan: Plan;
+  planId: PlanId;
+  interval: BillingInterval;
+  variant: PlanBillingVariant;
+} | null {
+  for (const plan of PLANS) {
+    if (plan.billing.monthly.code === planCode) {
+      return {
+        plan,
+        planId: plan.id,
+        interval: BILLING_INTERVAL.MONTH,
+        variant: plan.billing.monthly,
+      };
+    }
+    if (plan.billing.yearly.code === planCode) {
+      return {
+        plan,
+        planId: plan.id,
+        interval: BILLING_INTERVAL.YEAR,
+        variant: plan.billing.yearly,
+      };
+    }
+  }
+  return null;
+}
+
+export function getPlanCode(planId: PlanId | string, interval: BillingInterval): string | null {
+  const variant = getPlanVariant(planId, interval);
+  return variant?.code ?? null;
 }
 
 /**
  * Get credits for a given plan + billing interval.
  */
-export function getPlanCredits(planId: string, interval: BillingInterval): number {
-  const plan = getPlanById(planId);
-  if (!plan) return 0;
-  const priceUsd = interval === 'year' ? plan.yearlyPrice : plan.monthlyPrice;
-  const baseCredits = getCreditsForUsd(priceUsd);
-  if (interval === 'year') {
-    return baseCredits + plan.yearlyBonusCredits;
-  }
-  return baseCredits;
+export function getPlanCredits(planId: PlanId | string, interval: BillingInterval): number {
+  const variant = getPlanVariant(planId, interval);
+  if (!variant) return 0;
+  return variant.includedCredits + variant.bonusCredits;
 }
 
 export function getDefaultPlan(): Plan {
-  const explicitDefault =
-    PLANS.find((plan) => plan.isDefault) ??
-    getPlanById(DEFAULT_PLAN_ID) ??
-    PLANS[0];
-  return explicitDefault ?? (freePlan as Plan);
-}
-
-export function getStripePriceId(
-  planId: string,
-  interval: BillingInterval
-): string | null {
-  const plan = getPlanById(planId);
-  if (!plan) return null;
-  return interval === 'year' ? plan.stripePriceIdYearly : plan.stripePriceIdMonthly;
-}
-
-let priceIdToPlanCache: Map<string, Plan> | null = null;
-
-export function getPlanByPriceId(priceId: string): Plan | null {
-  if (!priceId) return null;
-  if (!priceIdToPlanCache) {
-    priceIdToPlanCache = new Map<string, Plan>();
-    for (const plan of PLANS) {
-      if (plan.stripePriceIdMonthly) {
-        priceIdToPlanCache.set(plan.stripePriceIdMonthly, plan);
-      }
-      if (plan.stripePriceIdYearly) {
-        priceIdToPlanCache.set(plan.stripePriceIdYearly, plan);
-      }
-    }
+  const explicitDefault = PLANS.find((plan) => plan.isDefault);
+  if (!explicitDefault) {
+    throw new Error('Invalid plan config: no default plan (isDefault=true) found.');
   }
-  return priceIdToPlanCache.get(priceId) ?? null;
+  return explicitDefault;
+}
+
+export function getPlanCatalogVersion(): number {
+  return PLAN_CATALOG_VERSION;
 }

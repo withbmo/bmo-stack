@@ -4,18 +4,18 @@ import { useQuery } from '@tanstack/react-query';
 import { Card } from '@pytholit/ui';
 import { AdminPage } from '@/admin/shared/components/AdminPage';
 import { useAuth } from '@/shared/auth';
-import { adminListInvoices, adminListSubscriptions } from '@/shared/lib/admin';
+import { adminListInvoicesAll, adminListSubscriptionsAll } from '@/shared/lib/admin';
 
 export function BillingRoute() {
   const { token } = useAuth();
   const subsQ = useQuery({
     queryKey: ['admin', 'billing', 'subscriptions'],
-    queryFn: () => adminListSubscriptions(token || '', { page: 1, pageSize: 25 }),
+    queryFn: () => adminListSubscriptionsAll(token || ''),
     enabled: !!token,
   });
   const invQ = useQuery({
     queryKey: ['admin', 'billing', 'invoices'],
-    queryFn: () => adminListInvoices(token || '', { page: 1, pageSize: 25 }),
+    queryFn: () => adminListInvoicesAll(token || ''),
     enabled: !!token,
   });
 

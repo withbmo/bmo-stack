@@ -1,11 +1,18 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { prisma } from '@pytholit/db';
 
+import { PrismaTxService } from './prisma-tx.service';
+
 @Injectable()
 export class PrismaService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
+  private readonly rootClient = prisma;
 
-  client = prisma;
+  constructor(private readonly prismaTx: PrismaTxService) {}
+
+  get client() {
+    return this.prismaTx.client;
+  }
 
   async onModuleInit(): Promise<void> {
     if (!process.env.DATABASE_URL) {
@@ -19,7 +26,7 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    await this.client.$connect();
+    await this.rootClient.$connect();
     this.logger.log('Database connected');
   }
 
@@ -28,7 +35,7 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    await this.client.$disconnect();
+    await this.rootClient.$disconnect();
     this.logger.log('Database disconnected');
   }
 }

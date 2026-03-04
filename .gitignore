@@ -74,3 +74,9 @@ packages/db/src/generated/
 
 # Docker buildx local cache
 .buildx-cache/
+
+# External docs reference checkouts
+docs/.cache/lago-openapi/
+
+# Local cache
+.cahce/

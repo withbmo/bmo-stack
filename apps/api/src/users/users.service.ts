@@ -59,7 +59,6 @@ export class UsersService {
       isActive: userWithoutPassword.isActive,
       isAdmin: !!userWithoutPassword.adminMembership,
       adminLevel: userWithoutPassword.adminMembership?.level ?? null,
-      stripeCustomerId: null,
       novuSubscriberId: userWithoutPassword.novuSubscriberId ?? null,
       createdAt: userWithoutPassword.createdAt.toISOString(),
       updatedAt: userWithoutPassword.updatedAt.toISOString(),

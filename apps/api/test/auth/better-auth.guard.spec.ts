@@ -1,4 +1,5 @@
 import { Reflector } from '@nestjs/core';
+import type { ExecutionContext } from '@nestjs/common';
 
 jest.mock('@thallesp/nestjs-better-auth', () => ({
   AuthService: class MockBetterAuthService {},
@@ -6,114 +7,108 @@ jest.mock('@thallesp/nestjs-better-auth', () => ({
 
 import { BetterAuthGuard } from '../../src/auth/guards/better-auth.guard';
 
-describe('BetterAuthGuard account-linking simulations', () => {
-  const makeGuard = () => {
+describe('BetterAuthGuard', () => {
+  const makeContext = (req: any): ExecutionContext =>
+    ({
+      getHandler: () => ({}),
+      getClass: () => ({}),
+      switchToHttp: () => ({ getRequest: () => req }),
+    }) as any;
+
+  const makeGuard = (opts?: { isPublic?: boolean; sessionResult?: any; throwError?: Error }) => {
     const reflector = {
-      getAllAndOverride: jest.fn(),
+      getAllAndOverride: jest.fn().mockReturnValue(opts?.isPublic ?? false),
     } as unknown as Reflector;
 
     const betterAuthService = {
       instance: {
         api: {
-          getSession: jest.fn(),
+          getSession: opts?.throwError
+            ? jest.fn().mockRejectedValue(opts.throwError)
+            : jest.fn().mockResolvedValue(opts?.sessionResult ?? null),
         },
       },
     } as any;
 
-    const prisma = {
-      client: {
-        user: {
-          findUnique: jest.fn(),
-          update: jest.fn(),
-          create: jest.fn(),
-        },
-      },
-    } as any;
-
-    const guard = new BetterAuthGuard(reflector, betterAuthService, prisma);
-    return { guard, prisma };
+    const guard = new BetterAuthGuard(reflector, betterAuthService);
+    return { guard };
   };
 
-  it('marks existing by-id user as verified when OAuth session is verified', async () => {
-    const { guard, prisma } = makeGuard();
+  it('allows access on public route without session', async () => {
+    const { guard } = makeGuard({ isPublic: true, sessionResult: null });
+    const req = { headers: {} };
+    await expect(guard.canActivate(makeContext(req))).resolves.toBe(true);
+  });
 
-    prisma.client.user.findUnique.mockResolvedValueOnce({
-      id: 'u1',
-      email: 'user@example.com',
-      username: 'user',
-      firstName: 'User',
-      lastName: null,
-      isEmailVerified: false,
-      isActive: true,
-    });
-    prisma.client.user.update.mockResolvedValueOnce({
-      id: 'u1',
-      email: 'user@example.com',
-      username: 'user',
-      firstName: 'User',
-      lastName: null,
-      isEmailVerified: true,
-      isActive: true,
-    });
-
-    const result = await (guard as any).resolveOrProvisionUser({
-      id: 'u1',
-      email: 'user@example.com',
-      name: 'User',
-      emailVerified: true,
-    });
-
-    expect(prisma.client.user.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: 'u1' },
-        data: { isEmailVerified: true },
-      }),
+  it('denies access on protected route without session', async () => {
+    const { guard } = makeGuard({ isPublic: false, sessionResult: null });
+    const req = { headers: {} };
+    await expect(guard.canActivate(makeContext(req))).rejects.toHaveProperty(
+      'response.code',
+      'AUTH_UNAUTHENTICATED',
     );
-    expect(result.isEmailVerified).toBe(true);
   });
 
-  it('does not merge by email when OAuth session email is unverified', async () => {
-    const { guard, prisma } = makeGuard();
-
-    prisma.client.user.findUnique.mockResolvedValueOnce(null);
-
-    const result = await (guard as any).resolveOrProvisionUser({
-      id: '',
-      email: 'user@example.com',
-      name: 'User',
-      emailVerified: false,
+  it('blocks unverified email', async () => {
+    const { guard } = makeGuard({
+      isPublic: false,
+      sessionResult: {
+        user: { id: 'u1', email: 'user@example.com', emailVerified: false, isActive: true },
+        session: {},
+      },
     });
-
-    expect(result).toBeNull();
-    expect(prisma.client.user.findUnique).toHaveBeenCalledTimes(1);
+    const req = { headers: {} };
+    await expect(guard.canActivate(makeContext(req))).rejects.toHaveProperty(
+      'response.code',
+      'AUTH_EMAIL_UNVERIFIED',
+    );
   });
 
-  it('resolves existing by-email user when session email is verified', async () => {
-    const { guard, prisma } = makeGuard();
+  it('blocks inactive accounts', async () => {
+    const { guard } = makeGuard({
+      isPublic: false,
+      sessionResult: {
+        user: { id: 'u1', email: 'user@example.com', emailVerified: true, isActive: false },
+        session: {},
+      },
+    });
+    const req = { headers: {} };
+    await expect(guard.canActivate(makeContext(req))).rejects.toHaveProperty(
+      'response.code',
+      'AUTH_ACCOUNT_INACTIVE',
+    );
+  });
 
-    prisma.client.user.findUnique
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        id: 'u2',
-        email: 'merge@example.com',
-        username: 'merge_user',
-        firstName: 'Merge',
-        lastName: null,
+  it('populates request.user for verified active sessions', async () => {
+    const { guard } = makeGuard({
+      sessionResult: {
+        user: {
+          id: 'u1',
+          email: 'user@example.com',
+          emailVerified: true,
+          isActive: true,
+          username: 'user',
+          firstName: 'User',
+          lastName: null,
+        },
+        session: { id: 's1' },
+      },
+    });
+    const req: any = { headers: {} };
+    await expect(guard.canActivate(makeContext(req))).resolves.toBe(true);
+    expect(req.user).toEqual(
+      expect.objectContaining({
+        id: 'u1',
+        email: 'user@example.com',
         isEmailVerified: true,
         isActive: true,
-      });
-
-    const result = await (guard as any).resolveOrProvisionUser({
-      id: 'oauth-id',
-      email: 'merge@example.com',
-      name: 'Merge User',
-      emailVerified: true,
-    });
-
-    expect(result.id).toBe('u2');
-    expect(prisma.client.user.findUnique).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({ where: { email: 'merge@example.com' } }),
+      }),
     );
+  });
+
+  it('allows public route when Better Auth throws', async () => {
+    const { guard } = makeGuard({ isPublic: true, throwError: new Error('boom') });
+    const req = { headers: {} };
+    await expect(guard.canActivate(makeContext(req))).resolves.toBe(true);
   });
 });

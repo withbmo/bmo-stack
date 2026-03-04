@@ -32,5 +32,4 @@ export const queryKeys = {
   subscription: () => ['subscription'] as const,
   plans: () => ['plans'] as const,
   invoices: () => ['invoices'] as const,
-  paymentMethods: () => ['payment-methods'] as const,
 } as const;

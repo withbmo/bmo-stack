@@ -1,19 +1,13 @@
-import { Body, Controller, Get, Logger, Post, Query, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Post, Query, Res } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Throttle } from '@nestjs/throttler';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import type { PasswordStrengthResponse } from '@pytholit/contracts';
 import { getPasswordStrength } from '@pytholit/validation';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 
-import { AuthFlowService } from './auth-flow.service';
+import { OAUTH_PROVIDERS, type OAuthProviderKey } from './auth-providers.config';
 import { Public } from './decorators/public.decorator';
 import { CheckPasswordStrengthDto } from './dto/check-password-strength.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { LoginPasswordDto } from './dto/login-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
-import { SendOtpDto } from './dto/send-otp.dto';
-import { SignupPasswordDto } from './dto/signup-password.dto';
-import { VerifyOtpDto } from './dto/verify-otp.dto';
 
 /**
  * Auth controller for custom auth endpoints not handled by Better Auth module.
@@ -34,23 +28,18 @@ import { VerifyOtpDto } from './dto/verify-otp.dto';
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly authFlowService: AuthFlowService
-  ) {}
+  constructor(private readonly configService: ConfigService) {}
 
   @Get('providers')
-  getProviders(): { providers: Array<'google' | 'github'> } {
-    const hasGoogle =
-      Boolean(this.configService.get<string>('GOOGLE_CLIENT_ID')?.trim()) &&
-      Boolean(this.configService.get<string>('GOOGLE_CLIENT_SECRET')?.trim());
-    const hasGithub =
-      Boolean(this.configService.get<string>('GITHUB_CLIENT_ID')?.trim()) &&
-      Boolean(this.configService.get<string>('GITHUB_CLIENT_SECRET')?.trim());
+  @SkipThrottle()
+  getProviders(): { providers: OAuthProviderKey[] } {
+    const providers = (Object.entries(OAUTH_PROVIDERS) as [OAuthProviderKey, (typeof OAUTH_PROVIDERS)[OAuthProviderKey]][])
+      .filter(([, def]) =>
+        Boolean(this.configService.get<string>(def.clientIdKey)?.trim()) &&
+        Boolean(this.configService.get<string>(def.clientSecretKey)?.trim())
+      )
+      .map(([key]) => key);
 
-    const providers: Array<'google' | 'github'> = [];
-    if (hasGoogle) providers.push('google');
-    if (hasGithub) providers.push('github');
     return { providers };
   }
 
@@ -98,87 +87,6 @@ export class AuthController {
     return getPasswordStrength(body.password);
   }
 
-  @Post('signup-password')
-  @Throttle({ auth: { limit: 5, ttl: 60000 } })
-  async signupPassword(
-    @Body() body: SignupPasswordDto,
-    @Req() req: Request
-  ) {
-    return this.authFlowService.signupPassword(
-      body,
-      this.toHeaders(req),
-      req.ip,
-      req.get('user-agent') ?? undefined
-    );
-  }
-
-  @Post('login-password')
-  @Throttle({ auth: { limit: 10, ttl: 60000 } })
-  async loginPassword(
-    @Body() body: LoginPasswordDto,
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response
-  ) {
-    const result = await this.authFlowService.loginPassword(
-      body,
-      this.toHeaders(req),
-      req.ip,
-      req.get('user-agent') ?? undefined
-    );
-    if (result.setCookies?.length) {
-      res.setHeader('Set-Cookie', result.setCookies);
-    }
-    const { setCookies: _setCookies, ...payload } = result;
-    return payload;
-  }
-
-  @Post('otp/send')
-  @Throttle({ 'strict-auth': { limit: 5, ttl: 60000 } })
-  async sendOtp(
-    @Body() body: SendOtpDto,
-    @Req() req: Request
-  ) {
-    return this.authFlowService.sendOtp(
-      body,
-      this.toHeaders(req),
-      req.ip,
-      req.get('user-agent') ?? undefined
-    );
-  }
-
-  @Post('otp/verify')
-  @Throttle({ 'strict-auth': { limit: 10, ttl: 60000 } })
-  async verifyOtp(
-    @Body() body: VerifyOtpDto,
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response
-  ) {
-    const result = await this.authFlowService.verifyOtp(body, this.toHeaders(req), req.ip);
-    if (result.setCookies?.length) {
-      res.setHeader('Set-Cookie', result.setCookies);
-    }
-    const { setCookies: _setCookies, ...payload } = result;
-    return payload;
-  }
-
-  @Post('password/forgot')
-  @Throttle({ 'strict-auth': { limit: 5, ttl: 60000 } })
-  async forgotPassword(
-    @Body() body: ForgotPasswordDto,
-    @Req() req: Request
-  ) {
-    return this.authFlowService.forgotPassword(body, this.toHeaders(req));
-  }
-
-  @Post('password/reset')
-  @Throttle({ 'strict-auth': { limit: 10, ttl: 60000 } })
-  async resetPassword(
-    @Body() body: ResetPasswordDto,
-    @Req() req: Request
-  ) {
-    return this.authFlowService.resetPassword(body, this.toHeaders(req));
-  }
-
   /**
    * Deprecated compatibility shim for one release cycle.
    * Use POST /auth-flow/check-password-strength instead.
@@ -193,17 +101,5 @@ export class AuthController {
     res.setHeader('Sunset', 'Release N+1');
     this.logger.warn('Deprecated GET /auth-flow/check-password-strength used. Switch to POST body.');
     return getPasswordStrength(password ?? '');
-  }
-
-  private toHeaders(req: Request): Headers {
-    const headers = new Headers();
-    for (const [key, value] of Object.entries(req.headers)) {
-      if (Array.isArray(value)) {
-        for (const entry of value) headers.append(key, entry);
-      } else if (typeof value === 'string') {
-        headers.set(key, value);
-      }
-    }
-    return headers;
   }
 }

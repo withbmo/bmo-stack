@@ -8,6 +8,20 @@ import { toast } from 'sonner';
 import { useAuth } from '@/shared/auth';
 import { getApiErrorMessage } from '@/shared/lib';
 
+/**
+ * OAuth Callback Handler
+ *
+ * This route handles the OAuth callback from providers (Google, GitHub).
+ * Better Auth validates the OAuth state parameter and returns the user
+ * to this callback route with either:
+ * - Success: User authenticated, refresh session and redirect
+ * - Error: OAuth failed (state invalid, profile invalid, etc.)
+ *
+ * Security:
+ * - OAuth state parameter is validated by Better Auth to prevent CSRF attacks
+ * - Only trusted callback URLs are accepted (configured in better-auth.config.ts)
+ * - Session is refreshed after successful OAuth to hydrate user context
+ */
 export function CallbackRoute() {
   const router = useRouter();
   const searchParams = useSearchParams();

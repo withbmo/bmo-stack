@@ -128,8 +128,8 @@ export const Navbar = () => {
               </div>
             </Link>
             <button
-              onClick={() => {
-                void logout();
+              onClick={async () => {
+                await logout();
                 router.push('/auth/login');
               }}
               className="text-nexus-muted hover:text-red-500 transition-colors ml-2"

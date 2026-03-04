@@ -62,42 +62,25 @@ export const ENVIRONMENT_CONFIG = {
   ],
 } as const;
 
-export const PLAN_FEATURES = {
-  free: {
-    maxProjects: 3,
-    maxEnvironments: 2,
-    maxDeployments: 10,
-    maxStorage: 1, // GB
-    support: 'community',
-  },
-  pro: {
-    maxProjects: 25,
-    maxEnvironments: 10,
-    maxDeployments: 100,
-    maxStorage: 50, // GB
-    support: 'email',
-  },
-  enterprise: {
-    maxProjects: 'unlimited',
-    maxEnvironments: 'unlimited',
-    maxDeployments: 'unlimited',
-    maxStorage: 'unlimited',
-    support: '24/7',
-  },
-} as const;
-
-export type { Plan, PlanFeature, PlanFeatureValue, PublicPlan } from './plans';
+export type {
+  Plan,
+  PlanBillingVariant,
+  PlanFeature,
+  PlanFeatureValue,
+} from './plans';
 export {
   CREDITS_PER_USD,
   DEFAULT_PLAN_ID,
+  PLAN_CATALOG_VERSION,
   getCreditsForUsd,
+  getPlanCatalogVersion,
+  getPlanByCode,
   getDefaultPlan,
   getPlanById,
-  getPlanByPriceId,
+  getPlanCode,
   getPlanCredits,
   getPlans,
-  getPublicPlans,
-  getStripePriceId,
+  getPlanVariant,
   PLANS,
 } from './plans';
 

@@ -8,6 +8,7 @@ import type { Project } from '@pytholit/contracts';
 import { slugify } from '@pytholit/utils';
 import type { CreateProjectDto } from '@pytholit/validation/class-validator';
 
+import { BillingAccessService } from '../billing/billing-access.service';
 import { PrismaService } from '../database/prisma.service';
 import { UpdateProjectDto } from './dto/update-project.dto';
 
@@ -17,12 +18,28 @@ import { UpdateProjectDto } from './dto/update-project.dto';
  */
 @Injectable()
 export class ProjectsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly billingAccess: BillingAccessService
+  ) {}
 
   async create(
     userId: string,
     createProjectDto: CreateProjectDto
   ): Promise<Project> {
+    await this.billingAccess.assertNotHardLocked(userId);
+    const maxProjects = await this.billingAccess.getLimit(userId, 'projects_active', 3);
+
+    const currentProjects = await this.prisma.client.project.count({
+      where: { ownerId: userId },
+    });
+    if (currentProjects >= maxProjects) {
+      throw new ForbiddenException({
+        code: 'PLAN_LIMIT_REACHED',
+        detail: `Active projects limit reached (${currentProjects}/${maxProjects}).`,
+      });
+    }
+
     // Generate slug from name if not provided
     const slug = createProjectDto.slug || slugify(createProjectDto.name);
 

@@ -43,14 +43,7 @@ app.register(async function routes(fastify) {
     let terminate: (() => Promise<void>) | null = null;
 
     try {
-      const tmuxEnabled = claims.tmuxEnabled === true;
-      const tmuxNameRaw = typeof claims.tmuxSessionName === 'string' ? claims.tmuxSessionName : '';
-      const tmuxName =
-        tmuxEnabled && /^[a-zA-Z0-9_.-]{1,64}$/.test(tmuxNameRaw) ? tmuxNameRaw : null;
-
-      const command = tmuxName
-        ? `bash -lc 'command -v tmux >/dev/null 2>&1 && exec tmux new -A -s ${tmuxName} || exec bash'`
-        : '/bin/bash';
+      const command = '/bin/bash';
 
       const session = await startSsmShellSession({
         instanceId: claims.instanceId,

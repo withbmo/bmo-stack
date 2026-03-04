@@ -1,15 +1,18 @@
 import { Global, Module, Provider } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthModule as NestBetterAuthModule } from '@thallesp/nestjs-better-auth';
 
 import { BillingModule } from '../billing/billing.module';
+import { TurnstileService } from '../common/services/turnstile.service';
+import { PrismaService } from '../database/prisma.service';
 import { EmailModule } from '../email/email.module';
+import { EmailService } from '../email/email.service';
 import { getJwtExpiresIn, getJwtSecret } from './auth.config';
 import { AuthController } from './auth.controller';
-import { AuthFlowService } from './auth-flow.service';
 import { createBetterAuth } from './better-auth.config';
+import { BetterAuthApiErrorFilter } from './filters/better-auth-api-error.filter';
 import { BetterAuthGuard } from './guards/better-auth.guard';
 import { AuthEventsHook } from './hooks/auth-events.hook';
 import { EmailVerificationCooldownHook } from './hooks/email-verification-cooldown.hook';
@@ -56,13 +59,22 @@ import { LoginLockoutHook } from './hooks/login-lockout.hook';
      * configuration in AppModule and main.ts for better control.
      */
     NestBetterAuthModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => ({
-        auth: await createBetterAuth(configService),
+      imports: [ConfigModule, EmailModule],
+      inject: [ConfigService, PrismaService, TurnstileService, EmailService],
+      useFactory: async (
+        configService: ConfigService,
+        prismaService: PrismaService,
+        turnstileService: TurnstileService,
+        emailService: EmailService
+      ) => ({
+        auth: await createBetterAuth(configService, {
+          prisma: prismaService,
+          turnstile: turnstileService,
+          email: emailService,
+        }),
         // Guard is registered explicitly in this module for better control
         disableGlobalAuthGuard: true,
-        // main.ts handles body parsing strategy explicitly for Stripe webhooks
+        // main.ts handles body parsing strategy explicitly to support better-auth
         disableBodyParser: true,
         // CORS is configured in main.ts for consistency
         disableTrustedOriginsCors: true,
@@ -87,10 +99,13 @@ import { LoginLockoutHook } from './hooks/login-lockout.hook';
   ],
   controllers: [AuthController],
   providers: [
-    AuthFlowService,
     AuthEventsHook,
     EmailVerificationCooldownHook,
     LoginLockoutHook,
+    {
+      provide: APP_FILTER,
+      useClass: BetterAuthApiErrorFilter,
+    } satisfies Provider,
     // Register BetterAuthGuard as APP_GUARD here where AUTH_MODULE_OPTIONS_KEY is available
     {
       provide: APP_GUARD,

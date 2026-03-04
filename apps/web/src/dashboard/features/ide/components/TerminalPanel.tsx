@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { Input } from '@/dashboard/components';
 import { useAuth } from '@/shared/auth';
-import { createTerminalSession, createTerminalTab, listTerminalTabs } from '@/shared/lib/environments';
+import { createTerminalSession } from '@/shared/lib/environments';
 
 interface TerminalPanelProps {
   environmentId?: string;
@@ -27,9 +27,7 @@ export const TerminalPanel = ({ environmentId }: TerminalPanelProps) => {
 
     setConnecting(true);
     try {
-      const tabs = await listTerminalTabs(undefined, environmentId);
-      const active = tabs.find(t => t.isActive) ?? tabs[0] ?? (await createTerminalTab(undefined, environmentId));
-      const session = await createTerminalSession(undefined, environmentId, active.id);
+      const session = await createTerminalSession(undefined, environmentId);
       const ws = new WebSocket(`${session.wsUrl}?token=${encodeURIComponent(session.token)}`);
       ws.onopen = () => {
         setConnected(true);

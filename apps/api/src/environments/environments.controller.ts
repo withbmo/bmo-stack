@@ -15,10 +15,7 @@ import type { Environment, ServerPreset } from '@pytholit/contracts';
 import {
   CreateEnvironmentDto,
   CreateEnvironmentSessionDto,
-  CreateTerminalSessionDto,
-  AppendTerminalTranscriptDto,
   SetEnvironmentAccessModeDto,
-  UpdateTerminalTabDto,
   UpdateEnvironmentDto,
 } from '@pytholit/validation/class-validator';
 
@@ -150,106 +147,13 @@ export class EnvironmentsController {
   @HttpCode(HttpStatus.OK)
   async createTerminalSession(
     @CurrentUser('id') userId: string,
-    @Param('id') id: string,
-    @Body() body: CreateTerminalSessionDto
+    @Param('id') id: string
   ): Promise<{
     token: string;
     expiresAt: string;
     wsUrl: string;
   }> {
-    return this.environmentsService.createTerminalSession(userId, id, body.tabId);
-  }
-
-  @Get(':id/terminal/tabs')
-  async listTerminalTabs(
-    @CurrentUser('id') userId: string,
-    @Param('id') id: string
-  ): Promise<
-    Array<{
-      id: string;
-      title: string;
-      isActive: boolean;
-      tmuxEnabled: boolean;
-      updatedAt: string;
-      lastActiveAt?: string | null;
-      archivedAt?: string | null;
-    }>
-  > {
-    return this.environmentsService.listTerminalTabs(userId, id);
-  }
-
-  @Post(':id/terminal/tabs')
-  async createTerminalTab(
-    @CurrentUser('id') userId: string,
-    @Param('id') id: string
-  ): Promise<{
-    id: string;
-    title: string;
-    isActive: boolean;
-    tmuxEnabled: boolean;
-    updatedAt: string;
-    lastActiveAt?: string | null;
-    archivedAt?: string | null;
-  }> {
-    return this.environmentsService.createTerminalTab(userId, id);
-  }
-
-  @Get(':id/terminal/tabs/:tabId')
-  async getTerminalTab(
-    @CurrentUser('id') userId: string,
-    @Param('id') id: string,
-    @Param('tabId') tabId: string
-  ): Promise<{
-    id: string;
-    title: string;
-    isActive: boolean;
-    tmuxEnabled: boolean;
-    updatedAt: string;
-    lastActiveAt?: string | null;
-    archivedAt?: string | null;
-    transcript: string;
-    lastSeq: number;
-    tmuxSessionName?: string | null;
-    tmuxExpiresAt?: string | null;
-  }> {
-    return this.environmentsService.getTerminalTab(userId, id, tabId);
-  }
-
-  @Patch(':id/terminal/tabs/:tabId')
-  async updateTerminalTab(
-    @CurrentUser('id') userId: string,
-    @Param('id') id: string,
-    @Param('tabId') tabId: string,
-    @Body() body: UpdateTerminalTabDto
-  ): Promise<{
-    id: string;
-    title: string;
-    isActive: boolean;
-    tmuxEnabled: boolean;
-    updatedAt: string;
-    lastActiveAt?: string | null;
-    archivedAt?: string | null;
-  }> {
-    return this.environmentsService.updateTerminalTab(userId, id, tabId, body);
-  }
-
-  @Delete(':id/terminal/tabs/:tabId')
-  async deleteTerminalTab(
-    @CurrentUser('id') userId: string,
-    @Param('id') id: string,
-    @Param('tabId') tabId: string
-  ): Promise<{ ok: true }> {
-    return this.environmentsService.deleteTerminalTab(userId, id, tabId);
-  }
-
-  @Post(':id/terminal/tabs/:tabId/append')
-  async appendTerminalTranscript(
-    @CurrentUser('id') userId: string,
-    @Param('id') id: string,
-    @Param('tabId') tabId: string,
-    @Body() body: AppendTerminalTranscriptDto
-  ): Promise<{ ok: true; applied: boolean }> {
-    return this.environmentsService.appendTerminalTranscript(userId, id, tabId, body.delta, body.seq);
+    return this.environmentsService.createTerminalSession(userId, id);
   }
 
   @Post(':id/proxy/session')

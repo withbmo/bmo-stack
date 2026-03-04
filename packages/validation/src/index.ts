@@ -14,4 +14,5 @@
 export * from './schemas';
 export * from './dtos';
 export * from './validators';
+export * from './utils';
 export { PASSWORD_STRENGTH_CONFIG } from './config/password-strength.config';

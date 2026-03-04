@@ -11,6 +11,7 @@ import { AppModule } from './app.module';
 import { setupBodyParsers } from './config/body-parser.setup';
 import { getApiAppEnv } from './config/app-env';
 import { PrismaService } from './database/prisma.service';
+import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
 async function bootstrapInitialAdmin(app: INestApplication) {
   const configService = app.get(ConfigService);
@@ -54,7 +55,7 @@ async function bootstrapInitialAdmin(app: INestApplication) {
 async function bootstrap() {
   // Disable Nest's default body parser so we can:
   // - keep JSON parsing for all routes
-  // - preserve the raw body for Stripe webhook signature verification
+  // - bypass parsing for better-auth routes (it handles its own body parsing)
   const app = await NestFactory.create(AppModule, { bodyParser: false });
 
   // Security headers
@@ -80,6 +81,9 @@ async function bootstrap() {
 
   // Cookies (OAuth state + auth session)
   app.use(cookieParser());
+
+  // Global exception filters
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   // Global validation pipe - uses class-validator DTOs from @pytholit/validation
   app.useGlobalPipes(

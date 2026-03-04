@@ -1,825 +1,524 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
-  Logger,
-  NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { getDefaultPlan, getPlanById, getPlanCredits, getPlans } from '@pytholit/config';
-import type {
-  Plan as ApiPlan,
-  PlanChangeApplyResponse,
-  PlanChangePreviewResponse,
-  PublicPlan,
-  Subscription as ApiSubscription,
+import { ConfigService } from '@nestjs/config';
+import { getPlanCatalogVersion } from '@pytholit/config';
+import {
+  BILLING_INTERVAL,
+  BILLING_INTERVALS,
+  type BillingInterval,
+  type CheckoutSessionResponse,
+  type InvoiceListResponse,
+  PAID_PLAN_IDS,
+  type PaidPlanId,
+  type Plan,
+  PLAN_ID,
+  type PlanId,
+  type Subscription,
 } from '@pytholit/contracts';
+import type Stripe from 'stripe';
 
-import { PrismaService } from '../database/prisma.service';
-import { BillingConfigService } from './billing.config';
-import type { PaymentMethodResponse, ValidatePaymentMethodResult } from './billing.types';
-import { LagoService } from './lago.service';
-import type { LagoSubscription } from './lago.types';
+import { StripeService } from '../stripe/stripe.service';
+import { BillingAccessService } from './billing-access.service';
+import { BILLING_ERROR_CODE } from './billing-error-codes';
+import {
+  buildBillingPlanCode,
+  parseBillingPlanCode,
+  planIdFromBillingPlanCode,
+} from './billing-plan-code';
+import { BillingPlansService } from './billing-plans.service';
+import { StripeCustomerService } from './stripe-customer.service';
+import { StripeWebhookService } from './stripe-webhook.service';
+import { extractBillingPlanCodeFromSubscription } from './utils/stripe-plan-code.utils';
 
-type ConfigPlan = ReturnType<typeof getDefaultPlan>;
-
-/**
- * BillingFacadeService
- *
- * High-level billing API that consolidates Lago (subscriptions, metering, invoicing)
- * and Stripe (payment methods) operations.
- *
- * This facade simplifies controller logic by providing single methods for complex
- * multi-service operations like checkout, subscription management, and limits checking.
- *
- * Benefits:
- * - Single injection point for all billing operations
- * - Centralized error handling and logging
- * - Reduced code duplication across controllers
- * - Cleaner separation of concerns
- */
-
-export type CheckoutResult = {
-  status?: 'activated' | 'already_active' | 'requires_payment_method' | 'failed';
-  subscription?: {
-    id: string;
-    planCode: string;
-    status: string;
-  };
-  paymentSetupUrl?: string;
-  requiresPaymentMethod: boolean;
-  pendingPlanCode?: string;
-  url?: string;
+type StripeSubscriptionWithPeriods = Stripe.Subscription & {
+  current_period_start?: number;
+  current_period_end?: number;
+  cancel_at_period_end?: boolean;
 };
 
-export type SubscriptionDetails = {
-  id: string;
-  planId: string;
-  billingInterval: 'month' | 'year';
-  status: string;
-  featureAccessState: 'enabled' | 'locked_due_to_payment';
-  walletCreditsUsable: boolean;
-  periodStart: Date;
-  periodEnd: Date;
-  cancelAtPeriodEnd: boolean;
-};
-
-export type FeatureLimit = {
-  id: string;
-  name: string;
-  limit: number | 'unlimited';
-  used: number;
-  remaining: number | 'unlimited';
-  percentage: number;
-};
-
-export type EntitlementLimitsResult = {
-  planId: string;
-  planName: string;
-  periodStart: Date;
-  periodEnd: Date;
-  features: FeatureLimit[];
-};
-
-export type InvoiceListResult = {
-  items: Array<{
-    id: string;
-    number: string;
-    status: string;
-    amountCents: number;
-    currency: 'USD';
-    issuingDate?: Date;
-    paymentDueDate?: Date;
-    pdfUrl?: string;
-  }>;
-  hasMore: boolean;
-};
-
-type CreditTopupProcessResult = 'processed' | 'skipped' | 'failed';
+function pickPlanSubscriptionItem(subscription: Stripe.Subscription): {
+  priceId: string;
+  interval: BillingInterval;
+  currentPeriodStart: number | null;
+  currentPeriodEnd: number | null;
+} | null {
+  const items = subscription.items?.data ?? [];
+  for (const item of items) {
+    const price = item?.price ?? null;
+    const priceId = price?.id ?? null;
+    const interval = price?.recurring?.interval ?? null;
+    if (!priceId) {
+      throw new ConflictException({
+        code: BILLING_ERROR_CODE.BILLING_STRIPE_SUBSCRIPTION_ITEM_INVALID,
+        detail: 'Subscription item is missing Stripe price id.',
+      });
+    }
+    if (!interval || !BILLING_INTERVALS.includes(interval as BillingInterval)) {
+      throw new ConflictException({
+        code: BILLING_ERROR_CODE.BILLING_STRIPE_SUBSCRIPTION_ITEM_INVALID,
+        detail: `Subscription item has invalid interval "${String(interval)}".`,
+      });
+    }
+    const billingInterval = interval as BillingInterval;
+    return {
+      priceId,
+      interval: billingInterval,
+      currentPeriodStart:
+        typeof item?.current_period_start === 'number' ? item.current_period_start : null,
+      currentPeriodEnd:
+        typeof item?.current_period_end === 'number' ? item.current_period_end : null,
+    };
+  }
+  return null;
+}
 
 @Injectable()
 export class BillingFacadeService {
-  private readonly logger = new Logger(BillingFacadeService.name);
-  private readonly dunningLockedStatuses = new Set(['past_due', 'unpaid']);
-
   constructor(
-    private readonly lago: LagoService,
-    private readonly prisma: PrismaService,
-    private readonly billingConfig: BillingConfigService,
+    private readonly config: ConfigService,
+    private readonly plans: BillingPlansService,
+    private readonly billingAccess: BillingAccessService,
+    private readonly stripeWebhook: StripeWebhookService,
+    private readonly stripeService: StripeService,
+    private readonly stripeCustomers: StripeCustomerService
   ) {}
 
+  /** Returns billing plans loaded from local JSON config. */
+  getPlans(): Plan[] {
+    return this.plans.getPlans();
+  }
+
   /**
-   * Create a subscription checkout session
-   *
-   * Orchestrates:
-   * 1. Create/get Lago customer
-   * 2. Create Lago subscription
-   * 3. Check if user needs payment method setup
-   * 4. Create Stripe setup session if needed
-   * 5. Update local database
+   * Returns user subscription view by combining:
+   * - local billing state snapshot (access state + plan code), and
+   * - latest Stripe subscription (for period/status details).
    */
-  async createCheckout(userId: string, planCode: string): Promise<CheckoutResult> {
-    this.logger.log(`Creating checkout for user ${userId}, plan ${planCode}`);
-    if (!this.billingConfig.shouldUseLago(userId)) {
-      throw new BadRequestException('Billing checkout is not enabled for this account cohort');
+  async getSubscriptionResponse(userId: string): Promise<{
+    subscription: Subscription | null;
+  }> {
+    const state = await this.billingAccess.getStateForUser(userId);
+    const planFromEngine = parseBillingPlanCode(state.planCode);
+    if (!planFromEngine) {
+      throw new ServiceUnavailableException({
+        code: BILLING_ERROR_CODE.BILLING_STATE_INVALID_PLAN_CODE,
+        detail: `Unknown billing plan code in state: ${state.planCode}`,
+      });
     }
+    const featureAccessState: Subscription['featureAccessState'] =
+      state.accessState === 'locked_due_to_payment' ||
+      state.accessState === 'locked_wallet_depleted'
+        ? 'locked_due_to_payment'
+        : 'enabled';
 
-    const planId = this.extractPlanIdFromCode(planCode);
-    const requestedPlan = getPlanById(planId);
-    if (!requestedPlan || !requestedPlan.isActive) {
-      throw new BadRequestException(`Unknown or inactive plan: ${planId}`);
-    }
+    const { stripe, stripeCustomerId } = await this.getStripeContextForUser(userId);
+    const sub = await this.getLatestStripeSubscription(stripe, stripeCustomerId);
+    if (!sub) {
+      if (planFromEngine.planId === PLAN_ID.FREE) return { subscription: null };
 
-    const lagoPlan = await this.lago.getPlan(planCode);
-    if (!lagoPlan) {
-      throw new BadRequestException(
-        `Plan ${planCode} is not available in Lago. Run plan migration before checkout.`
-      );
-    }
-
-    // Create Lago customer if doesn't exist
-    await this.lago.createCustomer(userId);
-
-    const existingSubscription = await this.lago.getSubscription(userId);
-    if (
-      existingSubscription &&
-      existingSubscription.plan_code === planCode &&
-      ['active', 'trialing', 'past_due'].includes(existingSubscription.status)
-    ) {
-      await this.syncSubscriptionToDb(userId, existingSubscription);
+      const periodStart = new Date();
+      const periodEnd = new Date(periodStart);
+      if (planFromEngine.billingInterval === BILLING_INTERVAL.YEAR) {
+        periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+      } else {
+        periodEnd.setMonth(periodEnd.getMonth() + 1);
+      }
+      const publicPlan = this.findPlanById(planFromEngine.planId);
       return {
-        status: 'already_active',
         subscription: {
-          id: existingSubscription.lago_id,
-          planCode: existingSubscription.plan_code,
-          status: existingSubscription.status,
+          id: `sub_${userId}`,
+          planId: planFromEngine.planId,
+          billingInterval: planFromEngine.billingInterval,
+          status: featureAccessState === 'locked_due_to_payment' ? 'past_due' : 'active',
+          featureAccessState,
+          walletCreditsUsable: false,
+          periodStart: periodStart.toISOString(),
+          periodEnd: periodEnd.toISOString(),
+          cancelAtPeriodEnd: false,
+          plan: publicPlan,
         },
-        requiresPaymentMethod: false,
-        url: `${this.billingConfig.frontendUrl}/dashboard/settings/billing`,
       };
     }
 
-    const paymentSetupUrl = await this.lago.regenerateCustomerCheckoutUrl(userId, planCode);
+    const planId: PlanId = planFromEngine.planId;
+    const billingInterval: BillingInterval = planFromEngine.billingInterval;
+    const publicPlan = this.findPlanById(planId);
+
+    const stripeSub = sub as StripeSubscriptionWithPeriods;
+    const startSec = stripeSub.current_period_start;
+    const endSec = stripeSub.current_period_end;
+    const periodStart = typeof startSec === 'number' ? new Date(startSec * 1000) : new Date();
+    const periodEnd = typeof endSec === 'number' ? new Date(endSec * 1000) : new Date();
 
     return {
-      status: 'requires_payment_method',
-      requiresPaymentMethod: true,
-      paymentSetupUrl,
-      pendingPlanCode: planCode,
-    };
-  }
-
-  async finalizeCheckout(userId: string, pendingPlanCode: string): Promise<CheckoutResult> {
-    if (!this.billingConfig.shouldUseLago(userId)) {
-      throw new BadRequestException('Billing checkout is not enabled for this account cohort');
-    }
-    const planId = this.extractPlanIdFromCode(pendingPlanCode);
-    const requestedPlan = getPlanById(planId);
-    if (!requestedPlan || !requestedPlan.isActive) {
-      throw new BadRequestException(`Unknown or inactive plan: ${planId}`);
-    }
-    const lagoPlan = await this.lago.getPlan(pendingPlanCode);
-    if (!lagoPlan) {
-      throw new BadRequestException(
-        `Plan ${pendingPlanCode} is not available in Lago. Run plan migration before checkout.`
-      );
-    }
-
-    const hasProvider = await this.lago.hasCustomerPaymentProvider(userId);
-    if (!hasProvider) {
-      throw new BadRequestException(
-        'Payment method setup is not completed yet. Please finish billing setup and try again.'
-      );
-    }
-
-    const subscription = await this.finalizePlanCheckout(userId, pendingPlanCode);
-
-    return {
-      status: 'activated',
-      requiresPaymentMethod: false,
       subscription: {
-        id: subscription.lago_id,
-        planCode: subscription.plan_code,
-        status: subscription.status,
-      },
-      url: `${this.billingConfig.frontendUrl}/dashboard/settings/billing`,
-    };
-  }
-
-  /**
-   * Get subscription details with plan information
-   */
-  async getSubscription(userId: string): Promise<SubscriptionDetails | null> {
-    if (!this.billingConfig.shouldUseLago(userId)) {
-      return null;
-    }
-    const subscription = await this.lago.getSubscription(userId);
-
-    if (!subscription) {
-      return null;
-    }
-
-    // Extract plan ID from plan code (format: "planId_monthly" or "planId_yearly")
-    const planId = this.extractPlanIdFromCode(subscription.plan_code);
-    const walletCreditsUsable = true;
-    const billingInterval = subscription.plan_code.endsWith('_yearly') ? 'year' : 'month';
-    const featureAccessState = this.dunningLockedStatuses.has(subscription.status)
-      ? 'locked_due_to_payment'
-      : 'enabled';
-
-    return {
-      id: subscription.lago_id,
-      planId,
-      billingInterval,
-      status: subscription.status,
-      featureAccessState,
-      walletCreditsUsable,
-      periodStart: subscription.current_period_start
-        ? new Date(subscription.current_period_start)
-        : new Date(),
-      periodEnd: subscription.current_period_end
-        ? new Date(subscription.current_period_end)
-        : new Date(),
-      cancelAtPeriodEnd: subscription.ending_at != null,
-    };
-  }
-
-  /**
-   * Get entitlement limits with usage
-   *
-   * Uses Lago's plan data as the source of truth for limits
-   */
-  async getLimits(userId: string): Promise<EntitlementLimitsResult> {
-    const subscription = await this.lago.getSubscription(userId);
-
-    if (!subscription || !subscription.plan) {
-      // Return default plan limits
-      const defaultPlan = getDefaultPlan();
-      return this.getDefaultLimits(userId, defaultPlan);
-    }
-
-    const features: FeatureLimit[] = [];
-
-    // Map Lago charges to feature limits
-    if (subscription.plan.charges) {
-      for (const charge of subscription.plan.charges) {
-        const maxUnits = charge.properties.max_units;
-        const used = charge.current_usage ?? 0;
-
-        let limit: number | 'unlimited';
-        let remaining: number | 'unlimited';
-        let percentage: number;
-
-        if (maxUnits === null || maxUnits === undefined) {
-          limit = 'unlimited';
-          remaining = 'unlimited';
-          percentage = 0;
-        } else {
-          limit = maxUnits;
-          remaining = Math.max(0, maxUnits - used);
-          percentage = maxUnits > 0 ? Math.round((used / maxUnits) * 100) : 0;
-        }
-
-        features.push({
-          id: charge.billable_metric_code,
-          name: charge.billable_metric_name || charge.billable_metric_code,
-          limit,
-          used,
-          remaining,
-          percentage,
-        });
-      }
-    }
-
-    return {
-      planId: subscription.plan.code,
-      planName: subscription.plan.name,
-      periodStart: subscription.current_period_start
-        ? new Date(subscription.current_period_start)
-        : new Date(),
-      periodEnd: subscription.current_period_end
-        ? new Date(subscription.current_period_end)
-        : new Date(),
-      features,
-    };
-  }
-
-  /**
-   * Check if user can consume a feature
-   */
-  async canConsume(userId: string, featureId: string, amount: number): Promise<boolean> {
-    if (amount <= 0) return false;
-
-    const limits = await this.getLimits(userId);
-    const feature = limits.features.find(f => f.id === featureId);
-
-    if (!feature) {
-      this.logger.warn(`Feature ${featureId} not found in plan for user ${userId}`);
-      return false;
-    }
-
-    if (feature.limit === 'unlimited') return true;
-    if (typeof feature.remaining !== 'number') return false;
-
-    return feature.remaining >= amount;
-  }
-
-  /**
-   * Record usage for a feature
-   */
-  async recordUsage(
-    userId: string,
-    featureId: string,
-    amount: number,
-    operationId: string
-  ): Promise<void> {
-    if (amount <= 0) {
-      throw new Error('Usage amount must be positive');
-    }
-
-    await this.lago.sendEvent({
-      transaction_id: `${featureId}:${userId}:${operationId}`,
-      external_customer_id: userId,
-      code: featureId,
-      timestamp: Math.floor(Date.now() / 1000),
-      properties: { amount },
-    });
-
-    this.logger.log(`Recorded usage for user ${userId}: ${featureId} = ${amount}`);
-  }
-
-  /**
-   * Get user invoices
-   */
-  async getInvoices(userId: string, limit = 20): Promise<InvoiceListResult> {
-    const invoices = await this.lago.getInvoices(userId);
-
-    // Sort by date descending
-    const sorted = invoices.sort((a, b) => {
-      const dateA = a.issuing_date ? new Date(a.issuing_date).getTime() : 0;
-      const dateB = b.issuing_date ? new Date(b.issuing_date).getTime() : 0;
-      return dateB - dateA;
-    });
-
-    const limited = sorted.slice(0, limit);
-
-    return {
-      items: limited.map(invoice => ({
-        id: invoice.lago_id,
-        number: invoice.number,
-        status: invoice.status,
-        amountCents: invoice.total_amount_cents,
-        currency: 'USD',
-        issuingDate: invoice.issuing_date ? new Date(invoice.issuing_date) : undefined,
-        paymentDueDate: invoice.payment_due_date ? new Date(invoice.payment_due_date) : undefined,
-        pdfUrl: invoice.file_url ?? undefined,
-      })),
-      hasMore: sorted.length > limit,
-    };
-  }
-
-  /**
-   * Get wallet balance (prepaid credits)
-   */
-  async getWalletBalance(userId: string): Promise<number> {
-    return this.lago.getWalletBalance(userId);
-  }
-
-  async registerCreditTopupRequest(
-    userId: string,
-    lagoInvoiceId: string,
-    amountUsd: number,
-    credits: number,
-    idempotencyKey: string
-  ): Promise<string> {
-    const row = await this.prisma.client.creditTopupRequest.upsert({
-      where: { lagoInvoiceId },
-      create: {
-        userId,
-        lagoInvoiceId,
-        amountUsd,
-        credits,
-        status: 'pending',
-        idempotencyKey,
-      },
-      update: {
-        userId,
-        amountUsd,
-        credits,
-        idempotencyKey,
-      },
-    });
-    return row.id;
-  }
-
-  async processPaidInvoiceTopup(lagoInvoiceId: string): Promise<CreditTopupProcessResult> {
-    const request = await this.prisma.client.creditTopupRequest.findUnique({
-      where: { lagoInvoiceId },
-      select: { id: true, userId: true, credits: true, status: true },
-    });
-
-    if (!request) return 'skipped';
-    if (request.status === 'succeeded' || request.status === 'processing') return 'skipped';
-
-    const claim = await this.prisma.client.creditTopupRequest.updateMany({
-      where: { id: request.id, status: 'pending' },
-      data: { status: 'processing' },
-    });
-    if (claim.count === 0) {
-      return 'skipped';
-    }
-
-    try {
-      const wallet = await this.lago.getWallet(request.userId);
-      if (wallet) {
-        await this.lago.topUpWallet(wallet.lago_id, request.credits);
-      } else {
-        await this.lago.createWallet(request.userId, request.credits);
-      }
-
-      const balance = await this.lago.getWalletBalance(request.userId);
-      await this.prisma.client.$transaction([
-        this.prisma.client.creditTopupRequest.update({
-          where: { id: request.id },
-          data: { status: 'succeeded', grantedAt: new Date(), processedAt: new Date() },
-        }),
-        this.prisma.client.creditLedgerEntry.create({
-          data: {
-            userId: request.userId,
-            type: 'topup',
-            deltaCredits: request.credits,
-            balanceAfter: Math.round(balance),
-            currency: 'USD',
-            referenceId: lagoInvoiceId,
-            reasonCode: 'invoice_paid',
-          },
-        }),
-      ]);
-      return 'processed';
-    } catch (error) {
-      await this.prisma.client.creditTopupRequest.update({
-        where: { id: request.id },
-        data: {
-          status: 'failed',
-          processedAt: new Date(),
-          failureCode: error instanceof Error ? error.name : 'topup_failed',
-        },
-      });
-      this.logger.error(
-        `Failed to apply paid invoice topup for invoice ${lagoInvoiceId}`,
-        error instanceof Error ? error.stack : String(error)
-      );
-      return 'failed';
-    }
-  }
-
-  async retryFailedCreditTopup(userId: string, lagoInvoiceId: string): Promise<CreditTopupProcessResult> {
-    const request = await this.prisma.client.creditTopupRequest.findUnique({
-      where: { lagoInvoiceId },
-      select: { userId: true, status: true },
-    });
-
-    if (!request || request.userId !== userId) {
-      throw new NotFoundException('Credit top-up request not found');
-    }
-    if (request.status === 'succeeded') {
-      return 'skipped';
-    }
-    return this.processPaidInvoiceTopup(lagoInvoiceId);
-  }
-
-  /**
-   * Create billing portal session for subscription management
-   */
-  async createPortalSession(userId: string): Promise<string> {
-    if (!this.billingConfig.shouldUseLago(userId)) {
-      throw new BadRequestException('Billing portal is not enabled for this account cohort');
-    }
-    return this.lago.getCustomerPortalUrl(userId);
-  }
-
-  /**
-   * Get all active plans (public API)
-   */
-  async getActivePlans(): Promise<PublicPlan[]> {
-    if (!this.billingConfig.lagoEnabled) {
-      throw new ServiceUnavailableException('Lago billing is not configured');
-    }
-
-    const configPlans = getPlans();
-    const lagoPlans = await this.lago.listPlans();
-
-    const byCode = new Map(lagoPlans.map(plan => [plan.code, plan]));
-    const merged = configPlans
-      .map((plan) => {
-        const monthly = byCode.get(`${plan.id}_monthly`);
-        const yearly = byCode.get(`${plan.id}_yearly`);
-        if (!monthly || !yearly) {
-          return null;
-        }
-
-        const monthlyPrice = Math.max(0, Math.round(monthly.amount_cents / 100));
-        const yearlyPrice = Math.max(0, Math.round(yearly.amount_cents / 100));
-
-        return this.toPublicPlan({
-          ...plan,
-          monthlyPrice,
-          yearlyPrice,
-        });
-      })
-      .filter((plan): plan is NonNullable<typeof plan> => plan !== null);
-
-    return merged.sort((a, b) => a.monthlyPriceCents - b.monthlyPriceCents);
-  }
-
-  /**
-   * Get user's saved payment methods from Stripe
-   */
-  async getPaymentMethods(userId: string): Promise<PaymentMethodResponse[]> {
-    this.logger.debug(`payment_methods_deprecated userId=${userId}`);
-    return [];
-  }
-
-  /**
-   * Validate that a payment method belongs to the user
-   */
-  async validatePaymentMethod(
-    userId: string,
-    paymentMethodId: string
-  ): Promise<ValidatePaymentMethodResult> {
-    this.logger.debug(
-      `validate_payment_method_deprecated userId=${userId} paymentMethodId=${paymentMethodId}`
-    );
-    return { valid: false, error: 'This endpoint is deprecated. Use Lago checkout/portal flow.' };
-  }
-
-  /**
-   * Private helper methods
-   */
-
-  private async syncSubscriptionToDb(userId: string, lagoSubscription: LagoSubscription) {
-    const planId = this.extractPlanIdFromCode(lagoSubscription.plan_code);
-    const billingInterval = lagoSubscription.plan_code.endsWith('_yearly') ? 'year' : 'month';
-    const featureAccessState = this.dunningLockedStatuses.has(lagoSubscription.status)
-      ? 'locked_due_to_payment'
-      : 'enabled';
-
-    await this.prisma.client.subscription.upsert({
-      where: {
-        externalSubscriptionId: lagoSubscription.lago_id,
-      },
-      create: {
-        userId,
+        id: sub.id,
         planId,
-        externalSubscriptionId: lagoSubscription.lago_id,
-        status: lagoSubscription.status,
         billingInterval,
-        featureAccessState,
-        currentPeriodStart: lagoSubscription.current_period_start
-          ? new Date(lagoSubscription.current_period_start)
-          : new Date(),
-        currentPeriodEnd: lagoSubscription.current_period_end
-          ? new Date(lagoSubscription.current_period_end)
-          : new Date(),
-        cancelAtPeriodEnd: false,
+        status: (sub.status ?? 'active') as Subscription['status'],
+        featureAccessState: featureAccessState,
+        walletCreditsUsable: false,
+        periodStart: periodStart.toISOString(),
+        periodEnd: periodEnd.toISOString(),
+        cancelAtPeriodEnd: Boolean(stripeSub.cancel_at_period_end),
+        plan: publicPlan,
       },
-      update: {
-        status: lagoSubscription.status,
-        billingInterval,
-        featureAccessState,
-        currentPeriodStart: lagoSubscription.current_period_start
-          ? new Date(lagoSubscription.current_period_start)
-          : undefined,
-        currentPeriodEnd: lagoSubscription.current_period_end
-          ? new Date(lagoSubscription.current_period_end)
-          : undefined,
-      },
+    };
+  }
+
+  /** Returns Stripe invoices for a user with cursor pagination (`starting_after`). */
+  async getInvoices(
+    userId: string,
+    limit = 25,
+    startingAfter?: string
+  ): Promise<InvoiceListResponse> {
+    const { stripe, stripeCustomerId } = await this.getStripeContextForUser(userId);
+    const normalizedLimit = Math.max(1, Math.min(100, Math.floor(limit)));
+    const normalizedStartingAfter = (startingAfter ?? '').trim();
+    const invoices = await stripe.invoices.list({
+      customer: stripeCustomerId,
+      limit: normalizedLimit,
+      starting_after: normalizedStartingAfter || undefined,
     });
-  }
-
-  private async finalizePlanCheckout(userId: string, planCode: string): Promise<LagoSubscription> {
-    const existingSubscription = await this.lago.getSubscription(userId);
-    if (
-      existingSubscription &&
-      existingSubscription.plan_code === planCode &&
-      ['active', 'trialing', 'past_due'].includes(existingSubscription.status)
-    ) {
-      await this.syncSubscriptionToDb(userId, existingSubscription);
-      return existingSubscription;
-    }
-
-    if (
-      existingSubscription &&
-      !['terminated', 'canceled', 'cancelled'].includes(existingSubscription.status)
-    ) {
-      await this.lago.terminateSubscription(existingSubscription.lago_id);
-    }
-
-    const subscription = await this.lago.createSubscription(userId, planCode);
-    await this.syncSubscriptionToDb(userId, subscription);
-    return subscription;
-  }
-
-  private extractPlanIdFromCode(planCode: string): string {
-    // Plan code format: "planId_monthly" or "planId_yearly"
-    const parts = planCode.split('_');
-    return parts.slice(0, -1).join('_') || planCode;
-  }
-
-  private toApiPlan(plan: ConfigPlan | null): ApiPlan | null {
-    if (!plan) return null;
-    const monthlyPriceCents = Math.max(0, Math.round(plan.monthlyPrice * 100));
-    const yearlyPriceCents = Math.max(0, Math.round(plan.yearlyPrice * 100));
-    const yearlyDiscountPercent =
-      monthlyPriceCents > 0
-        ? Math.max(
-            0,
-            Math.round((1 - yearlyPriceCents / Math.max(1, monthlyPriceCents * 12)) * 100)
-          )
-        : 0;
-    return {
-      id: plan.id,
-      name: plan.name,
-      displayName: plan.displayName,
-      description: plan.description ?? null,
-      currency: 'USD',
-      monthlyPriceCents,
-      yearlyPriceCents,
-      monthlyIncludedCredits: getPlanCredits(plan.id, 'month'),
-      yearlyIncludedCredits: getPlanCredits(plan.id, 'year'),
-      yearlyBonusCredits: plan.yearlyBonusCredits,
-      yearlyDiscountPercent,
-      features: plan.features ?? [],
-      isActive: Boolean(plan.isActive),
-    };
-  }
-
-  private toPublicPlan(plan: ConfigPlan | null): PublicPlan | null {
-    return this.toApiPlan(plan);
-  }
-
-  private planPriceCents(plan: ConfigPlan, interval: 'month' | 'year'): number {
-    return Math.round((interval === 'year' ? plan.yearlyPrice : plan.monthlyPrice) * 100);
-  }
-
-  async previewPlanChange(
-    userId: string,
-    targetPlanId: string,
-    targetInterval: 'month' | 'year'
-  ): Promise<PlanChangePreviewResponse> {
-    const current = await this.lago.getSubscription(userId);
-    if (!current) {
-      throw new BadRequestException('No active subscription to change');
-    }
-
-    const currentPlanId = this.extractPlanIdFromCode(current.plan_code);
-    const currentInterval: 'month' | 'year' = current.plan_code.endsWith('_yearly') ? 'year' : 'month';
-    const currentPlan = getPlanById(currentPlanId);
-    const nextPlan = getPlanById(targetPlanId);
-    if (!currentPlan || !nextPlan) {
-      throw new BadRequestException('Unknown plan');
-    }
-
-    const nowMs = Date.now();
-    const startMs = current.current_period_start ? new Date(current.current_period_start).getTime() : nowMs;
-    const endMs = current.current_period_end ? new Date(current.current_period_end).getTime() : nowMs;
-    const total = Math.max(1, endMs - startMs);
-    const remaining = Math.max(0, endMs - nowMs);
-    const remainingRatio = Number((remaining / total).toFixed(6));
-
-    const oldPriceCents = this.planPriceCents(currentPlan, currentInterval);
-    const newPriceCents = this.planPriceCents(nextPlan, targetInterval);
-    const prorationAmountCents = Math.round((newPriceCents - oldPriceCents) * remainingRatio);
-
-    const oldIncludedCredits = getPlanCredits(currentPlan.id, currentInterval);
-    const newIncludedCredits = getPlanCredits(nextPlan.id, targetInterval);
-    const includedCreditsDelta = Math.round((newIncludedCredits - oldIncludedCredits) * remainingRatio);
-
-    const previewId = `${userId}:${current.plan_code}:${targetPlanId}:${targetInterval}:${endMs}`;
+    const lastInvoice = invoices.data[invoices.data.length - 1] ?? null;
 
     return {
-      previewId,
-      prorationAmountCents,
-      currency: 'USD',
-      creditDelta: includedCreditsDelta,
-      includedCreditsDelta,
-      effectiveAt: new Date().toISOString(),
-      remainingRatio,
-      oldPlan: {
-        planId: currentPlan.id,
-        interval: currentInterval,
-        priceCents: oldPriceCents,
-        includedCredits: oldIncludedCredits,
-      },
-      newPlan: {
-        planId: nextPlan.id,
-        interval: targetInterval,
-        priceCents: newPriceCents,
-        includedCredits: newIncludedCredits,
-      },
-    };
-  }
-
-  async applyPlanChange(
-    userId: string,
-    targetPlanId: string,
-    targetInterval: 'month' | 'year',
-    previewId: string
-  ): Promise<PlanChangeApplyResponse> {
-    const preview = await this.previewPlanChange(userId, targetPlanId, targetInterval);
-    if (preview.previewId !== previewId) {
-      throw new BadRequestException('Plan change preview is stale. Please refresh and try again.');
-    }
-
-    const planCode = `${targetPlanId}_${targetInterval === 'year' ? 'yearly' : 'monthly'}`;
-    const checkout = await this.finalizeCheckout(userId, planCode);
-    const snapshot = await this.getSubscription(userId);
-
-    if (preview.includedCreditsDelta !== 0) {
-      const balance = await this.lago.getWalletBalance(userId);
-      await this.prisma.client.creditLedgerEntry.create({
-        data: {
-          userId,
-          type: 'plan_proration',
-          deltaCredits: preview.includedCreditsDelta,
-          balanceAfter: Math.round(balance),
+      items: invoices.data.map(inv => {
+        return {
+          id: inv.id,
+          number: inv.number ?? inv.id,
+          amountCents: inv.amount_due ?? inv.amount_paid ?? 0,
           currency: 'USD',
-          referenceId: planCode,
-          reasonCode: 'plan_change_proration',
-        },
+          status: inv.status ?? 'open',
+          issuingDate: inv.created ? new Date(inv.created * 1000).toISOString() : undefined,
+          paymentDueDate: inv.due_date ? new Date(inv.due_date * 1000).toISOString() : undefined,
+          pdfUrl: inv.invoice_pdf ?? undefined,
+        };
+      }),
+      hasMore: invoices.has_more,
+      nextCursor: invoices.has_more && lastInvoice?.id ? lastInvoice.id : undefined,
+    };
+  }
+
+  /** Creates Stripe Billing Portal session for payment-method management. */
+  async createPortalSession(userId: string): Promise<{ url: string }> {
+    const { stripe, stripeCustomerId } = await this.getStripeContextForUser(userId);
+
+    const returnUrl = `${this.requireFrontendUrl()}/dashboard/settings/billing`;
+    const session = await stripe.billingPortal.sessions.create({
+      customer: stripeCustomerId,
+      return_url: returnUrl,
+    });
+
+    if (!session.url) {
+      throw new ServiceUnavailableException({
+        code: BILLING_ERROR_CODE.STRIPE_PORTAL_FAILED,
+        detail: 'Stripe portal session did not return a URL.',
       });
     }
 
-    return {
-      status: checkout.status ?? 'activated',
-      subscriptionSnapshot: snapshot ? this.toApiSubscription(snapshot) : null,
-    };
+    return { url: session.url };
   }
 
-  private toApiSubscription(snapshot: SubscriptionDetails): ApiSubscription {
-    return {
-      id: snapshot.id,
-      planId: snapshot.planId,
-      billingInterval: snapshot.billingInterval,
-      status: snapshot.status as ApiSubscription['status'],
-      featureAccessState: snapshot.featureAccessState,
-      walletCreditsUsable: snapshot.walletCreditsUsable,
-      periodStart: snapshot.periodStart.toISOString(),
-      periodEnd: snapshot.periodEnd.toISOString(),
-      cancelAtPeriodEnd: snapshot.cancelAtPeriodEnd,
-    };
+  /** Creates Stripe Checkout payment session for one-off wallet top-up. */
+  async createCreditTopupSession(userId: string, amountUsd: number): Promise<{ url: string }> {
+    const billingAccountId = userId;
+    const { stripe, stripeCustomerId } = await this.getStripeContextForUser(userId);
+
+    const amountCents = Math.round(Number(amountUsd) * 100);
+    if (!Number.isFinite(amountCents) || !Number.isInteger(amountCents) || amountCents <= 0) {
+      throw new BadRequestException({
+        code: BILLING_ERROR_CODE.BILLING_INVALID_AMOUNT,
+        detail: 'amountUsd is invalid.',
+      });
+    }
+
+    const successUrl = `${this.requireFrontendUrl()}/dashboard/settings/billing?topup=success`;
+    const cancelUrl = `${this.requireFrontendUrl()}/dashboard/settings/billing?topup=cancel`;
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      customer: stripeCustomerId,
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: 'Pytholit Credits',
+              description: 'Pre-paid credits for usage-based billing (AI + compute).',
+              metadata: { is_credit_topup: 'true' },
+            },
+            unit_amount: amountCents,
+          },
+          quantity: 1,
+        },
+      ],
+      payment_intent_data: {
+        metadata: { is_credit_topup: 'true', billingAccountId, userId },
+      },
+      invoice_creation: {
+        enabled: true,
+        invoice_data: {
+          metadata: { is_credit_topup: 'true', billingAccountId, userId },
+        },
+      },
+      metadata: { kind: 'credit_topup', billingAccountId, userId },
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+    });
+
+    if (!session.url) {
+      throw new ServiceUnavailableException({
+        code: BILLING_ERROR_CODE.STRIPE_CHECKOUT_FAILED,
+        detail: 'Stripe checkout session did not return a URL.',
+      });
+    }
+
+    return { url: session.url };
   }
 
-  private async getDefaultLimits(userId: string, plan: ConfigPlan): Promise<EntitlementLimitsResult> {
-    const features: FeatureLimit[] = await Promise.all(
-      plan.features.map(async (feature) => {
-        const used = await this.lago.getCurrentUsage(userId, feature.id).catch(() => 0);
+  /** Creates Stripe Checkout subscription session for a paid plan. */
+  async createCheckoutSession(
+    userId: string,
+    planId: PaidPlanId,
+    interval: BillingInterval
+  ): Promise<CheckoutSessionResponse> {
+    if (!PAID_PLAN_IDS.includes(planId)) {
+      throw new BadRequestException({
+        code: BILLING_ERROR_CODE.BILLING_INVALID_PLAN,
+        detail: 'Only paid plans can be purchased via checkout (pro/max).',
+      });
+    }
+    if (!BILLING_INTERVALS.includes(interval)) {
+      throw new BadRequestException({
+        code: BILLING_ERROR_CODE.BILLING_INVALID_INTERVAL,
+        detail: 'interval must be month or year.',
+      });
+    }
 
-        if (feature.value === 'unlimited') {
-          return {
-            id: feature.id,
-            name: feature.name,
-            limit: 'unlimited' as const,
-            used,
-            remaining: 'unlimited' as const,
-            percentage: 0,
-          };
+    const billingAccountId = userId;
+
+    const state = await this.billingAccess.getStateForUser(userId);
+    if (state.accessState === 'locked_due_to_payment') {
+      const { url } = await this.createPortalSession(userId);
+      return {
+        status: 'requires_payment_method',
+        requiresPaymentMethod: true,
+        pendingPlanCode: planId,
+        url,
+      };
+    }
+
+    const { stripe, stripeCustomerId } = await this.getStripeContextForUser(userId);
+    const existing = await this.getLatestStripeSubscription(stripe, stripeCustomerId);
+    if (existing) {
+      if (existing.status === 'active' || existing.status === 'trialing') {
+        const existingPlanCode = extractBillingPlanCodeFromSubscription(existing);
+        if (!existingPlanCode) {
+          throw new ConflictException({
+            code: BILLING_ERROR_CODE.BILLING_PROCESSING_UPGRADE,
+            detail: 'Subscription is missing plan code metadata. Retry shortly.',
+          });
         }
-
-        if (typeof feature.value !== 'number') {
-          return {
-            id: feature.id,
-            name: feature.name,
-            limit: 0,
-            used,
-            remaining: 0,
-            percentage: 100,
-          };
+        if (existingPlanCode === buildBillingPlanCode(planId, interval)) {
+          return { status: 'already_active', requiresPaymentMethod: false };
         }
+      }
 
-        const remaining = Math.max(0, feature.value - used);
-        const percentage = feature.value > 0 ? Math.round((used / feature.value) * 100) : 0;
-
+      // Existing subscription (any other status): use portal to self-serve changes.
+      if (existing.status !== 'canceled' && existing.status !== 'incomplete_expired') {
+        const { url } = await this.createPortalSession(userId);
         return {
-          id: feature.id,
-          name: feature.name,
-          limit: feature.value,
-          used,
-          remaining,
-          percentage,
+          requiresPaymentMethod: false,
+          pendingPlanCode: planId,
+          url,
         };
-      })
-    );
+      }
+    }
 
-    const now = new Date();
-    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0));
-    const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 0, 0, 0));
+    const planCode = buildBillingPlanCode(planId, interval);
+    const planCatalogVersion = getPlanCatalogVersion();
+    const prices = await stripe.prices.list({
+      lookup_keys: [planCode],
+      active: true,
+      limit: 10,
+    });
+    const selectedPrice = prices.data.find(p => {
+      if (p.currency !== 'usd') return false;
+      if (!p.recurring) return false;
+      if (p.recurring.interval !== interval) return false;
+      return true;
+    });
+    if (!selectedPrice) {
+      throw new ServiceUnavailableException({
+        code: BILLING_ERROR_CODE.BILLING_STRIPE_PRICE_NOT_CONFIGURED,
+        detail: `No active Stripe price found for lookup_key=${planCode}.`,
+      });
+    }
 
-    return {
-      planId: plan.id,
-      planName: plan.displayName,
-      periodStart: start,
-      periodEnd: end,
-      features,
+    const successUrl = `${this.requireFrontendUrl()}/dashboard/settings/billing?setup=success&pendingPlanCode=${encodeURIComponent(planId)}`;
+    const cancelUrl = `${this.requireFrontendUrl()}/dashboard/settings/billing?setup=cancel`;
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      customer: stripeCustomerId,
+      line_items: [{ price: selectedPrice.id, quantity: 1 }],
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      metadata: {
+        kind: 'subscription',
+        billingAccountId,
+        planId,
+        interval,
+        planCode,
+        planCatalogVersion: String(planCatalogVersion),
+        engineSubscriptionExternalId: `sub_${userId}`,
+      },
+      subscription_data: {
+        metadata: {
+          billingAccountId,
+          planId,
+          interval,
+          planCode,
+          planCatalogVersion: String(planCatalogVersion),
+          engineSubscriptionExternalId: `sub_${userId}`,
+        },
+      },
+    });
+
+    if (!session.url) {
+      throw new ServiceUnavailableException({
+        code: BILLING_ERROR_CODE.STRIPE_CHECKOUT_FAILED,
+        detail: 'Stripe checkout session did not return a URL.',
+      });
+    }
+
+    return { requiresPaymentMethod: false, pendingPlanCode: planId, url: session.url };
+  }
+
+  /** Finalizes client-side checkout flow after Stripe webhooks settle. */
+  async finalizeCheckoutSession(
+    userId: string,
+    pendingPlanCode: PaidPlanId
+  ): Promise<CheckoutSessionResponse> {
+    if (!PAID_PLAN_IDS.includes(pendingPlanCode)) {
+      throw new BadRequestException({
+        code: BILLING_ERROR_CODE.BILLING_INVALID_PLAN,
+        detail: 'pendingPlanCode must be pro or max.',
+      });
+    }
+
+    const { stripe, stripeCustomerId } = await this.getStripeContextForUser(userId);
+    const sub = await this.getLatestStripeSubscription(stripe, stripeCustomerId);
+    if (!sub) {
+      throw new ConflictException({
+        code: BILLING_ERROR_CODE.BILLING_PROCESSING_UPGRADE,
+        detail: 'No Stripe subscription is visible yet. Wait for webhooks and retry.',
+      });
+    }
+
+    const planItem = pickPlanSubscriptionItem(sub);
+    const itemPeriodStart = planItem?.currentPeriodStart ?? null;
+    const itemPeriodEnd = planItem?.currentPeriodEnd ?? null;
+    if (!planItem?.interval) {
+      throw new ConflictException({
+        code: BILLING_ERROR_CODE.BILLING_PROCESSING_UPGRADE,
+        detail: 'Subscription is not ready yet (missing plan price item). Retry shortly.',
+      });
+    }
+    if (!itemPeriodStart || !itemPeriodEnd) {
+      throw new ConflictException({
+        code: BILLING_ERROR_CODE.BILLING_PROCESSING_UPGRADE,
+        detail: 'Subscription billing period is not available yet. Retry shortly.',
+      });
+    }
+
+    const planCode = extractBillingPlanCodeFromSubscription(sub);
+    if (!planCode) {
+      throw new ConflictException({
+        code: BILLING_ERROR_CODE.BILLING_PROCESSING_UPGRADE,
+        detail: 'Subscription is missing plan code metadata. Retry shortly.',
+      });
+    }
+    const planId: PlanId = planIdFromBillingPlanCode(planCode);
+
+    if (planId !== pendingPlanCode) {
+      throw new ConflictException({
+        code: BILLING_ERROR_CODE.BILLING_PROCESSING_UPGRADE,
+        detail: 'Stripe subscription is active, but plan mismatch. Retry shortly.',
+      });
+    }
+
+    if (sub.status !== 'active' && sub.status !== 'trialing') {
+      throw new ConflictException({
+        code: BILLING_ERROR_CODE.BILLING_PROCESSING_UPGRADE,
+        detail: `Subscription is ${sub.status}. Wait for webhooks and retry.`,
+      });
+    }
+
+    return { status: 'activated', requiresPaymentMethod: false };
+  }
+
+  /** Receives raw Stripe webhook payload and delegates signature/processing logic. */
+  async receiveStripeWebhook(rawBody: Buffer, signatureHeader: string | undefined): Promise<void> {
+    return this.stripeWebhook.receiveWebhook(rawBody, signatureHeader);
+  }
+
+  /** Returns shared Stripe context for user-scoped billing actions. */
+  private async getStripeContextForUser(
+    userId: string
+  ): Promise<{ stripe: Stripe; stripeCustomerId: string }> {
+    const stripeCustomerId = await this.stripeCustomers.getOrCreateStripeCustomerIdForUser(userId);
+    return { stripe: this.stripeService.client(), stripeCustomerId };
+  }
+
+  /** Returns newest Stripe subscription for customer, or `null` if none exists. */
+  private async getLatestStripeSubscription(
+    stripe: Stripe,
+    stripeCustomerId: string
+  ): Promise<Stripe.Subscription | null> {
+    const statusPriority: Record<string, number> = {
+      active: 0,
+      trialing: 1,
+      past_due: 2,
+      unpaid: 3,
+      incomplete: 4,
+      paused: 5,
+      canceled: 6,
+      incomplete_expired: 7,
     };
+
+    const subs = await stripe.subscriptions.list({
+      customer: stripeCustomerId,
+      status: 'all',
+      limit: 20,
+    });
+    const sorted = [...subs.data].sort((a, b) => {
+      const aPriority = statusPriority[a.status] ?? 99;
+      const bPriority = statusPriority[b.status] ?? 99;
+      if (aPriority !== bPriority) return aPriority - bPriority;
+      return (b.created ?? 0) - (a.created ?? 0);
+    });
+    return sorted[0] ?? null;
+  }
+
+  /** Finds a local plan definition by id. */
+  private findPlanById(planId: PlanId): Plan | null {
+    return this.plans.getPlans().find(p => p.id === planId) ?? null;
+  }
+
+  /** Resolves and validates `FRONTEND_URL` used by Stripe redirect flows. */
+  private requireFrontendUrl(): string {
+    const url = (this.config.get<string>('FRONTEND_URL') ?? '').trim();
+    if (!url) {
+      throw new ServiceUnavailableException({
+        code: BILLING_ERROR_CODE.FRONTEND_URL_NOT_CONFIGURED,
+        detail: 'FRONTEND_URL is required for Stripe redirects.',
+      });
+    }
+    return url.replace(/\/+$/, '');
   }
 }

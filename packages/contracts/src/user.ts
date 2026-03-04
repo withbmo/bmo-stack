@@ -18,7 +18,6 @@ export interface User {
   isActive: boolean;
   isAdmin: boolean;
   adminLevel: AdminLevel | null;
-  stripeCustomerId: string | null;
   novuSubscriberId: string | null;
   createdAt: string;
   updatedAt: string;

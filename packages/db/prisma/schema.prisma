@@ -21,47 +21,54 @@ enum AdminLevel {
   viewer
 }
 
+enum SignupBonusStatus {
+  PENDING
+  GRANTED
+  FAILED
+}
+
 model User {
-  id             String  @id @default(uuid())
-  email          String  @unique
-  username       String  @unique
-  firstName      String? @map("first_name")
-  lastName       String? @map("last_name")
-  bio            String?
-  avatarUrl      String? @map("avatar_url")
-  hashedPassword String? @map("hashed_password")
+  id              String  @id @default(uuid())
+  email           String  @unique
+  username        String  @unique
+  displayUsername String? @map("display_username")
+  firstName       String? @map("first_name")
+  lastName        String? @map("last_name")
+  bio             String?
+  avatarUrl       String? @map("avatar_url")
+  hashedPassword  String? @map("hashed_password")
 
   // Status flags
   isActive        Boolean @default(true) @map("is_active")
   isEmailVerified Boolean @default(false) @map("is_email_verified")
 
   // External service IDs
-  signupBonusGrantedAt DateTime? @map("signup_bonus_granted_at")
-  novuSubscriberId     String?   @unique @map("novu_subscriber_id")
+  signupBonusGrantedAt DateTime?         @map("signup_bonus_granted_at")
+  signupBonusStatus    SignupBonusStatus @default(PENDING) @map("signup_bonus_status")
+  novuSubscriberId     String?           @unique @map("novu_subscriber_id")
+  stripeCustomerId     String?           @unique @map("stripe_customer_id")
+
+  // Universal ID used to identify the user in Lago/Orb billing engine
+  billingProviderId    String?           @unique @map("billing_provider_id")
 
   // Timestamps
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  projects       Project[]
-  environments   Environment[]
-  terminalTabs   TerminalTab[]
-  deployJobs     DeployJob[]
-  wizardBuilds   WizardBuild[]
-  oauthAccounts  OAuthAccount[]
-  sessions       Session[]
-  accounts       Account[]
-  paymentMethods UserPaymentMethod[]
-  payments       Payment[]
-  creditTopupRequests CreditTopupRequest[]
-  creditLedgerEntries CreditLedgerEntry[]
-  invoices       Invoice[]
-  subscriptions  Subscription[]
-  lagoEvents     LagoWebhookEvent[]
-  auditLogs      AuditLog[]
-  adminMembership         Admin?   @relation("AdminMembership")
-  grantedAdminMemberships Admin[]  @relation("AdminGrantedBy")
+  projects      Project[]
+  environments  Environment[]
+  deployJobs    DeployJob[]
+  wizardBuilds            WizardBuild[]
+  oauthAccounts           OAuthAccount[]
+  sessions                Session[]
+  accounts                Account[]
+  billingAccount          BillingAccount?
+  billingEngineState      BillingEngineState?
+
+  auditLogs               AuditLog[]
+  adminMembership         Admin?               @relation("AdminMembership")
+  grantedAdminMemberships Admin[]              @relation("AdminGrantedBy")
 
   @@map("users")
 }
@@ -151,30 +158,30 @@ model Verification {
 }
 
 model AuthLoginAttempt {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  failedAttempts Int      @default(0) @map("failed_attempts")
-  firstFailedAt DateTime? @map("first_failed_at")
-  lastFailedAt  DateTime? @map("last_failed_at")
-  lockedUntil   DateTime? @map("locked_until")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  id             String    @id @default(uuid())
+  email          String    @unique
+  failedAttempts Int       @default(0) @map("failed_attempts")
+  firstFailedAt  DateTime? @map("first_failed_at")
+  lastFailedAt   DateTime? @map("last_failed_at")
+  lockedUntil    DateTime? @map("locked_until")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
   @@index([lockedUntil])
   @@map("auth_login_attempts")
 }
 
 model AuthOtpThrottle {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   email       String
   ip          String
   action      String
-  windowStart DateTime @map("window_start")
-  windowSec   Int      @map("window_sec")
-  attempts    Int      @default(0)
+  windowStart DateTime  @map("window_start")
+  windowSec   Int       @map("window_sec")
+  attempts    Int       @default(0)
   lockedUntil DateTime? @map("locked_until")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   @@unique([email, ip, action, windowStart, windowSec])
   @@index([email, ip, action, lockedUntil])
@@ -213,45 +220,16 @@ model Environment {
   region        String   @default("us-east-1")
   visibility    String   @default("private") // public, private
   config        Json? // Environment configuration (JSONB)
+  orchestratorStatus          String   @default("unknown") @map("orchestrator_status")
+  orchestratorStatusUpdatedAt DateTime @default(now()) @map("orchestrator_status_updated_at")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  owner        User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  deployJobs   DeployJob[]
-  terminalTabs TerminalTab[]
+  owner      User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  deployJobs DeployJob[]
 
   @@unique([ownerId, displayName])
   @@map("environments")
-}
-
-model TerminalTab {
-  id            String @id @default(uuid())
-  ownerId       String @map("owner_id")
-  environmentId String @map("environment_id")
-
-  title      String
-  isActive   Boolean   @default(false) @map("is_active")
-  archivedAt DateTime? @map("archived_at")
-
-  transcript   String    @default("")
-  lastSeq      BigInt    @default(0) @map("last_seq")
-  lastActiveAt DateTime? @map("last_active_at")
-
-  tmuxEnabled     Boolean   @default(false) @map("tmux_enabled")
-  tmuxSessionName String?   @map("tmux_session_name")
-  tmuxLastUsedAt  DateTime? @map("tmux_last_used_at")
-  tmuxExpiresAt   DateTime? @map("tmux_expires_at")
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  owner       User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  environment Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-
-  @@index([ownerId, environmentId])
-  @@index([environmentId])
-  @@index([tmuxEnabled, tmuxExpiresAt])
-  @@map("terminal_tabs")
 }
 
 model OrchestratorRegionConfig {
@@ -329,129 +307,132 @@ model WizardBuild {
 }
 
 // ============================================================================
-// Billing & Subscriptions
+// Billing — Stripe subscriptions, webhook persistence, and access state snapshots
 // ============================================================================
 
-model Subscription {
-  id                     String   @id @default(uuid())
-  userId                 String   @map("user_id")
-  planId                 String?  @map("plan_id")
-  status                 String // active, canceled, past_due, unpaid, trialing
-  billingInterval        String   @default("month") @map("billing_interval")
-  featureAccessState     String   @default("enabled") @map("feature_access_state")
-  externalSubscriptionId String   @unique @map("external_subscription_id")
-  currentPeriodStart     DateTime @map("current_period_start")
-  currentPeriodEnd       DateTime @map("current_period_end")
-  cancelAtPeriodEnd      Boolean  @default(false) @map("cancel_at_period_end")
-  createdAt              DateTime @default(now()) @map("created_at")
-  updatedAt              DateTime @updatedAt @map("updated_at")
+enum BillingAccountType {
+  user
+}
+
+enum PlanId {
+  free
+  pro
+  max
+}
+
+enum BillingInterval {
+  month
+  year
+}
+
+enum SubscriptionStatus {
+  active
+  trialing
+  incomplete
+  incomplete_expired
+  past_due
+  unpaid
+  paused
+  canceled
+  processing_upgrade
+}
+
+enum FeatureAccessState {
+  enabled
+  locked_due_to_payment
+  locked_no_subscription
+}
+
+enum StripeWebhookProcessingStatus {
+  received
+  queued
+  processed
+  failed
+}
+
+enum BillingEngineProvider {
+  stripe
+  lago
+  orb
+}
+
+enum BillingEngineAccessState {
+  enabled
+  locked_due_to_payment
+  locked_wallet_depleted
+  locked_no_subscription
+}
+
+enum EngineWebhookProcessingStatus {
+  received
+  queued
+  processed
+  failed
+}
+
+model BillingAccount {
+  id          String             @id @default(uuid())
+  ownerUserId String             @unique @map("owner_user_id")
+  type        BillingAccountType @default(user)
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+
+  ownerUser     User                  @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+
+  @@map("billing_accounts")
+}
+
+model StripeWebhookEvent {
+  stripeEventId      String                     @id @map("stripe_event_id")
+  eventType          String                     @map("event_type")
+  payloadJson        Json                       @map("payload_json")
+  rawBody            Bytes                      @map("raw_body")
+  signatureHeader    String                     @map("signature_header")
+  processingStatus   StripeWebhookProcessingStatus @default(received) @map("processing_status")
+  processingAttempts Int                        @default(0) @map("processing_attempts")
+  lastError          String?                    @map("last_error")
+  createdAt          DateTime                   @default(now()) @map("created_at")
+  updatedAt          DateTime                   @updatedAt @map("updated_at")
+
+  @@index([processingStatus, createdAt])
+  @@map("stripe_webhook_events")
+}
+
+model BillingEngineState {
+  userId                 String                   @id @map("user_id")
+  provider               BillingEngineProvider
+  externalCustomerId     String                   @unique @map("external_customer_id")
+  engineSubscriptionExternalId String             @unique @map("engine_subscription_external_id")
+  planCode               String                   @map("plan_code")
+  planCatalogVersion     Int?                     @map("plan_catalog_version")
+  accessState            BillingEngineAccessState @map("access_state")
+  lockedReason           String?                  @map("locked_reason")
+  lastStripeEventId      String?                  @map("last_stripe_event_id")
+  lastEngineEventId      String?                  @map("last_engine_event_id")
+  createdAt              DateTime                 @default(now()) @map("created_at")
+  updatedAt              DateTime                 @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("subscriptions")
+  @@index([provider, updatedAt])
+  @@map("billing_engine_states")
 }
 
-model UserPaymentMethod {
-  id                    String   @id @default(uuid())
-  userId                String   @map("user_id")
-  stripePaymentMethodId String   @unique @map("stripe_payment_method_id")
-  type                  String // card, bank_account
-  last4                 String
-  brand                 String?
-  expiryMonth           Int?     @map("expiry_month")
-  expiryYear            Int?     @map("expiry_year")
-  isDefault             Boolean  @default(false) @map("is_default")
-  createdAt             DateTime @default(now()) @map("created_at")
+model EngineWebhookEvent {
+  engineEventId      String                      @id @map("engine_event_id")
+  provider           BillingEngineProvider
+  eventType          String                      @map("event_type")
+  payloadJson        Json                        @map("payload_json")
+  rawBody            Bytes                       @map("raw_body")
+  signatureHeader    String                      @map("signature_header")
+  processingStatus   EngineWebhookProcessingStatus @default(received) @map("processing_status")
+  processingAttempts Int                         @default(0) @map("processing_attempts")
+  lastError          String?                     @map("last_error")
+  createdAt          DateTime                    @default(now()) @map("created_at")
+  updatedAt          DateTime                    @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("user_payment_methods")
-}
-
-model Payment {
-  id              String   @id @default(uuid())
-  userId          String   @map("user_id")
-  stripePaymentId String   @unique @map("stripe_payment_id")
-  /// Amount in minor units (e.g. cents)
-  amount          Int
-  currency        String   @default("usd")
-  status          String // pending, succeeded, failed, refunded
-  description     String?
-  createdAt       DateTime @default(now()) @map("created_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("payments")
-}
-
-model CreditTopupRequest {
-  id            String   @id @default(uuid())
-  userId        String   @map("user_id")
-  lagoInvoiceId String   @unique @map("lago_invoice_id")
-  amountUsd     Int      @map("amount_usd")
-  credits       Int
-  status        String // pending, succeeded, failed
-  grantedAt     DateTime? @map("granted_at")
-  processedAt   DateTime? @map("processed_at")
-  failureCode   String?  @map("failure_code")
-  idempotencyKey String? @unique @map("idempotency_key")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, status])
-  @@map("credit_topup_requests")
-}
-
-model CreditLedgerEntry {
-  id           String   @id @default(uuid())
-  userId       String   @map("user_id")
-  type         String
-  deltaCredits Int      @map("delta_credits")
-  balanceAfter Int      @map("balance_after")
-  currency     String   @default("USD")
-  referenceId  String?  @map("reference_id")
-  reasonCode   String?  @map("reason_code")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, createdAt])
-  @@index([type, referenceId])
-  @@map("credit_ledger_entries")
-}
-
-model Invoice {
-  id                String    @id @default(uuid())
-  userId            String    @map("user_id")
-  externalInvoiceId String    @unique @map("external_invoice_id")
-  /// Amount in minor units (e.g. cents)
-  amount          Int
-  currency        String    @default("usd")
-  status          String // draft, open, paid, void, uncollectible
-  paidAt          DateTime? @map("paid_at")
-  dueDate         DateTime? @map("due_date")
-  invoiceUrl      String?   @map("invoice_url")
-  pdfUrl          String?   @map("invoice_pdf")
-  createdAt       DateTime  @default(now()) @map("created_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("invoices")
-}
-
-model LagoWebhookEvent {
-  /// Lago webhook event id
-  id        String   @id
-  type      String
-  userId    String?  @map("user_id")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  @@index([userId])
-  @@map("lago_webhook_events")
+  @@index([provider, processingStatus, createdAt])
+  @@map("engine_webhook_events")
 }
 
 // ============================================================================

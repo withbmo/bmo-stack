@@ -118,6 +118,49 @@ services:
     ports:
       - '8080:80'
 
+  # Optional: Orb Sync Engine (Supabase) — syncs Orb → Postgres schema `orb` to reduce Orb API reads.
+  # Repo: https://github.com/supabase/orb-sync-engine
+  # Webhooks endpoint: POST /webhooks
+  orb-sync-migrate:
+    image: postgres:16-alpine
+    container_name: pytholit-orb-sync-migrate-dev
+    restart: "no"
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/pytholit?sslmode=disable
+    command:
+      [
+        "sh",
+        "-lc",
+        "apk add --no-cache curl >/dev/null && \
+         if psql \"$DATABASE_URL\" -tAc \"select 1 from information_schema.schemata where schema_name='orb'\" | grep -q 1; then \
+           echo \"orb schema already exists; skipping orb-sync-engine migrations\"; exit 0; \
+         fi; \
+         for f in 0001_initial.sql 0002_discounts_nullable.sql 0003_updated_at.sql 0004_plans.sql 0005_subscription_adjustment_intervals.sql 0006_subscription_exceeded_events.sql 0007_billable_metrics.sql 0008_credit_notes_invoice_id_idx.sql 0009_add_last_synced_at_columns.sql 0010_customer_props.sql; do \
+           echo \"Applying orb-sync-engine migration $f\"; \
+           curl -fsSL \"https://raw.githubusercontent.com/supabase/orb-sync-engine/main/db/migrations/$f\" | psql \"$DATABASE_URL\" -v ON_ERROR_STOP=1; \
+         done"
+      ]
+
+  orb-sync-engine:
+    image: supabase/orb-sync-engine:latest
+    container_name: pytholit-orb-sync-engine-dev
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - orb-sync-migrate
+    environment:
+      PORT: "8080"
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/pytholit?sslmode=disable
+      DATABASE_SCHEMA: orb
+      ORB_API_KEY: ${ORB_API_KEY:-}
+      ORB_WEBHOOK_SECRET: ${ORB_WEBHOOK_SECRET:-dev-orb-webhook-secret}
+      VERIFY_WEBHOOK_SIGNATURE: "true"
+      PROMETHEUS_METRICS_ENABLED: "true"
+    ports:
+      - '3020:8080'
+
   api:
     profiles: ['api']
     build:

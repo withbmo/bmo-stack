@@ -5,11 +5,11 @@ export const MOCK_TEMPLATES: Template[] = [
     id: 't1',
     title: 'SaaS Starter Kit',
     description:
-      'Full-stack FastAPI + React boilerplate with Stripe integration, Auth, and PostgreSQL.',
+      'Full-stack FastAPI + React boilerplate with billing integration, Auth, and PostgreSQL.',
     framework: 'FastAPI',
     author: 'Pytholit_Official',
     stars: '12k',
-    tags: ['saas', 'stripe', 'postgres'],
+    tags: ['saas', 'billing', 'postgres'],
     isOfficial: true,
     parts: {
       framework: 'fastapi',
@@ -33,7 +33,7 @@ export const MOCK_TEMPLATES: Template[] = [
       visibility: 'private',
       region: 'us-east-1',
       envVars: [
-        { key: 'STRIPE_SECRET_KEY', value: '' },
+        { key: 'BILLING_PROVIDER_SECRET_KEY', value: '' },
         { key: 'DATABASE_URL', value: '' },
         { key: 'REDIS_URL', value: '' },
       ],

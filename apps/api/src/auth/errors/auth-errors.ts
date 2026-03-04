@@ -1,12 +1,10 @@
-import { UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
 
 /**
  * Throws an UnauthorizedException with consistent error structure
  * Used when user is not authenticated
  */
-export function throwUnauthenticated(
-  detail = 'Authentication is required.'
-): never {
+export function throwUnauthenticated(detail = 'Authentication is required.'): never {
   throw new UnauthorizedException({
     code: 'AUTH_UNAUTHENTICATED',
     detail,
@@ -28,10 +26,7 @@ export function throwForbidden(code: string, detail: string): never {
  * Throws a ForbiddenException for email verification requirement
  */
 export function throwEmailUnverified(): never {
-  throwForbidden(
-    'AUTH_EMAIL_UNVERIFIED',
-    'Verify your email before continuing.'
-  );
+  throwForbidden('AUTH_EMAIL_UNVERIFIED', 'Verify your email before continuing.');
 }
 
 /**

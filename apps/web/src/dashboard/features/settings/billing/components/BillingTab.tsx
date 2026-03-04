@@ -1,4 +1,4 @@
-import type { PublicPlan } from '@pytholit/contracts';
+import { BILLING_INTERVAL, isPaidPlanId, type BillingInterval, type Plan } from '@pytholit/contracts';
 import {
   BarChart2,
   CircleDollarSign,
@@ -20,11 +20,9 @@ import {
   createPortalSession,
   finalizeCheckoutSession,
   getInvoices,
-  getPaymentMethods,
   getPlans,
   getSubscription,
   type InvoiceResponse,
-  type PaymentMethodResponse,
   type SubscriptionResponse,
 } from '@/shared/lib/billing';
 
@@ -57,11 +55,10 @@ export const BillingTab = () => {
   const searchParams = useSearchParams();
   const { user, hydrated } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [plans, setPlans] = useState<PublicPlan[]>([]);
+  const [plans, setPlans] = useState<Plan[]>([]);
   const [subscriptionResponse, setSubscriptionResponse] = useState<SubscriptionResponse | null>(null);
-  const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month');
+  const [billingInterval, setBillingInterval] = useState<BillingInterval>(BILLING_INTERVAL.MONTH);
   const [invoices, setInvoices] = useState<InvoiceResponse[]>([]);
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodResponse[]>([]);
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
   const [isFinalizingCheckout, setIsFinalizingCheckout] = useState(false);
 
@@ -71,22 +68,20 @@ export const BillingTab = () => {
     (async () => {
       setIsLoading(true);
       try {
-        const [sub, inv, planData, pms] = await Promise.all([
+        const [sub, inv, planData] = await Promise.all([
           getSubscription(undefined),
           getInvoices(undefined),
           getPlans(),
-          getPaymentMethods(undefined),
         ]);
         if (cancelled) return;
         setSubscriptionResponse(sub);
         setInvoices(inv.items ?? []);
         setPlans(planData);
-        setPaymentMethods(pms);
         if (planData.length > 0) {
+          const subPlanId = sub?.subscription?.planId ?? null;
           const preferredPlanId =
-            (sub?.subscription?.planId && planData.some((p) => p.id === sub.subscription.planId)
-              ? sub.subscription.planId
-              : planData[0]?.id) || '';
+            (subPlanId && planData.some((p) => p.id === subPlanId) ? subPlanId : planData[0]?.id) ||
+            '';
           setSelectedPlanId((prev) =>
             prev && planData.some((p) => p.id === prev) ? prev : preferredPlanId
           );
@@ -103,8 +98,9 @@ export const BillingTab = () => {
   }, [hydrated, user]);
 
   const activePlan = useMemo(() => {
-    if (subscriptionResponse?.subscription?.planId) {
-      return plans.find(p => p.id === subscriptionResponse.subscription.planId) || null;
+    const subPlanId = subscriptionResponse?.subscription?.planId ?? null;
+    if (subPlanId) {
+      return plans.find((p) => p.id === subPlanId) || null;
     }
     return plans[0] || null;
   }, [plans, subscriptionResponse?.subscription?.planId]);
@@ -123,10 +119,10 @@ export const BillingTab = () => {
   );
   const planLabel = activePlan?.name || (isActive ? 'Active' : 'Free');
   const planPrice = activePlan
-    ? `$${((billingInterval === 'year'
+    ? `$${((billingInterval === BILLING_INTERVAL.YEAR
       ? activePlan.yearlyPriceCents
       : activePlan.monthlyPriceCents) / 100).toFixed(0)} / ${
-        billingInterval === 'year' ? 'year' : 'month'
+        billingInterval === BILLING_INTERVAL.YEAR ? 'year' : 'month'
       }`
     : isActive
       ? 'Active subscription'
@@ -139,6 +135,11 @@ export const BillingTab = () => {
     const setup = searchParams.get('setup');
     const pendingPlanCode = searchParams.get('pendingPlanCode');
     if (setup !== 'success' || !pendingPlanCode || isFinalizingCheckout) return;
+    if (!isPaidPlanId(pendingPlanCode)) {
+      toast.error('Invalid pending plan code in URL.');
+      router.replace('/dashboard/settings/billing');
+      return;
+    }
 
     let cancelled = false;
     (async () => {
@@ -185,6 +186,10 @@ export const BillingTab = () => {
     }
     if (isSelectedCurrentPlan) {
       toast.error('Selected plan is already active');
+      return;
+    }
+    if (!isPaidPlanId(selectedPlan.id)) {
+      toast.error('Select a paid plan to start checkout.');
       return;
     }
     try {
@@ -295,11 +300,11 @@ export const BillingTab = () => {
                           <span className="font-mono text-[10px] uppercase text-nexus-accent">Current</span>
                         ) : null}
                       </div>
-                      <div className="mt-1 font-mono text-[10px] text-nexus-muted">
-                        ${((billingInterval === 'year'
+                        <div className="mt-1 font-mono text-[10px] text-nexus-muted">
+                        ${((billingInterval === BILLING_INTERVAL.YEAR
                           ? plan.yearlyPriceCents
                           : plan.monthlyPriceCents) / 100).toFixed(0)}/
-                        {billingInterval === 'year' ? 'year' : 'month'}
+                        {billingInterval === BILLING_INTERVAL.YEAR ? 'year' : 'month'}
                       </div>
                     </button>
                   );
@@ -309,9 +314,9 @@ export const BillingTab = () => {
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() => setBillingInterval('month')}
+                  onClick={() => setBillingInterval(BILLING_INTERVAL.MONTH)}
                   className={`px-3 py-1 border font-mono text-[10px] uppercase tracking-wider transition-colors ${
-                    billingInterval === 'month'
+                    billingInterval === BILLING_INTERVAL.MONTH
                       ? 'border-nexus-purple text-nexus-purple bg-nexus-purple/10'
                       : 'border-nexus-gray text-nexus-muted hover:text-nexus-purple hover:border-nexus-purple/60'
                   }`}
@@ -320,9 +325,9 @@ export const BillingTab = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setBillingInterval('year')}
+                  onClick={() => setBillingInterval(BILLING_INTERVAL.YEAR)}
                   className={`px-3 py-1 border font-mono text-[10px] uppercase tracking-wider transition-colors ${
-                    billingInterval === 'year'
+                    billingInterval === BILLING_INTERVAL.YEAR
                       ? 'border-nexus-purple text-nexus-purple bg-nexus-purple/10'
                       : 'border-nexus-gray text-nexus-muted hover:text-nexus-purple hover:border-nexus-purple/60'
                   }`}
@@ -362,39 +367,15 @@ export const BillingTab = () => {
                   Billing controls are unavailable for this account cohort.
                 </p>
               ) : null}
-              {paymentMethods.length === 0 ? (
-                <div className="flex items-center gap-3 text-white">
-                  <Wallet size={16} className="text-nexus-purple" />
-                  <div>
-                    <p className="font-mono text-sm">No active payment method</p>
-                    <p className="font-mono text-[10px] text-nexus-muted uppercase">
-                      Update in billing portal
-                    </p>
-                  </div>
+              <div className="flex items-center gap-3 text-white">
+                <Wallet size={16} className="text-nexus-purple" />
+                <div>
+                  <p className="font-mono text-sm">Manage billing and payment details</p>
+                  <p className="font-mono text-[10px] text-nexus-muted uppercase">
+                    Update in billing portal
+                  </p>
                 </div>
-              ) : (
-                paymentMethods.map(pm => (
-                  <div key={pm.id} className="flex items-center justify-between gap-3 text-white">
-                    <div className="flex items-center gap-3">
-                      <Wallet size={16} className="text-nexus-purple" />
-                      <div>
-                        <p className="font-mono text-sm">
-                          {(pm.brand ?? 'Card').toUpperCase()} •••• {pm.last4}
-                        </p>
-                        <p className="font-mono text-[10px] text-nexus-muted uppercase">
-                          Expires {String(pm.expiryMonth ?? 0).padStart(2, '0')} /{' '}
-                          {pm.expiryYear ?? ''}
-                        </p>
-                      </div>
-                    </div>
-                    {pm.isDefault ? (
-                      <span className="border border-nexus-gray/60 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-nexus-muted">
-                        Default
-                      </span>
-                    ) : null}
-                  </div>
-                ))
-              )}
+              </div>
               <div className="flex gap-3">
                 <button
                   onClick={handlePortal}

@@ -1,12 +1,13 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 
+import { BillingModule } from '../billing/billing.module';
 import { EnvironmentsConfigService } from './environments.config';
 import { EnvironmentsController } from './environments.controller';
 import { EnvironmentsService } from './environments.service';
 import { EnvironmentsCrudService } from './services/environments-crud.service';
 import { EnvironmentsLifecycleService } from './services/environments-lifecycle.service';
-import { TerminalTmuxCleanupService } from './terminal-tmux-cleanup.service';
+import { EnvironmentsStatusReconcileService } from './services/environments-status-reconcile.service';
 
 /**
  * Exposes the environments REST API and business logic.
@@ -14,15 +15,15 @@ import { TerminalTmuxCleanupService } from './terminal-tmux-cleanup.service';
  * (Prisma + JWT + orchestrator HTTP), and exports the service for use by DeployJobsModule.
  */
 @Module({
-  imports: [JwtModule.register({})],
+  imports: [JwtModule.register({}), forwardRef(() => BillingModule)],
   controllers: [EnvironmentsController],
   providers: [
     EnvironmentsConfigService,
     EnvironmentsService,
     EnvironmentsCrudService,
     EnvironmentsLifecycleService,
-    TerminalTmuxCleanupService,
+    EnvironmentsStatusReconcileService,
   ],
-  exports: [EnvironmentsService, EnvironmentsCrudService],
+  exports: [EnvironmentsService, EnvironmentsCrudService, EnvironmentsLifecycleService],
 })
 export class EnvironmentsModule { }

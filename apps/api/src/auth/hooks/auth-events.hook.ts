@@ -1,44 +1,63 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AfterHook, type AuthHookContext, Hook } from '@thallesp/nestjs-better-auth';
 
-import { SignupCreditsService } from '../../billing/signup-credits.service';
+import { StripeCustomerService } from '../../billing/stripe-customer.service';
+import { PrismaService } from '../../database/prisma.service';
 
 @Hook()
 @Injectable()
 export class AuthEventsHook {
   private readonly logger = new Logger(AuthEventsHook.name);
 
-  constructor(private readonly signupCredits: SignupCreditsService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly stripeCustomers: StripeCustomerService
+  ) {}
 
   @AfterHook('/verify-email')
   async onVerifyEmail(ctx: AuthHookContext): Promise<void> {
-    await this.tryGrantSignupBonus(ctx, 'verify-email');
+    await this.tryProvisionBillingCustomer(ctx, 'verify-email');
+  }
+
+  @AfterHook('/email-otp/verify-email')
+  async onOtpVerifyEmail(ctx: AuthHookContext): Promise<void> {
+    await this.tryProvisionBillingCustomer(ctx, 'otp-verify-email');
   }
 
   @AfterHook('/callback/google')
   async onGoogleCallback(ctx: AuthHookContext): Promise<void> {
-    await this.tryGrantSignupBonus(ctx, 'oauth-google-callback');
+    await this.tryProvisionBillingCustomer(ctx, 'oauth-google-callback');
   }
 
   @AfterHook('/callback/github')
   async onGithubCallback(ctx: AuthHookContext): Promise<void> {
-    await this.tryGrantSignupBonus(ctx, 'oauth-github-callback');
+    await this.tryProvisionBillingCustomer(ctx, 'oauth-github-callback');
   }
 
-  private async tryGrantSignupBonus(ctx: AuthHookContext, source: string): Promise<void> {
+  private async tryProvisionBillingCustomer(ctx: AuthHookContext, source: string): Promise<void> {
     const userId = this.extractUserId(ctx);
     if (!userId) {
-      this.logger.debug(`signup_bonus_hook_skipped no_user_id source=${source}`);
+      this.logger.warn(`billing_provision_skipped source=${source} reason=no_user_id`);
       return;
     }
 
-    void this.signupCredits.grantSignupBonusIfEligible(userId).catch((error) => {
-      this.logger.warn(
-        `signup_bonus_hook_failed source=${source} userId=${userId} reason=${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
-    });
+    try {
+      const user = await this.prisma.client.user.findUnique({
+        where: { id: userId },
+        select: { email: true },
+      });
+
+      if (!user?.email) {
+        this.logger.warn(`billing_provision_skipped source=${source} userId=${userId} reason=no_email`);
+        return;
+      }
+
+      await this.stripeCustomers.getOrCreateStripeCustomerIdForUser(userId);
+      this.logger.log(`billing_customer_provisioned source=${source} userId=${userId}`);
+    } catch (err) {
+      // Non-fatal: log and continue — idempotent on retry
+      this.logger.error(`billing_provision_failed source=${source} userId=${userId}`, err);
+    }
   }
 
   private extractUserId(ctx: AuthHookContext): string | null {

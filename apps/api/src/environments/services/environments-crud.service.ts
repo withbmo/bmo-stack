@@ -73,6 +73,7 @@ export class EnvironmentsCrudService {
       },
     };
 
+    const now = new Date();
     const created = await this.prisma.client.environment.create({
       data: {
         ownerId: userId,
@@ -85,6 +86,8 @@ export class EnvironmentsCrudService {
           createEnvironmentDto.environmentClass === ENVIRONMENT_CLASS.PROD
             ? ENVIRONMENT_VISIBILITY.PUBLIC
             : (createEnvironmentDto.visibility ?? ENVIRONMENT_VISIBILITY.PRIVATE),
+        orchestratorStatus: ORCHESTRATOR_STATUS.UNKNOWN,
+        orchestratorStatusUpdatedAt: now,
         config,
       },
     });

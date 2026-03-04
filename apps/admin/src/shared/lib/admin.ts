@@ -207,6 +207,30 @@ export async function adminListSubscriptions(
   });
 }
 
+export async function adminListSubscriptionsAll(token: string): Promise<PageResult<AdminSubscriptionRow>> {
+  const pageSize = 200;
+  const first = await adminListSubscriptions(token, { page: 1, pageSize });
+  if (first.total <= first.items.length) {
+    return { ...first, page: 1, pageSize: first.items.length };
+  }
+
+  const items: AdminSubscriptionRow[] = [...first.items];
+  const maxPages = Math.ceil(first.total / pageSize);
+
+  for (let page = 2; page <= maxPages; page += 1) {
+    const next = await adminListSubscriptions(token, { page, pageSize });
+    items.push(...next.items);
+    if (items.length >= first.total) break;
+    if (next.items.length === 0) break;
+  }
+
+  const byId = new Map<string, AdminSubscriptionRow>();
+  for (const item of items) byId.set(item.id, item);
+  const deduped = Array.from(byId.values());
+
+  return { ...first, items: deduped, page: 1, pageSize: deduped.length };
+}
+
 export async function adminListInvoices(
   token: string,
   params: { page?: number; pageSize?: number } = {}
@@ -219,4 +243,28 @@ export async function adminListInvoices(
     method: 'GET',
     token,
   });
+}
+
+export async function adminListInvoicesAll(token: string): Promise<PageResult<AdminInvoiceRow>> {
+  const pageSize = 200;
+  const first = await adminListInvoices(token, { page: 1, pageSize });
+  if (first.total <= first.items.length) {
+    return { ...first, page: 1, pageSize: first.items.length };
+  }
+
+  const items: AdminInvoiceRow[] = [...first.items];
+  const maxPages = Math.ceil(first.total / pageSize);
+
+  for (let page = 2; page <= maxPages; page += 1) {
+    const next = await adminListInvoices(token, { page, pageSize });
+    items.push(...next.items);
+    if (items.length >= first.total) break;
+    if (next.items.length === 0) break;
+  }
+
+  const byId = new Map<string, AdminInvoiceRow>();
+  for (const item of items) byId.set(item.id, item);
+  const deduped = Array.from(byId.values());
+
+  return { ...first, items: deduped, page: 1, pageSize: deduped.length };
 }

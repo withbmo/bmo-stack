@@ -72,34 +72,32 @@ export function formatEnvironment(env: PrismaEnvironment): Environment {
 }
 
 export async function resolveUserPlan(userId: string, prisma: any): Promise<Plan> {
-        const subscription = await prisma.client.subscription.findFirst({
-            where: {
-                userId,
-                status: { in: ['active', 'trialing', 'past_due'] },
-            },
-            orderBy: { createdAt: 'desc' },
-        });
+    const state = await prisma.client.billingEngineState.findUnique({
+        where: { userId },
+        select: { planCode: true },
+    });
+    const planCode = (state?.planCode ?? 'free_month').toString();
+    const planId =
+        planCode.startsWith('pro') ? 'pro' : planCode.startsWith('max') ? 'max' : 'free';
+    return getPlanById(planId) ?? getDefaultPlan();
+}
 
-        return subscription?.planId ? getPlanById(subscription.planId) ?? getDefaultPlan() : getDefaultPlan();
-    }
+export function featureNumber(
+    plan: ReturnType<typeof getDefaultPlan>,
+    id: string,
+    fallback: number
+): number {
+    const value = plan.features.find((f: any) => f.id === id)?.value;
+    if (typeof value === 'number' && Number.isFinite(value) && value > 0) return value;
+    return fallback;
+}
 
-    export function featureNumberOrUnlimited(
-        plan: ReturnType<typeof getDefaultPlan>,
-        id: string,
-        fallback: number
-    ): number | 'unlimited' {
-        const value = plan.features.find((f: any) => f.id === id)?.value;
-        if (value === 'unlimited') return 'unlimited';
-        if (typeof value === 'number' && Number.isFinite(value) && value > 0) return value;
-        return fallback;
-    }
-
-    export function featureBool(
-        plan: ReturnType<typeof getDefaultPlan>,
-        id: string,
-        fallback: boolean
-    ): boolean {
-        const value = plan.features.find((f: any) => f.id === id)?.value;
-        if (typeof value === 'boolean') return value;
-        return fallback;
-    }
+export function featureBool(
+    plan: ReturnType<typeof getDefaultPlan>,
+    id: string,
+    fallback: boolean
+): boolean {
+    const value = plan.features.find((f: any) => f.id === id)?.value;
+    if (typeof value === 'boolean') return value;
+    return fallback;
+}

@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { type AuthHookContext, BeforeHook, Hook } from '@thallesp/nestjs-better-auth';
+
 import { PrismaService } from '../../database/prisma.service';
 import { extractNormalizedEmail } from './auth-hook.utils';
 
 @Hook()
 @Injectable()
 export class EmailVerificationCooldownHook {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   @BeforeHook('/send-verification-email')
   async enforceCooldown(ctx: AuthHookContext): Promise<void> {

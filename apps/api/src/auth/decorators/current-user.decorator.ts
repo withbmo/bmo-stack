@@ -1,6 +1,7 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { getUserFromContext, getPropertyFromUser } from './decorator.utils';
+
 import type { AuthenticatedUser } from '../auth.types';
+import { getPropertyFromUser, getUserFromContext } from './decorator.utils';
 
 /**
  * Parameter decorator to access the authenticated user from the request.

@@ -24,6 +24,21 @@ import { SocialAuthButtons } from '@/site/components/auth/SocialAuthButtons';
 const TURNSTILE_SITE_KEY = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
 const IS_DEV = process.env.NODE_ENV === 'development';
 
+/**
+ * CAPTCHA Policy:
+ * - Production: CAPTCHA required (bot protection via Cloudflare Turnstile)
+ * - Development: CAPTCHA optional (for faster local testing)
+ *
+ * Rate Limiting Compensation:
+ * Backend rate limits apply regardless of CAPTCHA (see auth.controller.ts):
+ * - Login: 10 requests per 60 seconds
+ * - OTP Send: 5 requests per 60 seconds (with 60s cooldown + hourly/daily limits)
+ * - OTP Verify: 10 requests per 60 seconds
+ *
+ * In development, backend rate limiting is the primary protection.
+ * In production, CAPTCHA + rate limiting provide defense-in-depth.
+ */
+
 export function LoginRoute() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -161,7 +176,7 @@ export function LoginRoute() {
               </Button>
             </form>
 
-            <SocialAuthButtons next={redirectTarget} providers={oauthProviders} />
+            <SocialAuthButtons next={redirectTarget} providers={oauthProviders ?? undefined} />
           </>
         )}
       </AuthCard>

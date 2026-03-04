@@ -6,6 +6,7 @@ export const API_V1 = "/api/v1";
 export interface ApiError {
   detail: string | { msg?: string; loc?: unknown[] }[];
   status: number;
+  code?: string;
 }
 
 const RATE_LIMIT_MESSAGE = "Too many attempts. Please try again later.";
@@ -93,6 +94,7 @@ export async function apiRequest<T>(
     data = {};
   }
   if (!res.ok) {
+    const code = typeof data.code === "string" ? data.code : undefined;
     const raw =
       typeof data.detail === "string"
         ? data.detail
@@ -103,7 +105,7 @@ export async function apiRequest<T>(
       res.status === 401 && (raw === "Unauthorized" || !raw)
         ? "Invalid email or password"
         : raw;
-    throw { detail, status: res.status } as ApiError;
+    throw { detail, status: res.status, code } as ApiError;
   }
   return data as T;
 }

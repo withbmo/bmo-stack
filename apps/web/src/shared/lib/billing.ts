@@ -1,14 +1,16 @@
 import type {
+  CheckoutSessionResponse,
   BillingInterval,
-  CreditBalanceResponse,
   InvoiceListResponse,
   PlanChangeApplyInput,
   PlanChangeApplyResponse,
   PlanChangePreviewInput,
   PlanChangePreviewResponse,
-  PublicPlan,
+  PaidPlanId,
+  Plan,
   Subscription,
 } from "@pytholit/contracts";
+import { BILLING_INTERVAL } from "@pytholit/contracts";
 
 import { API_V1, apiRequest, snakeToCamel } from "./client";
 
@@ -28,36 +30,12 @@ export interface InvoiceResponse {
   pdfUrl?: string;
 }
 
-export interface PaymentMethodResponse {
-  id: string;
-  stripePaymentMethodId: string;
-  type: string;
-  last4: string;
-  brand: string | null;
-  expiryMonth: number | null;
-  expiryYear: number | null;
-  isDefault: boolean;
-}
-
-export interface CheckoutResponse {
-  status?: "activated" | "already_active" | "requires_payment_method" | "failed";
-  requiresPaymentMethod: boolean;
-  paymentSetupUrl?: string;
-  pendingPlanCode?: string;
-  subscription?: {
-    id: string;
-    planCode: string;
-    status: string;
-  };
-  url?: string;
-}
-
 export async function createCheckoutSession(
   token: string | undefined,
-  planId: string,
-  interval: BillingInterval = "month"
-): Promise<CheckoutResponse> {
-  return apiRequest<CheckoutResponse>(`${API_V1}/billing/checkout`, {
+  planId: PaidPlanId,
+  interval: BillingInterval = BILLING_INTERVAL.MONTH
+): Promise<CheckoutSessionResponse> {
+  return apiRequest<CheckoutSessionResponse>(`${API_V1}/billing/checkout`, {
     method: "POST",
     token,
     body: JSON.stringify({ planId, interval }),
@@ -66,9 +44,9 @@ export async function createCheckoutSession(
 
 export async function finalizeCheckoutSession(
   token: string | undefined,
-  pendingPlanCode: string
-): Promise<CheckoutResponse> {
-  return apiRequest<CheckoutResponse>(`${API_V1}/billing/checkout/finalize`, {
+  pendingPlanCode: PaidPlanId
+): Promise<CheckoutSessionResponse> {
+  return apiRequest<CheckoutSessionResponse>(`${API_V1}/billing/checkout/finalize`, {
     method: "POST",
     token,
     body: JSON.stringify({ pendingPlanCode }),
@@ -104,24 +82,28 @@ export async function getInvoices(
   return snakeToCamel(invoices);
 }
 
-export async function getPlans(): Promise<PublicPlan[]> {
-  const plans = await apiRequest<PublicPlan[]>(`${API_V1}/billing/plans`, {
+let plansCache: Plan[] | null = null;
+let plansCacheTime: number = 0;
+const PLANS_CACHE_DURATION = 1000 * 60 * 60; // 1 hour
+
+export async function getPlans(): Promise<Plan[]> {
+  const now = Date.now();
+
+  // Return cached plans if still valid
+  if (plansCache && now - plansCacheTime < PLANS_CACHE_DURATION) {
+    return plansCache;
+  }
+
+  const plans = await apiRequest<Plan[]>(`${API_V1}/billing/plans`, {
     method: "GET",
   });
-  return snakeToCamel(plans);
-}
+  const camelizedPlans = snakeToCamel(plans);
 
-export async function getPaymentMethods(
-  token: string | undefined
-): Promise<PaymentMethodResponse[]> {
-  const methods = await apiRequest<PaymentMethodResponse[]>(
-    `${API_V1}/billing/payment-methods`,
-    {
-      method: "GET",
-      token,
-    }
-  );
-  return snakeToCamel(methods);
+  // Update cache
+  plansCache = camelizedPlans;
+  plansCacheTime = now;
+
+  return camelizedPlans;
 }
 
 export async function previewPlanChange(
@@ -144,16 +126,6 @@ export async function applyPlanChange(
     method: "POST",
     token,
     body: JSON.stringify(input),
-  });
-  return snakeToCamel(response);
-}
-
-export async function getCreditBalance(
-  token: string | undefined
-): Promise<CreditBalanceResponse> {
-  const response = await apiRequest<CreditBalanceResponse>(`${API_V1}/billing/credits`, {
-    method: "GET",
-    token,
   });
   return snakeToCamel(response);
 }

@@ -5,11 +5,8 @@ export type TerminalClaims = {
   sub: string;
   envId: string;
   nonce: string;
-  tabId?: string;
   instanceId: string;
   region: string;
-  tmuxEnabled?: boolean;
-  tmuxSessionName?: string;
   exp?: number;
 };
 
