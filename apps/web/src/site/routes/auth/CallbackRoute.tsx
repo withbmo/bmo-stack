@@ -69,6 +69,10 @@ export function CallbackRoute() {
         if (!me) {
           throw { detail: 'Not signed in', status: 401 };
         }
+        if (me.oauthOnboardingRequired || !me.username) {
+          router.replace(`/auth/oauth-onboarding?next=${encodeURIComponent(nextTarget)}`);
+          return;
+        }
         router.replace(nextTarget);
       } catch (err) {
         if (cancelled) return;

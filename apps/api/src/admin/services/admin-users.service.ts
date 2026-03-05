@@ -55,24 +55,24 @@ export class AdminUsersService {
           isActive: true,
           isEmailVerified: true,
           createdAt: true,
-          adminMembership: {
-            select: {
-              level: true,
-            },
-          },
         },
       }),
     ]);
+    const memberships = await this.prisma.client.admin.findMany({
+      where: { userId: { in: users.map(user => user.id) } },
+      select: { userId: true, level: true },
+    });
+    const membershipByUserId = new Map(memberships.map(membership => [membership.userId, membership.level]));
 
     return {
       items: users.map((u) => ({
         id: u.id,
         email: u.email,
-        username: u.username,
+        username: u.username ?? '',
         isActive: u.isActive,
         isEmailVerified: u.isEmailVerified,
-        isAdmin: !!u.adminMembership,
-        adminLevel: u.adminMembership?.level ?? null,
+        isAdmin: membershipByUserId.has(u.id),
+        adminLevel: membershipByUserId.get(u.id) ?? null,
         createdAt: u.createdAt.toISOString(),
       })),
       total,
@@ -108,12 +108,11 @@ export class AdminUsersService {
         isActive: true,
         isEmailVerified: true,
         createdAt: true,
-        adminMembership: {
-          select: {
-            level: true,
-          },
-        },
       },
+    });
+    const membership = await this.prisma.client.admin.findUnique({
+      where: { userId },
+      select: { level: true },
     });
 
     await this.audit.record({
@@ -134,11 +133,11 @@ export class AdminUsersService {
     return {
       id: updated.id,
       email: updated.email,
-      username: updated.username,
+      username: updated.username ?? '',
       isActive: updated.isActive,
       isEmailVerified: updated.isEmailVerified,
-      isAdmin: !!updated.adminMembership,
-      adminLevel: updated.adminMembership?.level ?? null,
+      isAdmin: !!membership,
+      adminLevel: membership?.level ?? null,
       createdAt: updated.createdAt.toISOString(),
     };
   }
@@ -153,22 +152,21 @@ export class AdminUsersService {
         isActive: true,
         isEmailVerified: true,
         createdAt: true,
-        adminMembership: {
-          select: {
-            level: true,
-          },
-        },
       },
     });
     if (!user) throw new NotFoundException('User not found');
+    const membership = await this.prisma.client.admin.findUnique({
+      where: { userId },
+      select: { level: true },
+    });
     return {
       id: user.id,
       email: user.email,
-      username: user.username,
+      username: user.username ?? '',
       isActive: user.isActive,
       isEmailVerified: user.isEmailVerified,
-      isAdmin: !!user.adminMembership,
-      adminLevel: user.adminMembership?.level ?? null,
+      isAdmin: !!membership,
+      adminLevel: membership?.level ?? null,
       createdAt: user.createdAt.toISOString(),
     };
   }

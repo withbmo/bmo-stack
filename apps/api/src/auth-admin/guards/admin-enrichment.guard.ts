@@ -56,21 +56,16 @@ export class AdminEnrichmentGuard implements CanActivate {
       return true;
     }
 
-    // Fetch admin membership via the User model
-    const userWithMembership = await this.prisma.client.user.findUnique({
-      where: { id: user.id },
-      include: {
-        adminMembership: {
-          select: { level: true },
-        },
-      },
+    const membership = await this.prisma.client.admin.findUnique({
+      where: { userId: user.id },
+      select: { level: true },
     });
 
     // Enrich user object with admin fields
     request.user = {
       ...user,
-      isAdmin: !!userWithMembership?.adminMembership,
-      adminLevel: userWithMembership?.adminMembership?.level ?? null,
+      isAdmin: !!membership,
+      adminLevel: membership?.level ?? null,
     };
 
     return true;

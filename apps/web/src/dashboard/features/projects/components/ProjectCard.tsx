@@ -1,9 +1,9 @@
 'use client';
 
-import { Box, Globe, MoreVertical, Play, Settings,Square } from 'lucide-react';
+import { Box, Globe, MoreVertical, Play, Settings, Square } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-import { Button,Card, StatusBadge } from '@/dashboard/components';
+import { Button, Card, StatusBadge } from '@/dashboard/components';
 import { formatTimestamp } from '@/shared/lib/date';
 
 import type { Project } from '../types';
@@ -40,12 +40,14 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
               </div>
             </div>
           </div>
-          <button
-            className="text-nexus-muted hover:text-white transition-colors"
+          <Button
+            variant="ghost"
+            size="sm"
+            className="px-0 py-0 text-nexus-muted hover:text-white"
             onClick={e => e.stopPropagation()}
           >
             <MoreVertical size={16} />
-          </button>
+          </Button>
         </div>
 
         {/* Specs */}

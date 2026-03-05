@@ -1,6 +1,7 @@
 {
   "version": 1,
   "id": "max",
+  "rank": 2,
   "name": "max",
   "displayName": "Max",
   "description": "For scale and power users running serious workloads.",

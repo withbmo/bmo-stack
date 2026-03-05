@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -11,7 +12,9 @@ import * as path from 'path';
 
 import { readTrimmedStringOrDefault } from '../config/config-readers';
 import { UPLOAD_DIR_DEFAULT } from '../config/defaults';
+import { isPrismaUniqueViolation } from '../common/utils/prisma-error.utils';
 import { PrismaService } from '../database/prisma.service';
+import { CompleteOAuthOnboardingDto } from './dto/complete-oauth-onboarding.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 /**
@@ -21,6 +24,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 @Injectable()
 export class UsersService {
   private uploadDir: string;
+  private readonly emailPasswordProviderId = 'email-password';
 
   constructor(
     private readonly prisma: PrismaService,
@@ -30,16 +34,24 @@ export class UsersService {
   }
 
   async getUserProfile(userId: string): Promise<UserProfile> {
-    const user = await this.prisma.client.user.findUnique({
-      where: { id: userId },
-      include: {
-        adminMembership: {
-          select: {
-            level: true,
+    const [user, adminMembership] = await Promise.all([
+      this.prisma.client.user.findUnique({
+        where: { id: userId },
+        include: {
+          accounts: {
+            where: { providerId: { not: this.emailPasswordProviderId } },
+            select: {
+              oauthOnboardingRequired: true,
+              oauthOnboardingCompletedAt: true,
+            },
           },
         },
-      },
-    });
+      }),
+      this.prisma.client.admin.findUnique({
+        where: { userId },
+        select: { level: true },
+      }),
+    ]);
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -47,18 +59,29 @@ export class UsersService {
 
     const userWithoutPassword = exclude(user, ['hashedPassword']);
 
+    const oauthOnboardingRequired =
+      !userWithoutPassword.username ||
+      userWithoutPassword.accounts.some(account => account.oauthOnboardingRequired);
+    const oauthCompletedAt =
+      userWithoutPassword.accounts
+        .map(account => account.oauthOnboardingCompletedAt)
+        .filter((value): value is Date => value instanceof Date)
+        .sort((a, b) => b.getTime() - a.getTime())[0] ?? null;
+
     return {
       id: userWithoutPassword.id,
       email: userWithoutPassword.email,
-      username: userWithoutPassword.username,
+      username: userWithoutPassword.username ?? '',
       firstName: userWithoutPassword.firstName ?? null,
       lastName: userWithoutPassword.lastName ?? null,
       bio: userWithoutPassword.bio,
       avatarUrl: userWithoutPassword.avatarUrl,
       isEmailVerified: userWithoutPassword.isEmailVerified,
       isActive: userWithoutPassword.isActive,
-      isAdmin: !!userWithoutPassword.adminMembership,
-      adminLevel: userWithoutPassword.adminMembership?.level ?? null,
+      oauthOnboardingRequired,
+      oauthOnboardingCompletedAt: oauthCompletedAt ? oauthCompletedAt.toISOString() : null,
+      isAdmin: !!adminMembership,
+      adminLevel: adminMembership?.level ?? null,
       novuSubscriberId: userWithoutPassword.novuSubscriberId ?? null,
       createdAt: userWithoutPassword.createdAt.toISOString(),
       updatedAt: userWithoutPassword.updatedAt.toISOString(),
@@ -75,12 +98,94 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    await this.prisma.client.user.update({
+    try {
+      await this.prisma.client.user.update({
+        where: { id: userId },
+        data: {
+          ...updateUserDto,
+        },
+      });
+    } catch (err) {
+      if (isPrismaUniqueViolation(err)) {
+        throw new ConflictException('Username already exists');
+      }
+      throw err;
+    }
+
+    return this.getUserProfile(userId);
+  }
+
+  async getOAuthOnboardingState(
+    userId: string
+  ): Promise<{ required: boolean; completedAt: string | null }> {
+    const user = await this.prisma.client.user.findUnique({
       where: { id: userId },
-      data: {
-        ...updateUserDto,
+      select: {
+        id: true,
+        username: true,
+        accounts: {
+          where: { providerId: { not: this.emailPasswordProviderId } },
+          select: {
+            oauthOnboardingRequired: true,
+            oauthOnboardingCompletedAt: true,
+          },
+        },
       },
     });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const required = !user.username || user.accounts.some(account => account.oauthOnboardingRequired);
+    const completedAt =
+      user.accounts
+        .map(account => account.oauthOnboardingCompletedAt)
+        .filter((value): value is Date => value instanceof Date)
+        .sort((a, b) => b.getTime() - a.getTime())[0] ?? null;
+
+    return {
+      required,
+      completedAt: completedAt ? completedAt.toISOString() : null,
+    };
+  }
+
+  async completeOAuthOnboarding(
+    userId: string,
+    input: CompleteOAuthOnboardingDto
+  ): Promise<UserProfile> {
+    const user = await this.prisma.client.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    try {
+      await this.prisma.client.user.update({
+        where: { id: userId },
+        data: {
+          username: input.username.trim(),
+          firstName: input.firstName.trim(),
+          lastName: input.lastName.trim(),
+          bio: typeof input.bio === 'string' ? input.bio.trim() || null : null,
+          accounts: {
+            updateMany: {
+              where: { providerId: { not: this.emailPasswordProviderId } },
+              data: {
+                oauthOnboardingRequired: false,
+                oauthOnboardingCompletedAt: new Date(),
+              },
+            },
+          },
+        },
+        select: { id: true },
+      });
+    } catch (err) {
+      if (isPrismaUniqueViolation(err)) {
+        throw new ConflictException('Username already exists');
+      }
+      throw err;
+    }
 
     return this.getUserProfile(userId);
   }

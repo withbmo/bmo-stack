@@ -280,6 +280,15 @@ export async function createBetterAuth(configService: ConfigService, services: B
      * 7-day sessions with daily refresh and cookie caching for performance.
      */
     session: {
+      modelName: 'sessions',
+      fields: {
+        expiresAt: 'expires_at',
+        createdAt: 'created_at',
+        updatedAt: 'updated_at',
+        ipAddress: 'ip_address',
+        userAgent: 'user_agent',
+        userId: 'user_id',
+      },
       expiresIn: AUTH_SESSION_TTL_SECONDS,
       updateAge: AUTH_SESSION_UPDATE_AGE_SECONDS,
       cookieCache: {
@@ -312,6 +321,22 @@ export async function createBetterAuth(configService: ConfigService, services: B
      * Merge by email with trusted providers.
      */
     account: {
+      modelName: 'accounts',
+      fields: {
+        accountId: 'account_id',
+        providerId: 'provider_id',
+        userId: 'user_id',
+        accessToken: 'access_token',
+        refreshToken: 'refresh_token',
+        idToken: 'id_token',
+        scope: 'scope',
+        password: 'password',
+        expiresAt: 'expires_at',
+        accessTokenExpiresAt: 'access_token_expires_at',
+        refreshTokenExpiresAt: 'refresh_token_expires_at',
+        createdAt: 'created_at',
+        updatedAt: 'updated_at',
+      },
       accountLinking: {
         enabled: true,
         disableImplicitLinking: false,
@@ -325,6 +350,14 @@ export async function createBetterAuth(configService: ConfigService, services: B
      * Email changes are disabled by business decision.
      */
     user: {
+      modelName: 'users',
+      fields: {
+        name: 'username',
+        emailVerified: 'is_email_verified',
+        image: 'avatar_url',
+        createdAt: 'created_at',
+        updatedAt: 'updated_at',
+      },
       additionalFields: {
         firstName: {
           type: 'string',
@@ -346,6 +379,10 @@ export async function createBetterAuth(configService: ConfigService, services: B
       changeEmail: {
         enabled: false,
       },
+    },
+
+    verification: {
+      modelName: 'verification',
     },
 
     /**

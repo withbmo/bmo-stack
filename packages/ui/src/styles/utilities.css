@@ -21,7 +21,6 @@
   display: inline-block;
   z-index: 0;
   isolation: isolate;
-  transition: transform 0.2s ease;
 }
 
 .nexus-shadow-btn-wrapper::before {
@@ -31,20 +30,16 @@
   inset: 0;
   background-color: var(--color-brand-primary);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  transform: translate(8px, 8px);
-  z-index: 0;
+  transform: translate(4px, 4px);
+  z-index: -1;
   pointer-events: none;
   transition:
     transform 0.2s ease,
     background-color 0.2s ease;
 }
 
-.nexus-shadow-btn-wrapper:hover {
-  transform: translateY(-4px);
-}
-
 .nexus-shadow-btn-wrapper:hover::before {
-  transform: translate(4px, 4px);
+  transform: translate(0px, 0px);
   background-color: var(--color-nexus-neon);
 }
 
@@ -56,13 +51,14 @@
   position: relative;
   z-index: 1;
   background-color: var(--color-brand-primary);
+  transform: translate(-4px, -4px);
   transition:
     transform 0.2s ease,
     background-color 0.2s ease;
 }
 
 .nexus-shadow-btn-wrapper:hover .nexus-shadow-btn {
-  transform: translate(4px, 4px);
+  transform: translate(0px, 0px);
   background-color: var(--color-nexus-neon);
 }
 

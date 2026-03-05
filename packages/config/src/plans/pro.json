@@ -1,6 +1,7 @@
 {
   "version": 1,
   "id": "pro",
+  "rank": 1,
   "name": "pro",
   "displayName": "Pro",
   "description": "For teams shipping production workloads.",

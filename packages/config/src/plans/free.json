@@ -1,6 +1,7 @@
 {
   "version": 1,
   "id": "free",
+  "rank": 0,
   "name": "free",
   "displayName": "Free",
   "description": "For getting started and personal projects.",

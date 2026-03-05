@@ -77,6 +77,7 @@ export {
   getPlanByCode,
   getDefaultPlan,
   getPlanById,
+  getPlanRank,
   getPlanCode,
   getPlanCredits,
   getPlans,

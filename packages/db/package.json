@@ -26,11 +26,13 @@
     "db:archive-legacy-billing": "bash scripts/archive-legacy-billing.sh"
   },
   "dependencies": {
-    "@prisma/client": "^6.2.0"
+    "@prisma/adapter-pg": "^7.4.2",
+    "@prisma/client": "^7.4.2",
+    "@prisma/client-runtime-utils": "^7.4.2"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
-    "prisma": "^6.2.0",
+    "prisma": "^7.4.2",
     "tsup": "^8.3.5",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"

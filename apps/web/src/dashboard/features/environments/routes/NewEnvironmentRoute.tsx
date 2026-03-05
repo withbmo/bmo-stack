@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 
 import { Button, DashboardTabs, Input } from '@/dashboard/components';
 import { useAuth } from '@/shared/auth';
-import { DashboardPageHeader, PageLayout } from '@/shared/components/layout';
+import { DashboardPageHeader, PageLayout } from '@/dashboard/components';
 import type { EnvironmentConfig } from '@/shared/contracts/environment-config';
 import { getApiErrorMessage } from '@/shared/lib';
 import {
@@ -287,13 +287,15 @@ export const NewEnvironmentRoute = () => {
         }
         subtitle="Create a new environment for a project."
         actions={
-          <button
+          <Button
             onClick={() => router.push('/dashboard/environments')}
-            className="text-xs font-mono text-nexus-muted hover:text-white flex items-center gap-2 transition-colors group"
+            variant="ghost"
+            size="sm"
+            className="px-0 py-0 text-xs text-nexus-muted hover:text-white flex items-center gap-2 transition-colors group"
           >
             <ArrowLeft className="group-hover:-translate-x-1 transition-transform" size={14} />
             BACK TO ENVIRONMENTS
-          </button>
+          </Button>
         }
       />
 
@@ -377,9 +379,11 @@ export const NewEnvironmentRoute = () => {
                 Instance Type *
               </label>
               <div className="grid grid-cols-2 gap-4">
-                <button
+                <Button
                   type="button"
                   onClick={() => setInstanceType(MARKET_TYPE.ON_DEMAND)}
+                  variant="secondary"
+                  size="sm"
                   className={`p-4 border-2 transition-all ${
                     instanceType === MARKET_TYPE.ON_DEMAND
                       ? 'border-nexus-accent bg-nexus-accent/10'
@@ -396,11 +400,13 @@ export const NewEnvironmentRoute = () => {
                   <div className="text-[10px] text-nexus-muted">
                     Guaranteed availability, higher cost
                   </div>
-                </button>
+                </Button>
 
-                <button
+                <Button
                   type="button"
                   onClick={() => setInstanceType(MARKET_TYPE.SPOT)}
+                  variant="secondary"
+                  size="sm"
                   className={`p-4 border-2 transition-all ${
                     instanceType === 'spot'
                       ? 'border-nexus-accent bg-nexus-accent/10'
@@ -417,7 +423,7 @@ export const NewEnvironmentRoute = () => {
                   <div className="text-[10px] text-nexus-muted">
                     Up to 90% cheaper, may be interrupted
                   </div>
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -426,9 +432,11 @@ export const NewEnvironmentRoute = () => {
                 Configuration Mode *
               </label>
               <div className="grid grid-cols-2 gap-4">
-                <button
+                <Button
                   type="button"
                   onClick={() => setConfigMode(CONFIG_MODE.PRESET)}
+                  variant="secondary"
+                  size="sm"
                   className={`p-4 border-2 transition-all ${
                     configMode === CONFIG_MODE.PRESET
                       ? 'border-nexus-purple bg-nexus-purple/10'
@@ -445,11 +453,13 @@ export const NewEnvironmentRoute = () => {
                   <div className="text-[10px] text-nexus-muted">
                     Quick start with pre-configured resources
                   </div>
-                </button>
+                </Button>
 
-                <button
+                <Button
                   type="button"
                   onClick={() => setConfigMode(CONFIG_MODE.CUSTOM)}
+                  variant="secondary"
+                  size="sm"
                   className={`p-4 border-2 transition-all ${
                     configMode === CONFIG_MODE.CUSTOM
                       ? 'border-nexus-purple bg-nexus-purple/10'
@@ -464,7 +474,7 @@ export const NewEnvironmentRoute = () => {
                     CUSTOM
                   </div>
                   <div className="text-[10px] text-nexus-muted">Configure your own specs</div>
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -696,14 +706,16 @@ export const NewEnvironmentRoute = () => {
                         setEnvVars(next);
                       }}
                     />
-                    <button
+                    <Button
                       type="button"
                       onClick={() => setEnvVars(prev => prev.filter((_, i) => i !== index))}
-                      className="px-3 py-2 border border-nexus-gray text-nexus-muted hover:text-white hover:border-white transition-colors font-mono text-xs"
+                      variant="secondary"
+                      size="sm"
+                      className="px-3 py-2 border border-nexus-gray text-nexus-muted hover:text-white hover:border-white"
                       title="Remove"
                     >
                       <Trash2 size={12} />
-                    </button>
+                    </Button>
                   </div>
                 ))}
                 <Button

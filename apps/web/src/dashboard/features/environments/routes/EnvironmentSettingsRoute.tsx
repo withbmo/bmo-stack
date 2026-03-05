@@ -1,13 +1,23 @@
 'use client';
 
-import { EnvironmentsSkeleton } from '@pytholit/ui';
 import { Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { Button, DashboardTabs, EmptyState, Input, Modal } from '@/dashboard/components';
-import { DashboardPageHeader, PageLayout } from '@/shared/components/layout';
+import {
+  Button,
+  Card,
+  DashboardPageHeader,
+  DashboardTabs,
+  DynamicSkeletonProvider,
+  DynamicSlot,
+  EmptyState,
+  Input,
+  Modal,
+  PageLayout,
+  Skeleton,
+} from '@/dashboard/components';
 import { getApiErrorMessage } from '@/shared/lib';
 
 import { useDeleteEnvironment, useEnvironments } from '../../projects/hooks/useEnvironments';
@@ -55,6 +65,7 @@ export const EnvironmentSettingsRoute = ({ envId }: EnvironmentSettingsRouteProp
   };
 
   return (
+    <DynamicSkeletonProvider loading={isLoading}>
     <PageLayout className="pb-12">
       <DashboardPageHeader
         badge={{ icon: Settings, label: 'SETTINGS' }}
@@ -79,12 +90,34 @@ export const EnvironmentSettingsRoute = ({ envId }: EnvironmentSettingsRouteProp
         className="mb-8"
       />
 
-      {isLoading ? (
-        <EnvironmentsSkeleton />
-      ) : !environment ? (
+      <DynamicSlot
+        skeleton={
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {Array.from({ length: 2 }).map((_, index) => (
+              <div key={index} className="bg-bg-panel border border-border-dim p-6 space-y-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-2 flex-1">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-6 w-40" />
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="space-y-1">
+                      <Skeleton className="h-3 w-20" />
+                      <Skeleton className="h-9 w-full" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        }
+      >
+      {!environment ? (
         <EmptyState message="Environment not found." />
       ) : activeTab === 'general' ? (
-        <div className="space-y-4 max-w-lg">
+        <Card className="max-w-lg space-y-4">
           {(
             [
               { label: 'Env Type', value: environment.envType },
@@ -103,9 +136,9 @@ export const EnvironmentSettingsRoute = ({ envId }: EnvironmentSettingsRouteProp
               </div>
             </div>
           ))}
-        </div>
+        </Card>
       ) : (
-        <section className="border border-red-500/30 bg-red-500/5 rounded-lg p-6 max-w-lg">
+        <Card className="max-w-lg border-red-500/30 bg-red-500/5 p-6">
           <h3 className="text-red-400 font-mono text-xs uppercase tracking-widest mb-2">
             Danger Zone
           </h3>
@@ -116,8 +149,9 @@ export const EnvironmentSettingsRoute = ({ envId }: EnvironmentSettingsRouteProp
           <Button variant="danger" size="sm" onClick={openConfirmModal}>
             Delete Environment
           </Button>
-        </section>
+        </Card>
       )}
+      </DynamicSlot>
 
       <Modal
         isOpen={confirmOpen}
@@ -161,5 +195,6 @@ export const EnvironmentSettingsRoute = ({ envId }: EnvironmentSettingsRouteProp
         </div>
       </Modal>
     </PageLayout>
+    </DynamicSkeletonProvider>
   );
 };

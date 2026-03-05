@@ -64,8 +64,8 @@ export const TerminalPanel = ({ environmentId }: TerminalPanelProps) => {
   };
 
   return (
-    <div className="h-1/3 border-t border-nexus-gray flex flex-col bg-black">
-      <div className="flex items-center justify-between px-4 py-2 bg-[#080808] border-b border-nexus-gray/30">
+    <div className="h-1/3 border-t border-nexus-gray flex flex-col bg-nexus-black">
+      <div className="flex items-center justify-between px-4 py-2 bg-nexus-dark border-b border-nexus-gray/30">
         <div className="flex items-center gap-4">
           <span className="text-xs font-mono font-bold text-white border-b border-nexus-purple pb-0.5">
             TERMINAL

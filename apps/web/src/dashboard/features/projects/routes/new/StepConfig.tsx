@@ -2,7 +2,7 @@ import { ENVIRONMENT_VISIBILITY } from '@pytholit/contracts';
 import { ArrowRight, Box, Plus, Settings2, Trash2 } from 'lucide-react';
 import { type ChangeEvent, useMemo, useState } from 'react';
 
-import { Input } from '@/dashboard/components';
+import { Button, Input } from '@/dashboard/components';
 import {
   DATABASES,
   DJANGO_STRUCTURES,
@@ -113,11 +113,15 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
               className="bg-nexus-dark border-2 border-nexus-muted/40 rounded-sm p-6 text-2xl placeholder-nexus-muted focus:ring-nexus-purple/30"
               autoFocus
             />
-            <textarea
+            <Input
+              multiline
+              rows={6}
               value={config.description}
               onChange={e => setConfig(c => ({ ...c, description: e.target.value }))}
               placeholder="Describe what this service does, for your team and future you."
-              className="w-full min-h-[140px] flex-1 bg-nexus-dark border border-nexus-muted/40 rounded-sm p-4 text-sm text-white placeholder-nexus-muted focus:outline-none focus:border-nexus-purple/60"
+              variant="panel"
+              intent="brand"
+              className="w-full min-h-[140px] flex-1 bg-nexus-dark border border-nexus-muted/40 rounded-sm p-4 text-sm text-white placeholder-nexus-muted"
             />
           </div>
           <div className="flex flex-col h-full gap-3">
@@ -131,9 +135,11 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                     (typeof ENVIRONMENT_VISIBILITY)[keyof typeof ENVIRONMENT_VISIBILITY]
                   >
                 ).map(vis => (
-                  <button
+                  <Button
                     key={vis}
                     onClick={() => setConfig(c => ({ ...c, visibility: vis }))}
+                    variant="secondary"
+                    size="sm"
                     className={`flex-1 border px-3 py-2 text-xs font-mono uppercase tracking-wider transition-colors ${
                       config.visibility === vis
                         ? 'border-nexus-purple text-nexus-purple bg-nexus-purple/10'
@@ -141,7 +147,7 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                     }`}
                   >
                     {vis}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -231,7 +237,7 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
         </label>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {dependencyOptions.map(manager => (
-            <button
+            <Button
               key={manager}
               type="button"
               onClick={() =>
@@ -240,6 +246,8 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                   dependencyManager: manager as ProjectWizardConfig['dependencyManager'],
                 }))
               }
+              variant="secondary"
+              size="sm"
               className={`border p-4 text-left font-mono transition-all ${
                 config.dependencyManager === manager
                   ? 'border-nexus-purple bg-nexus-purple/10 text-white'
@@ -252,9 +260,9 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                   ? 'Fast, modern resolver'
                   : manager === 'poetry'
                     ? 'Lockfile + dependency groups'
-                    : 'Classic requirements.txt'}
+                  : 'Classic requirements.txt'}
               </div>
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -271,7 +279,7 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
               { id: 'large', label: 'Large', cpu: 2048, memory: 4096 },
             ] as const
           ).map(preset => (
-            <button
+            <Button
               key={preset.id}
               onClick={() =>
                 setConfig(c => ({
@@ -281,6 +289,8 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                   memory: preset.memory,
                 }))
               }
+              variant="secondary"
+              size="sm"
               className={`border p-4 text-left font-mono transition-all ${
                 config.runtimePreset === preset.id
                   ? 'border-nexus-purple bg-nexus-purple/10 text-white'
@@ -291,7 +301,7 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
               <div className="text-[10px] text-nexus-muted mt-2">
                 {preset.cpu} CPU / {preset.memory} MB
               </div>
-            </button>
+            </Button>
           ))}
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
@@ -374,14 +384,16 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                         {config.typeHintingLevel.toUpperCase()}
                       </span>
                     </div>
-                    <button
+                    <Button
                       type="button"
                       onClick={() => setShowTypeHintDialog(open => !open)}
-                      className="p-2 border border-border-dim text-nexus-muted hover:text-white hover:border-nexus-purple transition-colors"
+                      variant="secondary"
+                      size="sm"
+                      className="p-2 border border-border-dim text-nexus-muted hover:text-white hover:border-nexus-purple"
                       title="Configure type hinting"
                     >
                       <Settings2 size={14} />
-                    </button>
+                    </Button>
                   </div>
                   {showTypeHintDialog && (
                     <div className="border-t border-nexus-gray/60 px-4 pb-4">
@@ -390,7 +402,7 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         {(['basic', 'strict', 'mypy', 'pyright'] as const).map(level => (
-                          <button
+                          <Button
                             key={level}
                             type="button"
                             onClick={() =>
@@ -399,6 +411,8 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                                 typeHintingLevel: level,
                               }))
                             }
+                            variant="secondary"
+                            size="sm"
                             className={`border px-3 py-2 font-mono text-[10px] uppercase tracking-wider transition-colors ${
                               config.typeHintingLevel === level
                                 ? 'border-nexus-purple text-nexus-purple bg-nexus-purple/10'
@@ -406,7 +420,7 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                             }`}
                           >
                             {level}
-                          </button>
+                          </Button>
                         ))}
                       </div>
                     </div>
@@ -437,14 +451,16 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                         {config.formatterChoice.toUpperCase()}
                       </span>
                     </div>
-                    <button
+                    <Button
                       type="button"
                       onClick={() => setShowFormatterDialog(open => !open)}
-                      className="p-2 border border-border-dim text-nexus-muted hover:text-white hover:border-nexus-purple transition-colors"
+                      variant="secondary"
+                      size="sm"
+                      className="p-2 border border-border-dim text-nexus-muted hover:text-white hover:border-nexus-purple"
                       title="Configure formatter"
                     >
                       <Settings2 size={14} />
-                    </button>
+                    </Button>
                   </div>
                   {showFormatterDialog && (
                     <div className="border-t border-nexus-gray/60 px-4 pb-4">
@@ -453,7 +469,7 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         {(['ruff', 'black', 'autopep8', 'yapf'] as const).map(fmt => (
-                          <button
+                          <Button
                             key={fmt}
                             type="button"
                             onClick={() =>
@@ -462,6 +478,8 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                                 formatterChoice: fmt,
                               }))
                             }
+                            variant="secondary"
+                            size="sm"
                             className={`border px-3 py-2 font-mono text-[10px] uppercase tracking-wider transition-colors ${
                               config.formatterChoice === fmt
                                 ? 'border-nexus-purple text-nexus-purple bg-nexus-purple/10'
@@ -469,7 +487,7 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                             }`}
                           >
                             {fmt}
-                          </button>
+                          </Button>
                         ))}
                       </div>
                     </div>
@@ -535,43 +553,47 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                 intent="brand"
                 size="sm"
               />
-              <button
+              <Button
                 onClick={() =>
                   setConfig(c => ({
                     ...c,
                     envVars: c.envVars.filter(row => row.id !== env.id),
                   }))
                 }
-                className="border border-border-dim text-nexus-muted hover:text-red-500 hover:border-red-500 px-3 py-2 text-xs font-mono uppercase tracking-wider"
+                variant="secondary"
+                size="sm"
+                className="border border-border-dim text-nexus-muted hover:text-red-500 hover:border-red-500 px-3 py-2 text-xs uppercase tracking-wider"
               >
                 <Trash2 size={12} />
-              </button>
+              </Button>
             </div>
           ))}
-          <button
+          <Button
             onClick={() =>
               setConfig(c => ({
                 ...c,
                 envVars: [...c.envVars, { id: `env-${Date.now()}`, key: '', value: '' }],
               }))
             }
-            className="inline-flex items-center gap-2 border border-border-dim text-nexus-muted hover:text-white hover:border-nexus-purple px-3 py-2 text-xs font-mono uppercase tracking-wider"
+            variant="secondary"
+            size="sm"
+            className="inline-flex items-center gap-2 border border-border-dim text-nexus-muted hover:text-white hover:border-nexus-purple px-3 py-2 text-xs uppercase tracking-wider"
           >
             <Plus size={12} /> Add env var
-          </button>
+          </Button>
         </div>
       </div>
 
       <div className="flex justify-end pt-8">
-        <button
+        <Button
           onClick={onNext}
           disabled={!config.name}
-          className={`bg-white text-black font-mono font-bold text-sm px-8 py-4 flex items-center gap-3 transition-all hover:bg-nexus-light ${
-            !config.name ? 'opacity-50 cursor-not-allowed' : 'hover:translate-x-1'
-          }`}
+          variant="primary"
+          size="md"
+          className="text-sm px-8 py-4 flex items-center gap-3 transition-all hover:bg-nexus-light enabled:hover:translate-x-1"
         >
           REVIEW CONFIG <ArrowRight size={16} />
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+import { DashboardPageHeader, PageLayout } from '@/dashboard/components';
 import { env } from '@/env';
 import { useAuth } from '@/shared/auth';
-import { DashboardPageHeader,PageLayout } from '@/shared/components/layout';
 import { DEFAULT_PROJECT_CONFIG, type ProjectWizardConfig } from '@/shared/constants/project-wizard';
 import { createProject } from '@/shared/lib/projects';
 import { fetchWizardSchema, generateWizard } from '@/shared/lib/wizard';

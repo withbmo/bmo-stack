@@ -1,5 +1,4 @@
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { getPlanCatalogVersion } from '@pytholit/config';
 import Stripe from 'stripe';
 
@@ -17,7 +16,9 @@ import {
   isBillingPlanCode,
 } from './billing-plan-code';
 import { BillingStateService } from './billing-state.service';
-import { StripeUsageService } from './stripe-usage.service';
+import { StripeMetadataKey } from './billing.constants';
+import { BillingUsageControlsService } from './billing-usage-controls.service';
+import { StripeCustomerService } from './stripe-customer.service';
 import { StripeWebhookExplorerService } from './stripe-webhook-explorer.service';
 import { sanitizeErrorForLog } from './utils/log-sanitize.utils';
 import {
@@ -27,11 +28,11 @@ import {
 
 function isCreditTopupInvoice(invoice: Stripe.Invoice): boolean {
   const meta = (invoice.metadata ?? {}) as Record<string, string>;
-  if (meta.is_credit_topup === 'true') return true;
+  if (meta[StripeMetadataKey.IsCreditTopup] === 'true') return true;
   const lines = invoice.lines?.data ?? [];
   for (const line of lines) {
     const lm = (line.metadata ?? {}) as Record<string, string>;
-    if (lm.is_credit_topup === 'true') return true;
+    if (lm[StripeMetadataKey.IsCreditTopup] === 'true') return true;
   }
   return false;
 }
@@ -62,22 +63,11 @@ export class StripeWebhookProcessorService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly stripeService: StripeService,
-    private readonly config: ConfigService,
-    private readonly stripeUsage: StripeUsageService,
     private readonly billingState: BillingStateService,
-    private readonly webhookExplorer: StripeWebhookExplorerService
+    private readonly usageControls: BillingUsageControlsService,
+    private readonly webhookExplorer: StripeWebhookExplorerService,
+    private readonly stripeCustomers: StripeCustomerService
   ) {}
-
-  private isEnabled(flagName: string, defaultValue: boolean): boolean {
-    const raw = this.config.get<boolean | string>(flagName);
-    if (typeof raw === 'boolean') return raw;
-    if (typeof raw === 'string') {
-      const normalized = raw.trim().toLowerCase();
-      if (normalized === 'true' || normalized === '1' || normalized === 'yes') return true;
-      if (normalized === 'false' || normalized === '0' || normalized === 'no') return false;
-    }
-    return defaultValue;
-  }
 
   async processStripeEvent(event: Stripe.Event): Promise<void> {
     try {
@@ -133,17 +123,6 @@ export class StripeWebhookProcessorService {
     });
   }
 
-  private async resolveUserIdFromStripeCustomerId(
-    customerId: string
-  ): Promise<{ userId: string } | null> {
-    const user = await this.prisma.client.user.findUnique({
-      where: { stripeCustomerId: customerId },
-      select: { id: true },
-    });
-    if (!user?.id) return null;
-    return { userId: user.id };
-  }
-
   private async resolvePlanCodeFromState(userId: string): Promise<{
     planCode: BillingPlanCode;
     planCatalogVersion: number;
@@ -165,21 +144,8 @@ export class StripeWebhookProcessorService {
   }
 
   private extractSubscriptionIdFromInvoice(invoice: Stripe.Invoice): string | null {
-    const subRef = (invoice as unknown as { subscription?: unknown }).subscription ?? null;
-    const direct =
-      typeof subRef === 'string'
-        ? subRef
-        : subRef && typeof subRef === 'object' && 'id' in (subRef as Record<string, unknown>)
-          ? String((subRef as { id?: unknown }).id ?? '')
-          : null;
-    if (direct) return direct;
-
-    const parentSubRef = invoice.parent?.subscription_details?.subscription ?? null;
-    return typeof parentSubRef === 'string'
-      ? parentSubRef
-      : parentSubRef && typeof parentSubRef === 'object' && 'id' in parentSubRef
-        ? String((parentSubRef as { id?: unknown }).id ?? '')
-        : null;
+    const sub = invoice.parent?.subscription_details?.subscription ?? null;
+    return typeof sub === 'string' ? sub : sub?.id ?? null;
   }
 
   @StripeWebhookHandler([
@@ -200,7 +166,7 @@ export class StripeWebhookProcessorService {
       return;
     }
 
-    const user = await this.resolveUserIdFromStripeCustomerId(stripeCustomerId);
+    const user = await this.stripeCustomers.resolveUserIdFromStripeCustomerId(stripeCustomerId);
     if (!user) {
       this.logger.warn('stripe_subscription_event_unmapped_customer', {
         stripeEventId: event.id,
@@ -240,6 +206,22 @@ export class StripeWebhookProcessorService {
         lastStripeEventId: event.id,
       });
       return;
+    }
+
+    // Mark the subscription's default payment method as allow_redisplay=always
+    // so it appears in future Stripe Checkout sessions for this customer.
+    if (event.type === 'customer.subscription.created' || event.type === 'customer.subscription.updated') {
+      const pmId = typeof subscription.default_payment_method === 'string'
+        ? subscription.default_payment_method
+        : (subscription.default_payment_method as Stripe.PaymentMethod | null)?.id ?? null;
+      if (pmId) {
+        try {
+          const stripe = this.stripeService.client();
+          await stripe.paymentMethods.update(pmId, { allow_redisplay: 'always' });
+        } catch (err) {
+          this.logger.warn('stripe_allow_redisplay_update_failed', { pmId, error: sanitizeErrorForLog(err) });
+        }
+      }
     }
 
     await this.ensureBillingState({
@@ -283,7 +265,7 @@ export class StripeWebhookProcessorService {
       return;
     }
 
-    const user = await this.resolveUserIdFromStripeCustomerId(customerId);
+    const user = await this.stripeCustomers.resolveUserIdFromStripeCustomerId(customerId);
     if (!user) {
       this.logger.warn('stripe_invoice_issue_unmapped_customer', {
         stripeEventId: event.id,
@@ -360,14 +342,6 @@ export class StripeWebhookProcessorService {
         return;
       }
 
-      const useStripeCredits = this.isEnabled('BILLING_USE_STRIPE_CREDITS', true);
-      if (!useStripeCredits) {
-        throw new ServiceUnavailableException({
-          code: BILLING_ERROR_CODE.BILLING_ENGINE_ERROR,
-          detail: 'Stripe credit grants are disabled by configuration.',
-        });
-      }
-
       const user = await this.prisma.client.user.findUnique({
         where: { id: userId },
         select: { id: true, stripeCustomerId: true },
@@ -406,11 +380,7 @@ export class StripeWebhookProcessorService {
         return;
       }
 
-      await this.stripeUsage.grantCredits({
-        stripeCustomerId: customerId,
-        amountUsd: amountPaidCents / 100,
-        idempotencyKey: invoiceId,
-      });
+      await this.usageControls.addCredits(user.id, amountPaidCents);
 
       // If the only lock reason was wallet depletion, unlock on successful topup.
       const state = await this.prisma.client.billingEngineState.findUnique({
@@ -444,7 +414,7 @@ export class StripeWebhookProcessorService {
       });
       return;
     }
-    const user = await this.resolveUserIdFromStripeCustomerId(customerId);
+    const user = await this.stripeCustomers.resolveUserIdFromStripeCustomerId(customerId);
     if (!user) {
       this.logger.warn('stripe_invoice_paid_unmapped_customer', {
         stripeEventId: event.id,
@@ -508,7 +478,7 @@ export class StripeWebhookProcessorService {
       return;
     }
 
-    const user = await this.resolveUserIdFromStripeCustomerId(customerId);
+    const user = await this.stripeCustomers.resolveUserIdFromStripeCustomerId(customerId);
     if (!user) {
       this.logger.warn('stripe_charge_risk_event_unmapped_customer', {
         stripeEventId: event.id,

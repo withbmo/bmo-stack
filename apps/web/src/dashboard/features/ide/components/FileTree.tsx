@@ -97,7 +97,7 @@ const ContextMenu = ({ state, onClose, onAction }: ContextMenuProps) => {
 
   return (
     <div
-      className="fixed z-50 bg-[#080808] border border-nexus-gray shadow-[0_0_20px_rgba(0,0,0,0.8)] w-48 py-1 animate-in fade-in duration-100 flex flex-col"
+      className="fixed z-50 bg-nexus-dark border border-nexus-gray shadow-[0_0_20px_rgba(0,0,0,0.8)] w-48 py-1 animate-in fade-in duration-100 flex flex-col"
       style={{ top: state.y, left: state.x }}
       onClick={e => e.stopPropagation()}
     >
@@ -186,7 +186,7 @@ export const FileTree = () => {
   };
 
   return (
-    <div className="shrink-0 flex flex-col bg-[#050505] relative w-[280px] min-w-[220px] max-w-[360px]">
+    <div className="shrink-0 flex flex-col bg-nexus-black relative w-[280px] min-w-[220px] max-w-[360px]">
       <div className="h-10 shrink-0 px-3 border-b border-nexus-gray flex items-center justify-between text-xs font-mono font-bold text-nexus-muted">
         <span>FILES</span>
         <MoreVertical size={12} className="cursor-pointer hover:text-white" />

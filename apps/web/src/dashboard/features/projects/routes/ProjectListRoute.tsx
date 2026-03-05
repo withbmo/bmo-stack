@@ -1,7 +1,7 @@
 import { Terminal } from 'lucide-react';
-import { useEffect,useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { DashboardPageHeader,PageLayout } from '@/shared/components/layout';
+import { Card, DashboardPageHeader, PageLayout } from '@/dashboard/components';
 import { ACTIVITY_LOGS } from '@/shared/data/activity';
 import type { ActivityLog } from '@/shared/types';
 
@@ -29,7 +29,7 @@ const ResourceTicker = ({
   }, []);
 
   return (
-    <div className="flex flex-col bg-bg-surface border border-nexus-gray p-3 min-w-[140px]">
+    <Card padding="sm" className="min-w-[140px] bg-bg-surface">
       <span className="text-[10px] text-nexus-light/70 font-mono uppercase mb-1 tracking-wider">
         {label}
       </span>
@@ -43,7 +43,7 @@ const ResourceTicker = ({
           style={{ width: `${Math.min(displayValue, 100)}%` }}
         ></div>
       </div>
-    </div>
+    </Card>
   );
 };
 
@@ -82,7 +82,7 @@ export const ProjectListRoute = () => {
         {/* Right Column: Activity & quick stats */}
         <div className="space-y-6">
           {/* Activity Log */}
-          <div className="bg-bg-panel border border-nexus-gray p-0 overflow-hidden">
+          <Card variant="default" padding="none" className="overflow-hidden bg-bg-panel">
             <div className="bg-black/50 p-3 border-b border-nexus-gray flex justify-between items-center">
               <span className="font-mono text-[10px] uppercase text-nexus-muted tracking-wider">
                 System Logs
@@ -117,7 +117,7 @@ export const ProjectListRoute = () => {
               ))}
               <div className="animate-pulse text-nexus-purple">_</div>
             </div>
-          </div>
+          </Card>
         </div>
       </div>
     </PageLayout>

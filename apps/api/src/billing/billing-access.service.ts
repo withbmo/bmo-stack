@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { type Plan } from '@pytholit/contracts';
 
+import { isPrismaUniqueViolation } from '../common/utils/prisma-error.utils';
 import { PrismaService } from '../database/prisma.service';
 import {
   BILLING_ACCESS_STATE,
@@ -9,6 +10,7 @@ import {
 } from './billing.interface';
 import { BILLING_ERROR_CODE } from './billing-error-codes';
 import {
+  getDefaultBillingPlanCode,
   isBillingPlanCode,
   planIdFromBillingPlanCode,
 } from './billing-plan-code';
@@ -91,15 +93,38 @@ export class BillingAccessService {
     planCode: BillingPlanCode;
     accessState: BillingAccessState;
   }> {
-    const row = await this.prisma.client.billingEngineState.findUnique({
+    let row = await this.prisma.client.billingEngineState.findUnique({
       where: { userId },
       select: { planCode: true, accessState: true },
     });
     if (!row) {
-      throw new ServiceUnavailableException({
-        code: BILLING_ERROR_CODE.BILLING_STATE_MISSING,
-        detail: `Billing state is missing for user=${userId}.`,
+      const defaultPlanCode = getDefaultBillingPlanCode();
+      try {
+        await this.prisma.client.billingEngineState.create({
+          data: {
+            userId,
+            provider: 'stripe',
+            externalCustomerId: userId,
+            engineSubscriptionExternalId: `sub_${userId}`,
+            planCode: defaultPlanCode,
+            accessState: BILLING_ACCESS_STATE.Enabled,
+          },
+          select: { userId: true },
+        });
+      } catch (err) {
+        if (!isPrismaUniqueViolation(err)) throw err;
+      }
+
+      row = await this.prisma.client.billingEngineState.findUnique({
+        where: { userId },
+        select: { planCode: true, accessState: true },
       });
+      if (!row) {
+        throw new ServiceUnavailableException({
+          code: BILLING_ERROR_CODE.BILLING_STATE_MISSING,
+          detail: `Billing state is missing for user=${userId}.`,
+        });
+      }
     }
 
     const rawPlan = row.planCode.toString();

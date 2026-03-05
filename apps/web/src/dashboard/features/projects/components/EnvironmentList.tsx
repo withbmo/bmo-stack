@@ -1,4 +1,5 @@
 import type { Environment } from '@/shared/types';
+import { EmptyState } from '@/dashboard/components';
 
 import { EnvironmentCard } from './EnvironmentCard';
 
@@ -26,11 +27,7 @@ export const EnvironmentList = ({
   activeDeployId,
 }: EnvironmentListProps) => {
   if (environments.length === 0) {
-    return (
-      <div className="border border-border-dim bg-bg-panel p-6 text-center text-nexus-muted font-mono text-sm">
-        No environments yet. Create one to start deploying.
-      </div>
-    );
+    return <EmptyState message="No environments yet. Create one to start deploying." />;
   }
 
   return (

@@ -1,9 +1,10 @@
-import { CreditCard,User } from "lucide-react";
+import { CreditCard, Gauge, User } from 'lucide-react';
 
 // Tab definitions
 export const SETTINGS_TABS = [
-  { id: "profile", icon: User, label: "Profile" },
-  { id: "billing", icon: CreditCard, label: "Billing" },
+  { id: 'profile', icon: User, label: 'Profile' },
+  { id: 'billing', icon: CreditCard, label: 'Billing' },
+  { id: 'usage', icon: Gauge, label: 'Usage' },
 ] as const;
 
 export type SettingsTabId = (typeof SETTINGS_TABS)[number]["id"];

@@ -1,16 +1,23 @@
 'use client';
 
 import { ORCHESTRATOR_STATUS } from '@pytholit/contracts';
-import { EnvironmentsSkeleton } from '@pytholit/ui';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Layers, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { Button, DashboardTabs, EmptyState } from '@/dashboard/components';
+import {
+  Button,
+  DashboardPageHeader,
+  DashboardTabs,
+  DynamicSkeletonProvider,
+  DynamicSlot,
+  EmptyState,
+  PageLayout,
+  Skeleton,
+} from '@/dashboard/components';
 import { useAuth } from '@/shared/auth';
-import { DashboardPageHeader,PageLayout } from '@/shared/components/layout';
 import { getApiErrorMessage } from '@/shared/lib';
 import { startEnvironment, stopEnvironment, terminateEnvironment } from '@/shared/lib/environments';
 import { queryKeys } from '@/shared/lib/query-keys';
@@ -161,6 +168,7 @@ export const EnvironmentsRoute = () => {
   const projectTabs = [{ value: 'environments', label: 'ENVIRONMENTS' }];
 
   return (
+    <DynamicSkeletonProvider loading={envLoading}>
     <PageLayout className="pb-12">
       <DashboardPageHeader
         badge={{ icon: Layers, label: 'ENVIRONMENTS' }}
@@ -190,9 +198,41 @@ export const EnvironmentsRoute = () => {
         className="mb-8"
       />
 
-      {envLoading ? (
-        <EnvironmentsSkeleton />
-      ) : environments.length === 0 ? (
+      <DynamicSlot
+        skeleton={
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="bg-bg-panel border border-border-dim p-6 space-y-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-2 flex-1">
+                    <p className="text-[10px] font-mono text-text-secondary uppercase tracking-widest">Environment</p>
+                    <Skeleton className="h-6 w-40" />
+                    <Skeleton className="h-3 w-32 mt-2" />
+                  </div>
+                  <Skeleton className="h-6 w-16" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-mono text-text-secondary uppercase tracking-widest">Actions</p>
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-mono text-text-secondary uppercase tracking-widest">Service Paths</p>
+                    <div className="flex gap-2">
+                      <Skeleton className="h-10 flex-1" />
+                      <Skeleton className="h-10 flex-1" />
+                    </div>
+                  </div>
+                </div>
+                <div className="pt-2">
+                  <Skeleton className="h-9 w-28" />
+                </div>
+              </div>
+            ))}
+          </div>
+        }
+      >
+      {environments.length === 0 ? (
         <EmptyState message="No environments yet." />
       ) : (
         <EnvironmentList
@@ -249,6 +289,8 @@ export const EnvironmentsRoute = () => {
           activeActionId={activeActionId}
         />
       )}
+      </DynamicSlot>
     </PageLayout>
+    </DynamicSkeletonProvider>
   );
 };

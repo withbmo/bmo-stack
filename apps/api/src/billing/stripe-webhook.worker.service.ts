@@ -40,7 +40,20 @@ export class StripeWebhookWorkerService {
       select: { stripeEventId: true },
     });
 
-    const event = row.payloadJson as unknown as Stripe.Event;
+    // Prisma returns JsonValue; cast to Stripe.Event after validating the minimum shape.
+    // A real schema validation would use zod — this guard catches corrupted rows early.
+    const payload = row.payloadJson;
+    if (
+      typeof payload !== 'object' ||
+      payload === null ||
+      Array.isArray(payload) ||
+      typeof (payload as Record<string, unknown>).id !== 'string' ||
+      typeof (payload as Record<string, unknown>).type !== 'string'
+    ) {
+      this.logger.error('stripe_webhook_event_invalid_payload', { stripeEventId });
+      return;
+    }
+    const event = payload as unknown as Stripe.Event;
 
     await this.processor.processStripeEventAndUpdateStatus(stripeEventId, event, 2000);
   }

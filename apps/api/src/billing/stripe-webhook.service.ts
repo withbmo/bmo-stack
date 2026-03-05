@@ -2,16 +2,12 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import type { Prisma } from '@pytholit/db';
 import type Stripe from 'stripe';
 
+import { isPrismaUniqueViolation } from '../common/utils/prisma-error.utils';
 import { PrismaService } from '../database/prisma.service';
 import { StripeService } from '../stripe/stripe.service';
 import { BILLING_ERROR_CODE } from './billing-error-codes';
 import { StripeWebhookProcessorService } from './stripe-webhook.processor.service';
 import { WebhookQueueService } from './webhook.queue';
-
-function isPrismaUniqueViolation(e: unknown): boolean {
-  const err = e as { code?: string };
-  return err?.code === 'P2002';
-}
 
 @Injectable()
 export class StripeWebhookService {
@@ -83,7 +79,13 @@ export class StripeWebhookService {
       await this.queue.enqueueStripeWebhookEvent(event.id);
       return;
     } catch (e) {
-      // Local/dev fallback: no queue configured -> process inline so webhooks still work.
+      const isDev = (process.env.NODE_ENV ?? '') === 'development';
+      if (!isDev) {
+        // In production, let the error propagate so Stripe retries via its own retry mechanism.
+        // Processing inline would hold the HTTP connection open and risk timeouts under load.
+        throw e;
+      }
+      // Local/dev fallback: process inline so webhooks work without Redis.
       this.logger.warn('stripe_webhook_queue_unavailable_processing_inline', {
         stripeEventId: event.id,
         type: event.type,

@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Prisma } from '@pytholit/db';
 import { AfterHook, type AuthHookContext, BeforeHook, Hook } from '@thallesp/nestjs-better-auth';
 
+import { isPrismaUniqueViolation } from '../../common/utils/prisma-error.utils';
 import { DistributedLockService } from '../../common/services/distributed-lock.service';
 import { PrismaService } from '../../database/prisma.service';
 import { extractNormalizedEmail } from './auth-hook.utils';
@@ -111,7 +111,7 @@ export class LoginLockoutHook {
         return;
       } catch (error) {
         // Parallel failed-login requests can race on unique email.
-        if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
+        if (!isPrismaUniqueViolation(error)) {
           throw error;
         }
       }

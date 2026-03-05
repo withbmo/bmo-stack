@@ -35,6 +35,7 @@ export const Navbar = () => {
 
   useEffect(() => {
     if (!hydrated || !user) return;
+    if (!pathname.startsWith('/dashboard/settings/billing')) return;
     let cancelled = false;
     (async () => {
       try {
@@ -50,27 +51,27 @@ export const Navbar = () => {
     return () => {
       cancelled = true;
     };
-  }, [hydrated, user]);
+  }, [hydrated, pathname, user]);
 
   const avatarUrl = useMemo(() => resolveAvatarUrl(profile?.avatarUrl), [profile?.avatarUrl]);
 
   const navLinkClass = (path: string) =>
     pathname === path
-      ? 'text-white bg-nexus-gray/30'
-      : 'text-nexus-muted hover:text-nexus-purple hover:bg-nexus-gray/10';
+      ? 'text-text-primary bg-bg-surface'
+      : 'text-text-secondary hover:text-text-primary hover:bg-bg-surface/60';
 
   return (
-    <nav className="fixed top-0 left-0 w-full z-50 bg-nexus-black border-b border-nexus-gray h-16 flex items-center shadow-lg shadow-purple-900/5">
+    <nav className="fixed top-0 left-0 w-full z-50 bg-bg-panel border-b border-border-default h-16 flex items-center shadow-lg shadow-black/20">
       <div className="w-full px-6 flex justify-between items-center">
         <div className="flex items-center gap-8">
           <Link href="/dashboard" className="flex items-center gap-2 group">
-            <div className="w-6 h-6 bg-nexus-purple flex items-center justify-center border border-white group-hover:bg-nexus-neon transition-colors">
+            <div className="w-6 h-6 bg-brand-primary flex items-center justify-center border border-brand-primary/60 group-hover:bg-nexus-neon transition-colors">
               <Terminal size={14} className="text-white" />
             </div>
-            <span className="font-mono font-bold text-lg tracking-tighter">pytholit</span>
+            <span className="font-mono font-bold text-lg tracking-tighter text-text-primary">pytholit</span>
           </Link>
 
-          <div className="hidden md:flex gap-1 border-l border-nexus-gray pl-6 h-8 items-center">
+          <div className="hidden md:flex gap-1 border-l border-border-default pl-6 h-8 items-center">
             {DASH_LINKS.map(({ to, label }) => (
               <Link key={to} href={to}>
                 <button
@@ -82,37 +83,24 @@ export const Navbar = () => {
                 </button>
               </Link>
             ))}
-            <button className="px-3 py-1 font-mono text-xs font-bold transition-colors tracking-wider rounded-sm text-nexus-muted hover:text-nexus-purple hover:bg-nexus-gray/10">
-              LOGS
-            </button>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="hidden lg:flex items-center gap-2 text-[10px] font-mono text-nexus-accent bg-nexus-accent/5 px-3 py-1.5 border border-nexus-accent/20">
-            <div className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-nexus-accent opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-nexus-accent"></span>
-            </div>
-            SYSTEM_ONLINE
-          </div>
-
-          <div className="h-6 w-[1px] bg-nexus-gray hidden md:block"></div>
-
           <div className="flex items-center gap-3 relative">
             <NovuInbox />
 
             <Link
               href="/dashboard/settings"
-              className="flex items-center gap-3 cursor-pointer group border-l border-transparent pl-3 hover:border-nexus-gray transition-colors"
+              className="flex items-center gap-3 cursor-pointer group border-l border-transparent pl-3 hover:border-border-default transition-colors"
             >
-              <div className="text-right hidden md:block leading-tight">
-                <div className="font-mono text-xs text-white group-hover:text-nexus-purple transition-colors">
-                  {(profile?.username || 'USER').replace(/_/g, ' ')}
+                <div className="text-right hidden md:block leading-tight">
+                <div className="font-mono text-xs text-text-primary group-hover:text-brand-primary transition-colors">
+                  {profile?.username || 'USER'}
                 </div>
-                <div className="font-mono text-[10px] text-nexus-muted">{planLabel}</div>
+                <div className="font-mono text-[10px] text-text-secondary">{planLabel}</div>
               </div>
-              <div className="w-8 h-8 bg-nexus-gray/10 border border-nexus-gray flex items-center justify-center text-nexus-light group-hover:border-nexus-purple group-hover:text-white group-hover:bg-nexus-purple transition-all overflow-hidden">
+              <div className="w-8 h-8 bg-bg-surface border border-border-default flex items-center justify-center text-text-primary group-hover:border-brand-primary group-hover:text-white group-hover:bg-brand-primary transition-all overflow-hidden">
                 {avatarUrl ? (
                   <Image
                     src={avatarUrl}
@@ -132,7 +120,7 @@ export const Navbar = () => {
                 await logout();
                 router.push('/auth/login');
               }}
-              className="text-nexus-muted hover:text-red-500 transition-colors ml-2"
+              className="text-text-secondary hover:text-red-400 transition-colors ml-2"
               title="Logout"
             >
               <LogOut size={16} />

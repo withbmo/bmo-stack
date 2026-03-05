@@ -83,12 +83,14 @@ export const StepReview = ({ config, onBack, onDeploy, isDeploying }: StepReview
       </div>
 
       <div className="flex gap-4">
-        <button
+        <Button
           onClick={onBack}
-          className="flex-1 bg-transparent border border-nexus-gray text-nexus-muted font-mono font-bold py-4 hover:text-white hover:border-white transition-colors"
+          variant="secondary"
+          size="md"
+          className="flex-1 border border-nexus-gray bg-transparent text-nexus-muted hover:text-white hover:border-white"
         >
           BACK
-        </button>
+        </Button>
         <Button
           variant="primary"
           size="md"

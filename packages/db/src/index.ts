@@ -5,13 +5,15 @@
  * for the Pytholit application.
  */
 
+import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from './generated/client';
 
 const DEFAULT_DB_PORT = '5432';
 const DEFAULT_SSL_MODE = 'require';
 const DB_SCHEMA = 'public';
+const DEFAULT_LOCAL_DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/postgres?schema=public';
 
-function resolveDatabaseUrl(): string | undefined {
+function resolveDatabaseUrl(): string {
   if (process.env.DATABASE_URL) {
     return process.env.DATABASE_URL;
   }
@@ -24,7 +26,11 @@ function resolveDatabaseUrl(): string | undefined {
   const sslMode = process.env.DB_SSLMODE || DEFAULT_SSL_MODE;
 
   if (!host || !user || !password || !dbName) {
-    return undefined;
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('DATABASE_URL is required in production.');
+    }
+    process.env.DATABASE_URL = DEFAULT_LOCAL_DATABASE_URL;
+    return DEFAULT_LOCAL_DATABASE_URL;
   }
 
   const encodedUser = encodeURIComponent(user);
@@ -46,7 +52,7 @@ const globalForPrisma = globalThis as unknown as {
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    datasources: databaseUrl ? { db: { url: databaseUrl } } : undefined,
+    adapter: new PrismaPg({ connectionString: databaseUrl }),
     log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   });
 

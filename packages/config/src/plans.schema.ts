@@ -36,6 +36,7 @@ const PlanVariantSchema = z.object({
 export const PlanSchema = z.object({
   version: z.number().int().positive(),
   id: z.enum(PLAN_IDS),
+  rank: z.number().int().min(0),
   name: z.string().min(1),
   displayName: z.string().min(1),
   description: z.string().nullable(),

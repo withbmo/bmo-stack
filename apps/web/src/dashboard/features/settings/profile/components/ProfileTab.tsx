@@ -3,7 +3,14 @@ import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import { DashboardPageHeader, Input, ProfileSkeleton } from '@/dashboard/components';
+import {
+  Button,
+  DashboardPageHeader,
+  DynamicSkeletonProvider,
+  DynamicSlot,
+  Input,
+  Skeleton,
+} from '@/dashboard/components';
 import { useAuth } from '@/shared/auth';
 import { resolveAvatarUrl } from '@/shared/lib/avatar';
 import {
@@ -17,7 +24,7 @@ export const ProfileTab = () => {
   const { user, hydrated, refreshSession } = useAuth();
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -103,134 +110,181 @@ export const ProfileTab = () => {
     }
   };
 
-  if (isLoading && !profile) {
-    return <ProfileSkeleton />;
-  }
+  const initialLoading = isLoading && !profile;
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
+    <DynamicSkeletonProvider loading={initialLoading}>
+    <div className="space-y-6">
       <DashboardPageHeader
         badge={{ icon: User, label: 'PROFILE' }}
         title="PROFILE SETTINGS"
         subtitle="Manage your public identity"
         variant="minimal"
-        className="mb-0 border-0 pb-0"
+        className="mb-2 border-0 pb-2"
       />
 
-      <div className="flex items-start gap-6 pb-8 border-b border-nexus-gray/30">
-        <div
-          className="w-32 h-32 bg-nexus-gray/10 border border-nexus-gray flex items-center justify-center text-nexus-purple relative group cursor-pointer overflow-hidden"
-          onClick={handleUploadClick}
-        >
-          {avatarUrl ? (
-            <Image
-              src={avatarUrl}
-              alt="Avatar"
-              width={128}
-              height={128}
-              className="w-full h-full object-cover"
-              unoptimized
-            />
-          ) : (
-            <User size={32} className="group-hover:scale-110 transition-transform" />
-          )}
-          <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-            <span className="text-[8px] font-mono text-white text-center">
-              UPLOAD
-              <br />
-              IMAGE
-            </span>
-          </div>
+      {/* Avatar */}
+      <div className="border border-border-default bg-bg-panel">
+        <div className="px-6 py-4 border-b border-border-default">
+          <p className="font-mono text-[10px] text-text-primary/80 uppercase tracking-widest">Avatar</p>
         </div>
-        <div className="flex-1">
-          <h4 className="text-white font-bold mb-2">Avatar</h4>
-          <p className="text-xs text-nexus-muted mb-4 font-mono leading-relaxed">
-            Recommended dimensions: 400x400px.
-            <br />
-            Supported formats: JPG, PNG. Max 2MB.
-          </p>
-          <div className="flex gap-3 items-center">
-            <button
-              onClick={handleRemoveAvatar}
-              disabled={isSaving || !avatarUrl}
-              className="px-4 py-2 border border-nexus-gray text-nexus-muted font-mono text-xs font-bold hover:text-white hover:border-white transition-colors disabled:opacity-60"
+        <div className="px-6 py-5 flex items-start gap-6">
+          <DynamicSlot
+            skeleton={<Skeleton className="w-20 h-20 shrink-0" />}
+          >
+            <div
+              className="w-20 h-20 bg-bg-surface border border-border-default flex items-center justify-center text-text-primary/75 relative group cursor-pointer overflow-hidden shrink-0"
+              onClick={handleUploadClick}
             >
-              REMOVE
-            </button>
+              {avatarUrl ? (
+                <Image
+                  src={avatarUrl}
+                  alt="Avatar"
+                  width={80}
+                  height={80}
+                  className="w-full h-full object-cover"
+                  unoptimized
+                />
+              ) : (
+                <User size={24} className="group-hover:scale-110 transition-transform" />
+              )}
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="text-[8px] font-mono text-white text-center uppercase tracking-widest">
+                  Upload
+                </span>
+              </div>
+            </div>
+          </DynamicSlot>
+          <div className="flex-1">
+            <p className="font-mono text-xs text-text-primary/75 leading-relaxed mb-4">
+              Recommended: 400×400px. Supported: JPG, PNG. Max 2MB.
+            </p>
+            <DynamicSlot
+              skeleton={<Skeleton className="h-9 w-28" />}
+            >
+              <Button
+                onClick={handleRemoveAvatar}
+                disabled={isSaving || !avatarUrl}
+                variant="secondary"
+                size="sm"
+                className="text-xs tracking-wider"
+              >
+                Remove Avatar
+              </Button>
+            </DynamicSlot>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/png,image/jpeg"
+              className="hidden"
+              onChange={handleFileChange}
+            />
           </div>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/png,image/jpeg"
-            className="hidden"
-            onChange={handleFileChange}
-          />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
-        <div className="space-y-2">
-          <label className="font-mono text-[10px] text-nexus-purple uppercase tracking-wider">
-            Username
-          </label>
-          <Input type="text" value={profile?.username || ''} readOnly disabled />
+      {/* Fields */}
+      <div className="border border-border-default bg-bg-panel">
+        <div className="px-6 py-4 border-b border-border-default">
+          <p className="font-mono text-[10px] text-text-primary/80 uppercase tracking-widest">Identity</p>
         </div>
-        <div className="space-y-2">
-          <label className="font-mono text-[10px] text-nexus-purple uppercase tracking-wider">
-            First Name
-          </label>
-          <Input
-            type="text"
-            value={firstName}
-            onChange={e => setFirstName(e.target.value)}
-            disabled={isLoading}
-          />
-        </div>
-        <div className="space-y-2">
-          <label className="font-mono text-[10px] text-nexus-purple uppercase tracking-wider">
-            Last Name
-          </label>
-          <Input
-            type="text"
-            value={lastName}
-            onChange={e => setLastName(e.target.value)}
-            disabled={isLoading}
-          />
-        </div>
-        <div className="space-y-2">
-          <label className="font-mono text-[10px] text-nexus-purple uppercase tracking-wider">
-            Email Address
-          </label>
-          <Input
-            type="email"
-            value={profile?.email || ''}
-            disabled
-            readOnly
-          />
-        </div>
-        <div className="space-y-2">
-          <label className="font-mono text-[10px] text-nexus-purple uppercase tracking-wider">
-            Bio / Status
-          </label>
-          <Input
-            multiline
-            rows={3}
-            value={bio}
-            onChange={e => setBio(e.target.value)}
-            disabled={isLoading}
-          />
+        <div className="px-6 py-5 grid grid-cols-1 gap-5">
+          <div className="space-y-2">
+            <label className="font-mono text-[10px] text-text-primary/80 uppercase tracking-wider">
+              Username
+            </label>
+            <DynamicSlot skeleton={<Skeleton className="h-10 w-full" />}>
+              <Input
+                type="text"
+                value={profile?.username || ''}
+                readOnly
+                disabled
+                variant="default"
+                size="sm"
+              />
+            </DynamicSlot>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-5">
+            <div className="space-y-2">
+              <label className="font-mono text-[10px] text-text-primary/80 uppercase tracking-wider">
+                First Name
+              </label>
+              <DynamicSlot skeleton={<Skeleton className="h-10 w-full" />}>
+                <Input
+                  type="text"
+                  value={firstName}
+                  onChange={e => setFirstName(e.target.value)}
+                  disabled={isLoading}
+                  variant="default"
+                  intent="brand"
+                  size="sm"
+                />
+              </DynamicSlot>
+            </div>
+            <div className="space-y-2">
+              <label className="font-mono text-[10px] text-text-primary/80 uppercase tracking-wider">
+                Last Name
+              </label>
+              <DynamicSlot skeleton={<Skeleton className="h-10 w-full" />}>
+                <Input
+                  type="text"
+                  value={lastName}
+                  onChange={e => setLastName(e.target.value)}
+                  disabled={isLoading}
+                  variant="default"
+                  intent="brand"
+                  size="sm"
+                />
+              </DynamicSlot>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="font-mono text-[10px] text-text-primary/80 uppercase tracking-wider">
+              Email Address
+            </label>
+            <DynamicSlot skeleton={<Skeleton className="h-10 w-full" />}>
+              <Input
+                type="email"
+                value={profile?.email || ''}
+                disabled
+                readOnly
+                variant="default"
+                size="sm"
+              />
+            </DynamicSlot>
+          </div>
+          <div className="space-y-2">
+            <label className="font-mono text-[10px] text-text-primary/80 uppercase tracking-wider">
+              Bio / Status
+            </label>
+            <DynamicSlot skeleton={<Skeleton className="h-20 w-full" />}>
+              <Input
+                multiline
+                rows={3}
+                value={bio}
+                onChange={e => setBio(e.target.value)}
+                disabled={isLoading}
+                variant="default"
+                intent="brand"
+                size="sm"
+              />
+            </DynamicSlot>
+          </div>
         </div>
       </div>
 
-      <div className="pt-4">
-        <button
+      <div className="flex justify-end">
+        <Button
           onClick={handleSave}
           disabled={isSaving || isLoading || !profile}
-          className="px-8 py-3 bg-nexus-purple text-white font-mono font-bold text-xs hover:bg-nexus-neon transition-colors shadow-lg shadow-purple-900/20 disabled:opacity-60"
+          variant="primary"
+          size="sm"
+          className="px-8 text-xs tracking-wider"
         >
-          {isSaving ? 'SAVING...' : 'SAVE CHANGES'}
-        </button>
+          {isSaving ? 'Saving...' : 'Save Changes'}
+        </Button>
       </div>
     </div>
+    </DynamicSkeletonProvider>
   );
 };

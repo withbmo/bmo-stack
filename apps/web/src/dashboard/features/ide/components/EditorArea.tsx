@@ -19,8 +19,8 @@ export const CodeEditor = ({
   const lineCount = content.split("\n").length || 1;
 
   return (
-    <div className="h-full flex font-mono text-sm overflow-hidden bg-[#0C0C0C]">
-      <div className="w-12 bg-[#0A0A0A] border-r border-nexus-gray/20 text-nexus-muted/40 text-right pr-3 py-4 select-none">
+    <div className="h-full flex font-mono text-sm overflow-hidden bg-nexus-black">
+      <div className="w-12 bg-nexus-dark border-r border-nexus-gray/20 text-nexus-muted/40 text-right pr-3 py-4 select-none">
         {Array.from({ length: lineCount }).map((_, i) => (
           <div key={i} className="leading-6">
             {i + 1}
@@ -53,9 +53,9 @@ export const EditorArea = () => {
   const activeMeta = activeFileId != null ? files[activeFileId] : null;
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 bg-[#0C0C0C]">
+    <div className="flex-1 flex flex-col min-w-0 bg-nexus-black">
       <div className="flex-grow flex flex-col min-h-0">
-        <div className="editor-tabs-scroll h-10 shrink-0 flex items-center border-b border-nexus-gray bg-[#080808] overflow-x-auto">
+        <div className="editor-tabs-scroll h-10 shrink-0 flex items-center border-b border-nexus-gray bg-nexus-dark overflow-x-auto">
           {openFileIds.map((fileId) => {
             const meta = files[fileId];
             if (!meta) return null;
@@ -68,7 +68,7 @@ export const EditorArea = () => {
                 onClick={() => setActiveFile(fileId)}
                 className={`h-full px-4 flex items-center gap-2 border-r border-nexus-gray/50 text-xs font-mono shrink-0 cursor-pointer transition-colors ${
                   isActive
-                    ? "bg-[#0C0C0C] border-t-2 border-t-nexus-purple text-white"
+                    ? "bg-nexus-black border-t-2 border-t-nexus-purple text-white"
                     : "text-nexus-muted hover:text-white hover:bg-nexus-gray/20"
                 }`}
               >

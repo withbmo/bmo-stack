@@ -11,6 +11,15 @@ export class StripeCustomerService {
     private readonly stripeService: StripeService
   ) {}
 
+  async resolveUserIdFromStripeCustomerId(customerId: string): Promise<{ userId: string } | null> {
+    const user = await this.prisma.client.user.findUnique({
+      where: { stripeCustomerId: customerId },
+      select: { id: true },
+    });
+    if (!user?.id) return null;
+    return { userId: user.id };
+  }
+
   async getOrCreateStripeCustomerIdForUser(userId: string): Promise<string> {
     const existing = await this.prisma.client.user.findUnique({
       where: { id: userId },

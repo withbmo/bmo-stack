@@ -1,37 +1,19 @@
-import { useEffect, useState } from 'react';
-
-import { getEnabledOAuthProviders, type OAuthProvider } from '@/shared/lib/auth';
+import { type OAuthProvider } from '@/shared/lib/auth';
 
 type UseOAuthProvidersResult = {
-  providers: OAuthProvider[] | null;
+  providers: OAuthProvider[];
   isLoading: boolean;
 };
 
+const DEFAULT_OAUTH_PROVIDERS: OAuthProvider[] = ['github', 'google'];
+
 /**
- * Loads enabled OAuth providers for auth screens.
- * Returns null while loading, then a concrete provider array (possibly empty).
+ * Returns static OAuth providers for auth screens.
+ * Provider gating is enforced server-side during sign-in.
  */
 export function useOAuthProviders(): UseOAuthProvidersResult {
-  const [providers, setProviders] = useState<OAuthProvider[] | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    void getEnabledOAuthProviders()
-      .then((nextProviders) => {
-        if (!cancelled) setProviders(nextProviders);
-      })
-      .catch(() => {
-        if (!cancelled) setProviders([]);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   return {
-    providers,
-    isLoading: providers === null,
+    providers: DEFAULT_OAUTH_PROVIDERS,
+    isLoading: false,
   };
 }

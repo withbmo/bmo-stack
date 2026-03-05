@@ -16,6 +16,8 @@ export interface User {
   avatarUrl: string | null;
   isEmailVerified: boolean;
   isActive: boolean;
+  oauthOnboardingRequired: boolean;
+  oauthOnboardingCompletedAt: string | null;
   isAdmin: boolean;
   adminLevel: AdminLevel | null;
   novuSubscriberId: string | null;
@@ -45,6 +47,7 @@ export interface PlanFeature {
 }
 
 export interface UpdateProfileInput {
+  username?: string;
   firstName?: string;
   lastName?: string;
   bio?: string;

@@ -177,6 +177,11 @@ export interface Subscription {
   periodStart: string;
   periodEnd: string;
   cancelAtPeriodEnd: boolean;
+  scheduledDowngrade?: {
+    planId: PlanId;
+    billingInterval: BillingInterval;
+    effectiveAt: string;
+  } | null;
   plan?: Plan | null;
 }
 

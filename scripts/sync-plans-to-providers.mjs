@@ -92,13 +92,18 @@ async function ensureStripePlan(variant, stripeSecret) {
     return;
   }
 
-  const products = await stripeRequest(
-    'GET',
-    `/products?limit=100&active=true&metadata[plan_code]=${encodeURIComponent(variant.planCode)}`,
-    null,
-    stripeSecret
-  );
-  let product = (products.data ?? [])[0] ?? null;
+  let product = null;
+  let startingAfter = null;
+  while (!product) {
+    const endpoint = startingAfter
+      ? `/products?limit=100&active=true&starting_after=${encodeURIComponent(startingAfter)}`
+      : '/products?limit=100&active=true';
+    const products = await stripeRequest('GET', endpoint, null, stripeSecret);
+    const productData = products.data ?? [];
+    product = productData.find((p) => p?.metadata?.plan_code === variant.planCode) ?? null;
+    if (product || !products.has_more || productData.length === 0) break;
+    startingAfter = productData[productData.length - 1]?.id ?? null;
+  }
 
   if (!product) {
     const payload = {

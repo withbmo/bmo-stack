@@ -15,7 +15,7 @@ export function ProtectedDashboardGuard({ children }: { children: React.ReactNod
   const { user, hydrated } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [status, setStatus] = useState<'checking' | 'ok' | 'fail'>('checking');
+  const [status, setStatus] = useState<'checking' | 'ok' | 'fail' | 'onboarding'>('checking');
 
   const next = useMemo(
     () => `${pathname}${typeof window !== 'undefined' ? window.location.search : ''}`,
@@ -28,8 +28,13 @@ export function ProtectedDashboardGuard({ children }: { children: React.ReactNod
       setStatus('fail');
       return;
     }
+    if (user.oauthOnboardingRequired || !user.username) {
+      setStatus('onboarding');
+      router.replace(`/auth/oauth-onboarding?next=${encodeURIComponent(next)}`);
+      return;
+    }
     setStatus('ok');
-  }, [user, hydrated]);
+  }, [hydrated, next, router, user]);
 
   useEffect(() => {
     if (status === 'fail') {
@@ -39,6 +44,6 @@ export function ProtectedDashboardGuard({ children }: { children: React.ReactNod
 
   if (!hydrated) return <PageLoader />;
   if (status === 'checking') return <PageLoader />;
-  if (status === 'fail') return null; // redirecting
+  if (status === 'fail' || status === 'onboarding') return null; // redirecting
   return <>{children}</>;
 }

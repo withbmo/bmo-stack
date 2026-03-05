@@ -25,6 +25,7 @@ export type PlanBillingVariant = {
 export type Plan = {
   version: number;
   id: PlanId;
+  rank: number;
   name: string;
   displayName: string;
   description: string | null;
@@ -45,6 +46,7 @@ const RAW_PLANS = PlansSchema.parse([
 ]) as Array<{
   version: number;
   id: PlanId;
+  rank: number;
   name: string;
   displayName: string;
   description: string | null;
@@ -81,6 +83,7 @@ export function getCreditsForUsd(priceUsd: number): number {
 export function validatePlans(plans: Plan[]): void {
   const errors: string[] = [];
   const ids = new Set<string>();
+  const ranks = new Set<number>();
   const versions = new Set<number>();
   let defaultCount = 0;
   let featureIdSet: Set<string> | null = null;
@@ -89,6 +92,10 @@ export function validatePlans(plans: Plan[]): void {
       errors.push(`plans[${index}].id must be unique: ${plan.id}`);
     }
     ids.add(plan.id);
+    if (ranks.has(plan.rank)) {
+      errors.push(`plans[${index}].rank must be unique: ${plan.rank}`);
+    }
+    ranks.add(plan.rank);
     versions.add(plan.version);
     if (plan.isDefault === true) {
       defaultCount += 1;
@@ -135,6 +142,11 @@ export function getPlans(): Plan[] {
 
 export function getPlanById(planId: string): Plan | null {
   return PLANS.find((plan) => plan.id === planId) ?? null;
+}
+
+export function getPlanRank(planId: string): number | null {
+  const plan = getPlanById(planId);
+  return plan ? plan.rank : null;
 }
 
 export function getPlanVariant(

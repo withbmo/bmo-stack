@@ -9,7 +9,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { Prisma } from '@pytholit/db';
 
 import { readTrimmedStringOrDefault } from '../config/config-readers';
 import {
@@ -135,6 +134,12 @@ function validateAndApplyDefaults(
 
 @Injectable()
 export class WizardService {
+  private readonly manifestCache = new Map<
+    string,
+    { ownerId: string; manifest: WizardManifest; createdAtMs: number }
+  >();
+  private readonly manifestCacheTtlMs = 60 * 60 * 1000;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService
@@ -403,31 +408,45 @@ export class WizardService {
 
     const version = await this.resolveVersion(templateId, requestedVersion);
     const { manifest, lock } = await this.renderWizard(schema, templateId, version, inputs);
+    void lock;
+    this.storeManifest(userId, manifest);
 
-    await this.prisma.client.wizardBuild.create({
-      data: {
-        id: manifest.id,
-        ownerId: userId,
-        projectId,
-        version,
-        inputs: inputs as unknown as Prisma.InputJsonValue,
-        manifest: manifest as unknown as Prisma.InputJsonValue,
-        lock: lock as unknown as Prisma.InputJsonValue,
-      },
-    });
+    void projectId;
+    void version;
+    void inputs;
 
     return { id: manifest.id, manifestId: manifest.id };
   }
 
   async getManifest(userId: string, manifestId: string): Promise<WizardManifest> {
-    const build = await this.prisma.client.wizardBuild.findUnique({
-      where: { id: manifestId },
-      select: { ownerId: true, manifest: true },
+    const entry = this.getCachedManifest(manifestId);
+    if (!entry) throw new NotFoundException('Manifest not found');
+    if (entry.ownerId !== userId) throw new ForbiddenException('Access denied');
+    return entry.manifest;
+  }
+
+  private storeManifest(ownerId: string, manifest: WizardManifest): void {
+    this.cleanupManifestCache();
+    this.manifestCache.set(manifest.id, {
+      ownerId,
+      manifest,
+      createdAtMs: Date.now(),
     });
+  }
 
-    if (!build) throw new NotFoundException('Manifest not found');
-    if (build.ownerId !== userId) throw new ForbiddenException('Access denied');
+  private getCachedManifest(manifestId: string): { ownerId: string; manifest: WizardManifest } | null {
+    this.cleanupManifestCache();
+    const entry = this.manifestCache.get(manifestId);
+    if (!entry) return null;
+    return { ownerId: entry.ownerId, manifest: entry.manifest };
+  }
 
-    return build.manifest as unknown as WizardManifest;
+  private cleanupManifestCache(): void {
+    const now = Date.now();
+    for (const [manifestId, entry] of this.manifestCache.entries()) {
+      if (now - entry.createdAtMs > this.manifestCacheTtlMs) {
+        this.manifestCache.delete(manifestId);
+      }
+    }
   }
 }

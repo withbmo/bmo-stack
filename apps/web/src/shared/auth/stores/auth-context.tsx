@@ -60,18 +60,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       pathname.startsWith('/dashboard') ||
       pathname.startsWith('/editor') ||
       pathname.startsWith('/admin');
-
     if (user) {
       setHydrated(true);
       return;
     }
 
-    // One initial hydration on app load keeps public-site auth UI accurate
-    // (e.g. "GO TO DASHBOARD" vs "START BUILDING") without polling on every public route.
+    // On first load, only check session for protected/auth routes.
+    // Public pages default hydrated=true (no 401 noise, button defaults to "START BUILDING").
     if (!initialSessionCheckDone.current) {
       initialSessionCheckDone.current = true;
-      setHydrated(false);
-      void refreshSession();
+      if (isProtectedRoute) {
+        setHydrated(false);
+        void refreshSession();
+        return;
+      }
+      setHydrated(true);
       return;
     }
 

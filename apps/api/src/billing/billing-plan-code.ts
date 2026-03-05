@@ -2,8 +2,8 @@ import { ServiceUnavailableException } from '@nestjs/common';
 import { getDefaultPlan, getPlanByCode, getPlanCode } from '@pytholit/config';
 import { type BillingInterval, type PlanId } from '@pytholit/contracts';
 
-import { BILLING_ERROR_CODE } from './billing-error-codes';
 import { type BillingPlanCode } from './billing.interface';
+import { BILLING_ERROR_CODE } from './billing-error-codes';
 
 export function getDefaultBillingPlanCode(): BillingPlanCode {
   return getDefaultPlan().billing.monthly.code as BillingPlanCode;

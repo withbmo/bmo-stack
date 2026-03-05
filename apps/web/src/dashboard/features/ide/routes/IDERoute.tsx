@@ -124,13 +124,13 @@ const SidebarIcon = ({
     className={`relative group w-full h-14 flex items-center justify-center transition-all duration-200
       ${
         isActive
-          ? 'text-white bg-[#0A0A0A] border-l-2 border-nexus-purple'
+          ? 'text-white bg-nexus-dark border-l-2 border-nexus-purple'
           : 'text-nexus-muted hover:text-white hover:bg-white/5 border-l-2 border-transparent'
       }
     `}
   >
     <Icon size={20} strokeWidth={1.5} className={isActive ? 'text-nexus-purple' : ''} />
-    <div className="absolute left-full ml-1 px-3 py-1.5 bg-[#080808] border border-nexus-gray text-[10px] font-mono font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-[4px_4px_0px_0px_rgba(30,30,30,1)]">
+    <div className="absolute left-full ml-1 px-3 py-1.5 bg-nexus-dark border border-nexus-gray text-[10px] font-mono font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-[4px_4px_0px_0px_rgba(30,30,30,1)]">
       {label}
     </div>
   </button>
@@ -194,9 +194,9 @@ export const IDERoute = () => {
   }, [searchParams, replaceFileTree, hydrated, user]);
 
   return (
-    <div className="h-screen w-full bg-[#050505] text-white flex flex-col overflow-hidden font-sans">
+    <div className="h-screen w-full bg-nexus-black text-white flex flex-col overflow-hidden font-sans">
       {/* IDE Header */}
-      <div className="h-12 border-b border-nexus-gray flex items-center justify-between px-4 bg-[#080808]">
+      <div className="h-12 border-b border-nexus-gray flex items-center justify-between px-4 bg-nexus-dark">
         <div className="flex items-center gap-4">
           <button
             type="button"
@@ -229,7 +229,7 @@ export const IDERoute = () => {
       {/* Main Layout */}
       <div className="flex-1 flex overflow-hidden">
         {/* Navigation Sidebar */}
-        <div className="w-14 border-r border-nexus-gray bg-[#050505] flex flex-col items-center py-2 z-10">
+        <div className="w-14 border-r border-nexus-gray bg-nexus-black flex flex-col items-center py-2 z-10">
           <SidebarIcon
             icon={Code2}
             label="Code Editor"
@@ -269,7 +269,7 @@ export const IDERoute = () => {
             <div className="flex-1 flex overflow-hidden min-w-0">
               {/* AI Chat */}
               <div
-                className="shrink-0 flex flex-col bg-[#080808]"
+                className="shrink-0 flex flex-col bg-nexus-dark"
                 style={{
                   width: chatPanelWidth,
                   minWidth: CHAT_MIN,
@@ -299,7 +299,7 @@ export const IDERoute = () => {
                         className={`p-3 text-xs leading-relaxed border max-w-[85%] font-mono
                         ${
                           msg.role === 'agent'
-                            ? 'bg-[#0A0A0A] border-nexus-gray text-nexus-light/80'
+                            ? 'bg-nexus-dark border-nexus-gray text-nexus-light/80'
                             : 'bg-nexus-purple/10 border-nexus-purple/30 text-white'
                         }`}
                       >
@@ -311,7 +311,7 @@ export const IDERoute = () => {
                 <form
                   ref={chatFormRef}
                   onSubmit={handleChatSubmit}
-                  className="border-t border-nexus-gray bg-[#0A0A0A]"
+                  className="border-t border-nexus-gray bg-nexus-dark"
                 >
                   <div className="px-3 pt-3 pb-3">
                     <Input
@@ -335,13 +335,13 @@ export const IDERoute = () => {
                             setLlmDropdownOpen(false);
                             setModeDropdownOpen(o => !o);
                           }}
-                          className="flex items-center gap-1 px-2 py-1.5 bg-[#141414] border border-nexus-gray text-nexus-muted hover:text-white hover:border-nexus-gray/70 transition-colors"
+                          className="flex items-center gap-1 px-2 py-1.5 bg-nexus-dark border border-nexus-gray text-nexus-muted hover:text-white hover:border-nexus-gray/70 transition-colors"
                         >
                           {chatMode === 'ask' ? <MessageSquare size={14} /> : <Code2 size={14} />}
                           <ChevronDown size={12} className="opacity-70" />
                         </button>
                         {modeDropdownOpen && (
-                          <div className="absolute left-0 bottom-full mb-1 z-10 min-w-[100%] bg-[#0D0D0D] border border-nexus-gray shadow-lg">
+                          <div className="absolute left-0 bottom-full mb-1 z-10 min-w-[100%] bg-nexus-dark border border-nexus-gray shadow-lg">
                             {(['ask', 'editor'] as const).map(mode => (
                               <button
                                 key={mode}
@@ -376,7 +376,7 @@ export const IDERoute = () => {
                           <ChevronDown size={12} className="opacity-70" />
                         </button>
                         {llmDropdownOpen && (
-                          <div className="absolute left-0 bottom-full mb-1 z-10 min-w-[100%] bg-[#0D0D0D] border border-nexus-gray shadow-lg">
+                          <div className="absolute left-0 bottom-full mb-1 z-10 min-w-[100%] bg-nexus-dark border border-nexus-gray shadow-lg">
                             {LLM_OPTIONS.map(opt => (
                               <button
                                 key={opt.id}
@@ -425,7 +425,7 @@ export const IDERoute = () => {
               />
 
               <div
-                className="flex-1 flex flex-col min-w-0 bg-[#0C0C0C]"
+                className="flex-1 flex flex-col min-w-0 bg-nexus-black"
                 style={{ minWidth: EDITOR_MIN }}
               >
                 <EditorArea />
@@ -437,7 +437,7 @@ export const IDERoute = () => {
           {/* API Playground View */}
           {activeView === 'api' && (
             <div className="flex-1 min-w-0 w-full flex flex-col overflow-hidden api-playground-swagger">
-              <div className="h-full overflow-auto bg-[#080808] border border-nexus-gray">
+              <div className="h-full overflow-auto bg-nexus-dark border border-nexus-gray">
                 <SwaggerUI url={OPENAPI_SPEC_URL} />
               </div>
             </div>
@@ -452,8 +452,8 @@ export const IDERoute = () => {
 
           {/* Database View Placeholder */}
           {activeView === 'database' && (
-            <div className="flex-1 flex items-center justify-center flex-col text-nexus-muted bg-[#0A0A0A]">
-              <div className="w-24 h-24 border border-nexus-gray flex items-center justify-center mb-6 bg-[#080808] animate-in zoom-in duration-300">
+            <div className="flex-1 flex items-center justify-center flex-col text-nexus-muted bg-nexus-dark">
+              <div className="w-24 h-24 border border-nexus-gray flex items-center justify-center mb-6 bg-nexus-black animate-in zoom-in duration-300">
                 <Database size={48} className="text-blue-400" />
               </div>
               <h3 className="font-sans font-bold text-2xl text-white mb-2 tracking-widest">
@@ -467,7 +467,7 @@ export const IDERoute = () => {
 
           {/* Config View: Env Vars + Danger Zone */}
           {activeView === 'config' && (
-            <div className="flex-1 min-w-0 w-full flex flex-col overflow-auto bg-[#0A0A0A] p-8">
+            <div className="flex-1 min-w-0 w-full flex flex-col overflow-auto bg-nexus-dark p-8">
               <div className="max-w-2xl space-y-10">
                 <div>
                   <h2 className="font-sans font-bold text-xl text-white mb-2 flex items-center gap-2">
@@ -480,7 +480,7 @@ export const IDERoute = () => {
                     {projectConfig.envVars.map(ev => (
                       <div
                         key={ev.id}
-                        className="flex gap-2 items-center border border-nexus-gray bg-[#080808] p-3"
+                        className="flex gap-2 items-center border border-nexus-gray bg-nexus-black p-3"
                       >
                         <Input
                           value={ev.key}
@@ -559,7 +559,7 @@ export const IDERoute = () => {
                     Irreversible actions. Proceed with caution.
                   </p>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between border border-nexus-gray bg-[#080808] p-4">
+                    <div className="flex items-center justify-between border border-nexus-gray bg-nexus-black p-4">
                       <div>
                         <div className="font-sans font-bold text-white mb-1">DELETE_PROJECT</div>
                         <div className="font-mono text-xs text-nexus-muted">
@@ -573,7 +573,7 @@ export const IDERoute = () => {
                         DELETE
                       </button>
                     </div>
-                    <div className="flex items-center justify-between border border-nexus-gray bg-[#080808] p-4">
+                    <div className="flex items-center justify-between border border-nexus-gray bg-nexus-black p-4">
                       <div>
                         <div className="font-sans font-bold text-white mb-1">
                           TRANSFER_OWNERSHIP

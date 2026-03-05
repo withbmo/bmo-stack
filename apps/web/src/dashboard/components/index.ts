@@ -3,15 +3,16 @@ export type { DashboardPageHeaderProps } from '@/shared/components/layout';
 export {
   BackgroundLayers,
   Badge,
-  BillingSkeleton,
   Button,
   Card,
   CyberRings,
   DashboardTabs,
   DeployJobStatusBadge,
   DeploymentStatusBadge,
+  DynamicSkeletonProvider,
+  DynamicSlot,
+  DynamicValue,
   EmptyState,
-  EnvironmentsSkeleton,
   FilterTabButton,
   GlitchText,
   Input,
@@ -19,13 +20,13 @@ export {
   LoadingState,
   Modal,
   PricingCard,
-  ProfileSkeleton,
   ResourceCard,
   ScrollToHash,
   SectionHeader,
   Skeleton,
   StatusBadge,
   TemplateCard,
+  useDynamicSkeletonLoading,
 } from '@pytholit/ui';
 
 // Layout

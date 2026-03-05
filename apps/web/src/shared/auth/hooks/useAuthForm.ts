@@ -83,7 +83,7 @@ export function useAuthForm({ mode }: UseAuthFormOptions): UseAuthFormReturn {
       errors.username = "Username is required.";
     } else if (!USERNAME_REGEX.test(u)) {
       errors.username =
-        "Username must be 3–30 characters, only letters, numbers, and underscore.";
+        "Username must be 3-39 chars, letters/numbers/hyphens only, no leading/trailing hyphen.";
     }
     if (!firstName.trim()) {
       errors.firstName = "First name is required.";

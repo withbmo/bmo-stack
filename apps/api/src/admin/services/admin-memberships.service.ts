@@ -2,6 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import type { AdminLevel } from '@pytholit/contracts';
 import { Prisma } from '@pytholit/db';
 
+import { isPrismaUniqueViolation } from '../../common/utils/prisma-error.utils';
 import { PrismaService } from '../../database/prisma.service';
 import type { PageResult } from '../types/page-result';
 import { AdminAuditService } from './admin-audit.service';
@@ -69,7 +70,7 @@ export class AdminMembershipsService {
       items: rows.map((row) => ({
         userId: row.userId,
         email: row.user.email,
-        username: row.user.username,
+        username: row.user.username ?? '',
         level: row.level,
         grantedByUserId: row.grantedByUserId,
         createdAt: row.createdAt.toISOString(),
@@ -123,17 +124,14 @@ export class AdminMembershipsService {
       return {
         userId: created.userId,
         email: created.user.email,
-        username: created.user.username,
+        username: created.user.username ?? '',
         level: created.level,
         grantedByUserId: created.grantedByUserId,
         createdAt: created.createdAt.toISOString(),
         updatedAt: created.updatedAt.toISOString(),
       };
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
+      if (isPrismaUniqueViolation(error)) {
         throw new ConflictException('User is already an admin');
       }
       throw error;
@@ -183,7 +181,7 @@ export class AdminMembershipsService {
     return {
       userId: updated.userId,
       email: updated.user.email,
-      username: updated.user.username,
+      username: updated.user.username ?? '',
       level: updated.level,
       grantedByUserId: updated.grantedByUserId,
       createdAt: updated.createdAt.toISOString(),

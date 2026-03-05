@@ -13,10 +13,10 @@ export type ButtonSize = 'sm' | 'md' | 'lg' | 'xl';
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'px-5 py-2 font-mono text-sm font-bold',
-  md: 'px-6 py-3 font-mono text-base font-bold',
-  lg: 'h-14 px-8 font-mono font-bold text-lg',
-  xl: 'px-12 py-4 font-mono font-bold text-xl',
+  sm: 'px-5 py-1.5 font-mono text-sm font-bold',
+  md: 'px-6 py-2 font-mono text-base font-bold',
+  lg: 'h-12 px-8 font-mono font-bold text-lg',
+  xl: 'px-12 py-3 font-mono font-bold text-xl',
 };
 
 const variantClasses: Record<ButtonVariant, string> = {

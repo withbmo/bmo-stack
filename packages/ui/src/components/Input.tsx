@@ -15,20 +15,20 @@ const sizeClasses: Record<InputSize, string> = {
 };
 
 const variantClasses: Record<InputVariant, string> = {
-  default: 'bg-bg-surface border border-border-dim text-text-primary',
-  panel: 'bg-bg-panel border border-border-dim text-white placeholder:text-nexus-muted',
+  default: 'bg-bg-surface border border-border-default text-text-primary',
+  panel: 'bg-bg-panel border border-border-default text-white placeholder:text-nexus-muted',
   ide: 'bg-[#0D0D0D] border border-nexus-gray text-white placeholder:text-nexus-muted',
   terminal:
     'bg-transparent border-none px-0 py-0 text-white placeholder:text-nexus-muted focus:ring-0 focus:border-transparent',
 };
 
 const intentFocusClasses: Record<InputIntent, string> = {
-  default: 'focus:border-border-highlight focus:ring-border-highlight',
-  brand: 'focus:border-brand-primary focus:ring-brand-primary',
-  danger: 'focus:border-red-500 focus:ring-red-500',
+  default: 'focus:border-border-highlight',
+  brand: 'focus:border-brand-primary',
+  danger: 'focus:border-red-500',
 };
 
-const errorClass = 'border-red-500 focus:border-red-500 focus:ring-red-500';
+const errorClass = 'border-red-500 focus:border-red-500';
 
 export type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> & {
   /** When true, renders a textarea instead of an input */
@@ -65,7 +65,7 @@ export const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputPro
     rootClass,
     sizeClasses[size],
     variantClasses[variant],
-    !isTerminal && 'focus:outline-none focus:ring-1',
+    !isTerminal && 'focus:outline-none',
     !isTerminal && intentFocusClasses[focusIntent],
     error && errorClass,
     className

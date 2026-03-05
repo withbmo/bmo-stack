@@ -15,6 +15,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import type { UserProfile } from '@pytholit/contracts';
 
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CompleteOAuthOnboardingDto } from './dto/complete-oauth-onboarding.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
 
@@ -37,6 +38,22 @@ export class UsersController {
     @Body() updateUserDto: UpdateUserDto
   ): Promise<UserProfile> {
     return this.usersService.updateProfile(userId, updateUserDto);
+  }
+
+  @Get('me/oauth-onboarding')
+  async getOAuthOnboarding(@CurrentUser('id') userId: string): Promise<{
+    required: boolean;
+    completedAt: string | null;
+  }> {
+    return this.usersService.getOAuthOnboardingState(userId);
+  }
+
+  @Patch('me/oauth-onboarding')
+  async completeOAuthOnboarding(
+    @CurrentUser('id') userId: string,
+    @Body() payload: CompleteOAuthOnboardingDto
+  ): Promise<UserProfile> {
+    return this.usersService.completeOAuthOnboarding(userId, payload);
   }
 
   @Post('me/avatar')
