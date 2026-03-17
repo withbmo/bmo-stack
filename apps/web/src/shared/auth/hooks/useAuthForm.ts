@@ -1,4 +1,4 @@
-import { AUTH_CONSTANTS } from "@pytholit/validation/zod";
+import { AUTH_CONSTANTS } from '@pytholit/validation';
 import { useCallback, useState } from "react";
 
 type AuthMode = "login" | "register";

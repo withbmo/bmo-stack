@@ -10,17 +10,6 @@ export const HERO_PYTHON_CODE = `class PytholitApp(App):
         await self.disrupt_market()
         return "Legacy code destroyed."`;
 
-export const TRUSTED_STACK = [
-  'FastAPI',
-  'Django',
-  'Flask',
-  'Pydantic',
-  'Celery',
-  'PostgreSQL',
-  'Redis',
-  'LangChain',
-];
-
 export const WORKFLOW_STEPS = [
   {
     id: 's1',

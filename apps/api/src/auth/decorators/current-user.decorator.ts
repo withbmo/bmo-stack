@@ -1,40 +1,24 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 
-import type { AuthenticatedUser } from '../auth.types';
-import { getPropertyFromUser, getUserFromContext } from './decorator.utils';
+import type { AuthenticatedUser } from '../auth.types.js';
+
+function getUserFromContext(ctx: ExecutionContext): AuthenticatedUser | undefined {
+  const request = ctx.switchToHttp().getRequest<{ user?: AuthenticatedUser }>();
+  return request.user;
+}
+
+function getPropertyFromUser<K extends keyof AuthenticatedUser>(
+  ctx: ExecutionContext,
+  key: K
+): AuthenticatedUser[K] | undefined {
+  return getUserFromContext(ctx)?.[key];
+}
 
 /**
- * Parameter decorator to access the authenticated user from the request.
+ * Access the authenticated user from `request.user`.
  *
- * Extracts the `user` object from the request (populated by {@link BetterAuthGuard})
- * and injects it into the controller method parameter.
- *
- * By default, it returns the full user object:
- * ```typescript
- * @Get('profile')
- * async getProfile(@CurrentUser() user: AuthenticatedUser) {
- *   return this.usersService.findById(user.id);
- * }
- * ```
- *
- * You can also select a specific user property by key:
- * ```typescript
- * @Get('profile')
- * async getProfile(@CurrentUser('id') userId: string) {
- *   return this.usersService.findById(userId);
- * }
- * ```
- *
- * @param {keyof AuthenticatedUser | undefined} data - Optional property key to select from user
- * @param {ExecutionContext} ctx - NestJS execution context
- * @returns {AuthenticatedUser | AuthenticatedUser[keyof AuthenticatedUser] | undefined}
- * The authenticated user, selected user property, or undefined if unauthenticated
- *
- * @decorator ParameterDecorator
- *
- * @see {@link AuthenticatedUser}
- * @see {@link BetterAuthGuard}
- * @see {@link https://docs.nestjs.com/custom-decorators NestJS Custom Decorators}
+ * - `@CurrentUser()` injects the whole `AuthenticatedUser`
+ * - `@CurrentUser('id')` injects a single field
  */
 export const CurrentUser = createParamDecorator<
   keyof AuthenticatedUser | undefined,
@@ -47,4 +31,4 @@ export const CurrentUser = createParamDecorator<
 });
 
 // Re-export type for convenience when importing decorator
-export type { AuthenticatedUser } from '../auth.types';
+export type { AuthenticatedUser } from '../auth.types.js';

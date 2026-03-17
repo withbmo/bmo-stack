@@ -78,7 +78,7 @@ module "secrets" {
 module "iam" {
   source = "./iam"
   tags   = local.tags
-  secret_arns = [
+  secret_arns = compact([
     module.secrets.jwt_secret_arn,
     module.secrets.env_session_secret_arn,
     module.secrets.zeptomail_api_key_arn,
@@ -91,7 +91,9 @@ module "iam" {
     module.secrets.github_client_secret_prod_arn,
     module.secrets.google_client_id_arn,
     module.secrets.google_client_secret_arn,
-  ]
+    var.api_database_provider == "supabase" ? module.secrets.supabase_prod_secret_arn : null,
+    var.api_database_provider == "supabase" && var.api_supabase_direct_url_enabled ? module.secrets.supabase_prod_direct_secret_arn : null,
+  ])
 }
 
 module "dynamodb" {
@@ -152,7 +154,6 @@ module "route53_records" {
   env_alb_zone_id  = module.alb_env[0].alb_zone_id
 
   enable_alb_records = var.enable_alb
-  enable_lago        = var.enable_lago
 
   extra_txt_records   = var.route53_extra_txt_records
   extra_cname_records = var.route53_extra_cname_records
@@ -167,8 +168,6 @@ module "alb_app" {
   public_subnet_ids     = module.servicesvpc.public_subnet_ids
   alb_security_group_id = module.security.alb_app_security_group_id
   app_domain_name       = local.app_domain_name
-  enable_lago           = var.enable_lago
-  alarm_actions         = var.lago_alarm_actions
   certificate_arn       = var.enable_dns_acm ? module.dns_acm[0].app_certificate_arn : null
   enable_https          = var.enable_dns_acm
   tags                  = local.tags
@@ -220,38 +219,51 @@ module "ecs_web" {
   depends_on = [module.alb_app]
 }
 
+locals {
+  api_db_host                       = var.api_database_provider == "rds" ? module.postgres.endpoints[var.api_database_env] : null
+  api_db_port                       = var.api_database_provider == "rds" ? module.postgres.ports[var.api_database_env] : 5432
+  api_db_name                       = var.api_database_provider == "rds" ? "pytholit_${var.api_database_env}" : null
+  api_db_credentials_secret_arn     = var.api_database_provider == "rds" ? (var.api_database_env == "prod" ? module.secrets.db_prod_secret_arn : module.secrets.db_dev_secret_arn) : null
+  api_supabase_db_secret_arn        = var.api_database_provider == "supabase" ? module.secrets.supabase_prod_secret_arn : null
+  api_supabase_direct_db_secret_arn = var.api_database_provider == "supabase" && var.api_supabase_direct_url_enabled ? module.secrets.supabase_prod_direct_secret_arn : null
+}
+
 module "ecs_api" {
-  source                    = "./ecs/api"
-  cluster_arn               = module.ecs_shared.cluster_arn
-  cluster_name              = module.ecs_shared.cluster_name
-  private_subnet_ids        = module.servicesvpc.private_subnet_ids
-  security_group_id         = module.security.ecs_services_security_group_id
-  execution_role_arn        = module.iam.ecs_execution_role_arn
-  task_role_arn             = module.iam.api_task_role_arn
-  frontend_url              = "https://${local.app_domain_name}"
-  app_env                   = var.app_domain_prefix != "" ? "development" : "production"
-  cookie_domain             = ".${var.domain_name}"
-  upload_dir                = "uploads"
-  node_env                  = "production"
-  redis_url                 = module.elasticache.redis_url
-  jwt_secret_arn            = module.secrets.jwt_secret_arn
-  env_session_secret_arn    = module.secrets.env_session_secret_arn
-  turnstile_secret_arn      = var.api_database_env == "prod" ? module.secrets.turnstile_secret_prod_arn : module.secrets.turnstile_secret_dev_arn
-  zeptomail_api_key_arn     = module.secrets.zeptomail_api_key_arn
-  github_client_id_arn      = var.api_database_env == "prod" ? module.secrets.github_client_id_prod_arn : module.secrets.github_client_id_dev_arn
-  github_client_secret_arn  = var.api_database_env == "prod" ? module.secrets.github_client_secret_prod_arn : module.secrets.github_client_secret_dev_arn
-  google_client_id_arn      = module.secrets.google_client_id_arn
-  google_client_secret_arn  = module.secrets.google_client_secret_arn
-  db_host                   = module.postgres.endpoints[var.api_database_env]
-  db_port                   = module.postgres.ports[var.api_database_env]
-  db_name                   = "pytholit_${var.api_database_env}"
-  db_credentials_secret_arn = var.api_database_env == "prod" ? module.secrets.db_prod_secret_arn : module.secrets.db_dev_secret_arn
-  enable_load_balancer      = var.enable_alb
-  target_group_arn          = var.enable_alb ? module.alb_app[0].api_target_group_arn : null
-  image                     = var.images.api
-  orchestrator_url          = var.orchestrator_api_url
-  internal_secret           = var.orchestrator_internal_secret
-  tags                      = local.tags
+  source                        = "./ecs/api"
+  cluster_arn                   = module.ecs_shared.cluster_arn
+  cluster_name                  = module.ecs_shared.cluster_name
+  private_subnet_ids            = module.servicesvpc.private_subnet_ids
+  security_group_id             = module.security.ecs_services_security_group_id
+  execution_role_arn            = module.iam.ecs_execution_role_arn
+  task_role_arn                 = module.iam.api_task_role_arn
+  frontend_url                  = "https://${local.app_domain_name}"
+  cookie_domain                 = ".${var.domain_name}"
+  upload_dir                    = "uploads"
+  node_env                      = "production"
+  redis_url                     = module.elasticache.redis_url
+  jwt_secret_arn                = module.secrets.jwt_secret_arn
+  env_session_secret_arn        = module.secrets.env_session_secret_arn
+  turnstile_secret_arn          = var.api_database_env == "prod" ? module.secrets.turnstile_secret_prod_arn : module.secrets.turnstile_secret_dev_arn
+  zeptomail_api_key_arn         = module.secrets.zeptomail_api_key_arn
+  github_client_id_arn          = var.api_database_env == "prod" ? module.secrets.github_client_id_prod_arn : module.secrets.github_client_id_dev_arn
+  github_client_secret_arn      = var.api_database_env == "prod" ? module.secrets.github_client_secret_prod_arn : module.secrets.github_client_secret_dev_arn
+  google_client_id_arn          = module.secrets.google_client_id_arn
+  google_client_secret_arn      = module.secrets.google_client_secret_arn
+  db_host                       = local.api_db_host
+  db_port                       = local.api_db_port
+  db_name                       = local.api_db_name
+  db_credentials_secret_arn     = local.api_db_credentials_secret_arn
+  supabase_db_secret_arn        = local.api_supabase_db_secret_arn
+  supabase_direct_db_secret_arn = local.api_supabase_direct_db_secret_arn
+  enable_load_balancer          = var.enable_alb
+  target_group_arn              = var.enable_alb ? module.alb_app[0].api_target_group_arn : null
+  image                         = var.images.api
+  internal_secret               = var.orchestrator_internal_secret
+  storage_driver                = "s3"
+  s3_bucket                     = aws_s3_bucket.avatars.bucket
+  s3_region                     = var.region
+  s3_public_url                 = "https://${aws_s3_bucket.avatars.bucket}.s3.${var.region}.amazonaws.com"
+  tags                          = local.tags
 
   depends_on = [module.alb_app, module.elasticache]
 }
@@ -290,49 +302,3 @@ module "ecs_ingress_router" {
   depends_on = [module.alb_env]
 }
 
-module "ecs_orchestrator" {
-  source             = "./ecs/orchestrator"
-  cluster_arn        = module.ecs_shared.cluster_arn
-  cluster_name       = module.ecs_shared.cluster_name
-  private_subnet_ids = module.servicesvpc.private_subnet_ids
-  security_group_id  = module.security.ecs_services_security_group_id
-  execution_role_arn = module.iam.ecs_execution_role_arn
-  task_role_arn      = module.iam.orchestrator_task_role_arn
-  image              = var.images.orchestrator
-  redis_url          = module.elasticache.redis_url
-  api_url            = var.orchestrator_api_url
-  internal_secret    = var.orchestrator_internal_secret
-  tags               = local.tags
-}
-
-module "ecs_lago" {
-  count = var.enable_lago ? 1 : 0
-
-  source               = "./ecs/lago"
-  cluster_arn          = module.ecs_shared.cluster_arn
-  cluster_name         = module.ecs_shared.cluster_name
-  private_subnet_ids   = module.servicesvpc.private_subnet_ids
-  security_group_id    = module.security.ecs_services_security_group_id
-  execution_role_arn   = module.iam.ecs_execution_role_arn
-  task_role_arn        = module.iam.api_task_role_arn
-  db_host              = module.postgres.endpoints[var.api_database_env]
-  db_port              = module.postgres.ports[var.api_database_env]
-  db_name              = var.lago_db_name
-  db_user              = var.lago_db_user
-  db_password          = var.lago_db_password
-  redis_url            = module.elasticache.redis_url
-  api_url              = var.lago_api_url
-  front_url            = var.lago_front_url
-  api_key              = var.lago_api_key
-  secret_key_base      = var.lago_secret_key_base
-  stripe_secret_key    = var.lago_stripe_secret_key
-  api_image            = var.lago_api_image
-  worker_image         = var.lago_worker_image
-  front_image          = var.lago_front_image
-  enable_front         = var.lago_enable_front
-  enable_load_balancer = var.enable_alb
-  api_target_group_arn = var.enable_alb ? module.alb_app[0].lago_target_group_arn : null
-  tags                 = local.tags
-
-  depends_on = [module.elasticache]
-}

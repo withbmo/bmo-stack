@@ -1,6 +1,0 @@
-/* Tailwind v4: single entry point (required for theme/utilities to work) */
-@import 'tailwindcss';
-
-/* Pytholit design system: theme, base, animations, utilities */
-@import '@pytholit/ui/styles';
-

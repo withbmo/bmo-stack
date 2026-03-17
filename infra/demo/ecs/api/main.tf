@@ -18,11 +18,24 @@ locals {
   ]
 
   db_secrets = var.db_credentials_secret_arn != null && var.db_credentials_secret_arn != "" ? [
-    { name = "DB_USER", valueFrom = "${var.db_credentials_secret_arn}:username::" },
+    { name = "DB_USERNAME", valueFrom = "${var.db_credentials_secret_arn}:username::" },
     { name = "DB_PASSWORD", valueFrom = "${var.db_credentials_secret_arn}:password::" }
   ] : []
 
-  container_secrets = concat(local.base_secrets, local.db_secrets)
+  supabase_db_secrets = [
+    for s in [
+      { name = "DB_HOST", valueFrom = var.supabase_db_secret_arn != null ? "${var.supabase_db_secret_arn}:host::" : null },
+      { name = "DB_PORT", valueFrom = var.supabase_db_secret_arn != null ? "${var.supabase_db_secret_arn}:port::" : null },
+      { name = "DB_NAME", valueFrom = var.supabase_db_secret_arn != null ? "${var.supabase_db_secret_arn}:dbname::" : null },
+      { name = "DB_USERNAME", valueFrom = var.supabase_db_secret_arn != null ? "${var.supabase_db_secret_arn}:username::" : null },
+      { name = "DB_PASSWORD", valueFrom = var.supabase_db_secret_arn != null ? "${var.supabase_db_secret_arn}:password::" : null },
+      { name = "DB_SSLMODE", valueFrom = var.supabase_db_secret_arn != null ? "${var.supabase_db_secret_arn}:sslmode::" : null },
+      { name = "DB_DIRECT_HOST", valueFrom = var.supabase_direct_db_secret_arn != null ? "${var.supabase_direct_db_secret_arn}:host::" : null },
+      { name = "DB_DIRECT_PORT", valueFrom = var.supabase_direct_db_secret_arn != null ? "${var.supabase_direct_db_secret_arn}:port::" : null }
+    ] : s if s.valueFrom != null && s.valueFrom != ""
+  ]
+
+  container_secrets = concat(local.base_secrets, local.db_secrets, local.supabase_db_secrets)
 }
 
 resource "aws_ecs_task_definition" "this" {
@@ -53,10 +66,13 @@ resource "aws_ecs_task_definition" "this" {
       }
       environment = [
         { name = "NODE_ENV", value = var.node_env },
-        { name = "APP_ENV", value = var.app_env != null ? var.app_env : "" },
         { name = "FRONTEND_URL", value = var.frontend_url != null ? var.frontend_url : "" },
         { name = "COOKIE_DOMAIN", value = var.cookie_domain != null ? var.cookie_domain : "" },
         { name = "UPLOAD_DIR", value = var.upload_dir },
+        { name = "STORAGE_DRIVER", value = var.storage_driver },
+        { name = "S3_BUCKET", value = var.s3_bucket },
+        { name = "S3_REGION", value = var.s3_region },
+        { name = "S3_PUBLIC_URL", value = var.s3_public_url },
         { name = "REDIS_URL", value = var.redis_url != null ? var.redis_url : "" },
         { name = "GITHUB_CALLBACK_URL", value = var.frontend_url != null ? "https://api.${trimsuffix(var.frontend_url, "https://")}/api/v1/oauth/github/callback" : "" },
         { name = "GOOGLE_CALLBACK_URL", value = var.frontend_url != null ? "https://api.${trimsuffix(var.frontend_url, "https://")}/api/v1/oauth/google/callback" : "" },
@@ -67,7 +83,6 @@ resource "aws_ecs_task_definition" "this" {
         { name = "ZEPTOMAIL_BASE_URL", value = "https://api.zeptomail.com" },
         { name = "ZEPTOMAIL_FROM_EMAIL", value = "noreply@pytholit.dev" },
         { name = "ZEPTOMAIL_FROM_NAME", value = "Pytholit" },
-        { name = "ORCHESTRATOR_URL", value = var.orchestrator_url != null ? var.orchestrator_url : "" },
         { name = "INTERNAL_SECRET", value = var.internal_secret != null ? var.internal_secret : "" }
       ]
       secrets = local.container_secrets

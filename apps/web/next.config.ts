@@ -4,8 +4,6 @@ const nextConfig: NextConfig = {
   transpilePackages: [
     '@pytholit/contracts',
     '@pytholit/validation',
-    '@pytholit/config',
-    '@pytholit/utils',
     '@pytholit/ui',
   ],
   experimental: {

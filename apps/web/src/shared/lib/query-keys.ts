@@ -10,12 +10,8 @@ export const queryKeys = {
   projects: () => ['projects'] as const,
   project: (id: string) => ['project', id] as const,
 
-  // Environments
-  environments: () => ['environments'] as const,
-  environment: (id: string) => ['environment', id] as const,
-
   // Deploy Jobs
-  deployJobs: (params: { projectId?: string; envId?: string }) =>
+  deployJobs: (params: { projectId?: string }) =>
     ['deploy-jobs', params] as const,
   deployJob: (id: string) => ['deploy-job', id] as const,
 

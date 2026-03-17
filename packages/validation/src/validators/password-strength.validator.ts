@@ -1,51 +1,19 @@
-import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
-import { zxcvbn, ZxcvbnResult } from '@zxcvbn-ts/core';
+import { zxcvbn, zxcvbnOptions, ZxcvbnResult } from '@zxcvbn-ts/core';
+import * as zxcvbnCommonPackage from '@zxcvbn-ts/language-common';
+import * as zxcvbnEnPackage from '@zxcvbn-ts/language-en';
 import { PASSWORD_STRENGTH_CONFIG } from '../config/password-strength.config';
 
-// zxcvbn will use default dictionaries if no options provided
-
-/**
- * Custom validator that checks password strength using zxcvbn
- */
-export function IsStrongPassword(
-  minScore: number = PASSWORD_STRENGTH_CONFIG.MIN_SCORE,
-  validationOptions?: ValidationOptions
-) {
-  return function (object: object, propertyName: string) {
-    registerDecorator({
-      name: 'isStrongPassword',
-      target: object.constructor,
-      propertyName: propertyName,
-      options: validationOptions,
-      validator: {
-        validate(value: string): boolean {
-          if (!value || typeof value !== 'string') return false;
-
-          // Check minimum length first
-          if (value.length < PASSWORD_STRENGTH_CONFIG.OPTIONS.minLength) {
-            return false;
-          }
-
-          const result: ZxcvbnResult = zxcvbn(value);
-          return result.score >= minScore;
-        },
-
-        defaultMessage(args: ValidationArguments): string {
-          const value = args.value as string;
-
-          if (!value || value.length < PASSWORD_STRENGTH_CONFIG.OPTIONS.minLength) {
-            return `Password must be at least ${PASSWORD_STRENGTH_CONFIG.OPTIONS.minLength} characters long`;
-          }
-
-          const result: ZxcvbnResult = zxcvbn(value);
-          const feedback = result.feedback.suggestions?.[0] || 'Choose a stronger password';
-
-          return `Password is too weak. ${feedback}. Current strength: ${PASSWORD_STRENGTH_CONFIG.SCORE_LABELS[result.score]}`;
-        },
-      },
-    });
-  };
-}
+// Load dictionaries and keyboard graphs so scoring works correctly.
+// Without this, @zxcvbn-ts/core runs with empty dictionaries and only detects
+// keyboard patterns — it will miss common passwords like "password123".
+zxcvbnOptions.setOptions({
+  dictionary: {
+    ...zxcvbnCommonPackage.dictionary,
+    ...zxcvbnEnPackage.dictionary,
+  },
+  graphs: zxcvbnCommonPackage.adjacencyGraphs,
+  translations: zxcvbnEnPackage.translations,
+});
 
 /**
  * Validates password strength by throwing an error if it doesn't meet requirements.

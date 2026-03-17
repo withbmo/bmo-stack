@@ -6,20 +6,37 @@
  */
 
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from './generated/client';
+import { PrismaClient } from './generated/client.js';
 
 const DEFAULT_DB_PORT = '5432';
 const DEFAULT_SSL_MODE = 'require';
 const DB_SCHEMA = 'public';
-const DEFAULT_LOCAL_DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/postgres?schema=public';
+const DEFAULT_LOCAL_DB = {
+  host: 'localhost',
+  port: DEFAULT_DB_PORT,
+  dbName: 'pytholit',
+  user: 'postgres',
+  password: 'postgres',
+  sslMode: 'disable',
+} as const;
+
+function buildDatabaseUrl(options: {
+  host: string;
+  port: string;
+  dbName: string;
+  user: string;
+  password: string;
+  sslMode: string;
+}): string {
+  const encodedUser = encodeURIComponent(options.user);
+  const encodedPassword = encodeURIComponent(options.password);
+  const params = new URLSearchParams({ schema: DB_SCHEMA, sslmode: options.sslMode });
+  return `postgresql://${encodedUser}:${encodedPassword}@${options.host}:${options.port}/${options.dbName}?${params.toString()}`;
+}
 
 function resolveDatabaseUrl(): string {
-  if (process.env.DATABASE_URL) {
-    return process.env.DATABASE_URL;
-  }
-
   const host = process.env.DB_HOST;
-  const user = process.env.DB_USER;
+  const user = process.env.DB_USERNAME;
   const password = process.env.DB_PASSWORD;
   const dbName = process.env.DB_NAME;
   const port = process.env.DB_PORT || DEFAULT_DB_PORT;
@@ -27,19 +44,12 @@ function resolveDatabaseUrl(): string {
 
   if (!host || !user || !password || !dbName) {
     if (process.env.NODE_ENV === 'production') {
-      throw new Error('DATABASE_URL is required in production.');
+      throw new Error('DB_HOST, DB_PORT, DB_NAME, DB_USERNAME, and DB_PASSWORD are required in production.');
     }
-    process.env.DATABASE_URL = DEFAULT_LOCAL_DATABASE_URL;
-    return DEFAULT_LOCAL_DATABASE_URL;
+    return buildDatabaseUrl(DEFAULT_LOCAL_DB);
   }
 
-  const encodedUser = encodeURIComponent(user);
-  const encodedPassword = encodeURIComponent(password);
-  const params = new URLSearchParams({ schema: DB_SCHEMA, sslmode: sslMode });
-
-  const url = `postgresql://${encodedUser}:${encodedPassword}@${host}:${port}/${dbName}?${params.toString()}`;
-  process.env.DATABASE_URL = url;
-  return url;
+  return buildDatabaseUrl({ host, port, dbName, user, password, sslMode });
 }
 
 const databaseUrl = resolveDatabaseUrl();
@@ -61,7 +71,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Export Prisma types
-export * from './generated/client';
+export * from './generated/client.js';
 
 // Export utilities
-export * from './utils';
+export * from './utils.js';

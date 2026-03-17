@@ -55,7 +55,6 @@ if [[ "$mode" == "tag" ]]; then
   api="${registry}/api:${tag}"
   terminal_gateway="${registry}/terminal-gateway:${tag}"
   ingress_router="${registry}/ingress-router:${tag}"
-  orchestrator="${registry}/env-orchestrator:${tag}"
 elif [[ "$mode" == "ecs" ]]; then
   if [[ -z "$cluster_name" ]]; then
     usage
@@ -86,7 +85,6 @@ elif [[ "$mode" == "ecs" ]]; then
   api="$(resolve_image demo-api api)"
   terminal_gateway="$(resolve_image demo-terminal-gateway terminal-gateway)"
   ingress_router="$(resolve_image demo-ingress-router ingress-router)"
-  orchestrator="$(resolve_image demo-orchestrator orchestrator)"
 else
   usage
 fi
@@ -98,8 +96,6 @@ jq -n \
   --arg api "$api" \
   --arg terminal_gateway "$terminal_gateway" \
   --arg ingress_router "$ingress_router" \
-  --arg orchestrator "$orchestrator" \
-  '{images:{web:$web,api:$api,terminal_gateway:$terminal_gateway,ingress_router:$ingress_router,orchestrator:$orchestrator}}' >"$output_file"
+  '{images:{web:$web,api:$api,terminal_gateway:$terminal_gateway,ingress_router:$ingress_router}}' >"$output_file"
 
 echo "Wrote $output_file"
-

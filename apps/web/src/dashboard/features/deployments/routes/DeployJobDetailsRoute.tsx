@@ -1,17 +1,13 @@
 'use client';
 
 import { DEPLOY_JOB_STATUS } from '@pytholit/contracts';
-import { useQuery } from '@tanstack/react-query';
 import { Rocket } from 'lucide-react';
 import { useParams,useRouter } from 'next/navigation';
 
 import { Button, DeployJobStatusBadge, EmptyState } from '@/dashboard/components';
 import { AsyncState } from '@/dashboard/shared/state/AsyncState';
-import { useAuth } from '@/shared/auth';
 import { DashboardPageHeader,PageLayout } from '@/shared/components/layout';
 import { formatTimestamp } from '@/shared/lib/date';
-import { getEnvironment } from '@/shared/lib/environments';
-import { queryKeys } from '@/shared/lib/query-keys';
 
 import { DeployJobStepper } from '../components/DeployJobStepper';
 import { useCancelDeployJob,useDeployJob } from '../hooks/useDeployJobs';
@@ -22,17 +18,6 @@ export const DeployJobDetailsRoute = () => {
   const router = useRouter();
   const { data: job, isLoading, error, refetch } = useDeployJob(jobId, true);
   const cancelJob = useCancelDeployJob(job?.projectId);
-  const { user, hydrated } = useAuth();
-  const { data: environment } = useQuery({
-    queryKey: job?.environmentId
-      ? queryKeys.environment(job.environmentId)
-      : ['environment', undefined],
-    queryFn: async () => {
-      if (!hydrated || !user || !job?.environmentId) return null;
-      return getEnvironment(undefined, job.environmentId);
-    },
-    enabled: hydrated && !!user && !!job?.environmentId,
-  });
 
   if (isLoading || error) {
     return (
@@ -78,12 +63,6 @@ export const DeployJobDetailsRoute = () => {
       {/* Status badges below header */}
       <div className="flex flex-wrap items-center gap-3 mb-8">
         <DeployJobStatusBadge status={job.status} />
-        <div className="text-xs font-mono text-nexus-muted">
-          Env: {environment ? (environment.displayName || environment.envType).toUpperCase() : 'UNKNOWN'}
-        </div>
-        <div className="text-xs font-mono text-nexus-muted">
-          Mode: {job.executionModeSnapshot === 'managed' ? 'Managed' : 'BYO AWS'}
-        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">

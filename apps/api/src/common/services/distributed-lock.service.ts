@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Redlock } from '@sesamecare-oss/redlock';
-import IORedis from 'ioredis';
+import { Redis } from 'ioredis';
 
 export type LockRunResult<T> =
   | { acquired: false }
@@ -10,14 +10,14 @@ export type LockRunResult<T> =
 @Injectable()
 export class DistributedLockService implements OnModuleDestroy {
   private readonly logger = new Logger(DistributedLockService.name);
-  private readonly redis: IORedis;
+  private readonly redis: Redis;
   private readonly redlock: Redlock;
 
   constructor(private readonly configService: ConfigService) {
     const redisUrl = this.configService.get<string>('REDIS_URL')?.trim();
     this.redis = redisUrl
-      ? new IORedis(redisUrl, { maxRetriesPerRequest: null })
-      : new IORedis({ host: 'localhost', port: 6379, maxRetriesPerRequest: null });
+      ? new Redis(redisUrl, { maxRetriesPerRequest: null })
+      : new Redis({ host: 'localhost', port: 6379, maxRetriesPerRequest: null });
 
     this.redlock = new Redlock([this.redis], { retryCount: 0 });
     this.redlock.on('clientError', (error: unknown) => {
@@ -26,7 +26,7 @@ export class DistributedLockService implements OnModuleDestroy {
     });
   }
 
-  client(): IORedis {
+  client(): Redis {
     return this.redis;
   }
 

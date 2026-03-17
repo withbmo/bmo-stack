@@ -8,12 +8,11 @@ import {
 import type { DeployJob, DeployJobStep } from '@pytholit/contracts';
 import { DEPLOY_JOB_STATUS, DEPLOY_JOB_STEP_STATUS } from '@pytholit/contracts';
 import type { Prisma } from '@pytholit/db';
-import { CreateDeployJobDto } from '@pytholit/validation/class-validator';
 
-import { DistributedLockService } from '../common/services/distributed-lock.service';
-import { PrismaService } from '../database/prisma.service';
-import { EnvironmentsCrudService } from '../environments/services/environments-crud.service';
-import { ProjectsService } from '../projects/projects.service';
+import { DistributedLockService } from '../common/services/distributed-lock.service.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { ProjectsService } from '../projects/projects.service.js';
+import { CreateDeployJobDto } from './dto/create-deploy-job.dto.js';
 
 /**
  * Deploy Jobs Service
@@ -34,7 +33,6 @@ export class DeployJobsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly projectsService: ProjectsService,
-    private readonly environmentsCrudService: EnvironmentsCrudService,
     private readonly lockService: DistributedLockService
   ) { }
 
@@ -43,12 +41,12 @@ export class DeployJobsService {
     createDeployJobDto: CreateDeployJobDto
   ): Promise<DeployJob> {
     const lock = await this.lockService.runWithLock(
-      this.deployCreateLockResource(createDeployJobDto.environmentId),
+      this.deployCreateLockResource(createDeployJobDto.projectId),
       DeployJobsService.DEPLOY_CREATE_LOCK_TTL_MS,
       () => this.createInsideLock(userId, createDeployJobDto)
     );
     if (!lock.acquired) {
-      throw new ConflictException('Another deploy job request is already in progress for this environment');
+      throw new ConflictException('Another deploy job request is already in progress for this project');
     }
     return lock.result;
   }
@@ -60,33 +58,19 @@ export class DeployJobsService {
     // Verify project ownership
     await this.projectsService.findOne(userId, createDeployJobDto.projectId);
 
-    // Verify environment ownership
-    await this.environmentsCrudService.findOne(userId, createDeployJobDto.environmentId);
-
-    // Get environment execution mode for snapshot
-    const environment = await this.prisma.client.environment.findUnique({
-      where: { id: createDeployJobDto.environmentId },
-    });
-
-    if (!environment) {
-      throw new NotFoundException('Environment not found');
-    }
-
-    // Auto-cancel any active jobs for this environment
-    await this.autoCancelActiveJobs(createDeployJobDto.environmentId);
+    // Auto-cancel any active jobs for this project
+    await this.autoCancelActiveJobs(createDeployJobDto.projectId);
 
     // Create deploy job
     const deployJob = await this.prisma.client.deployJob.create({
       data: {
         projectId: createDeployJobDto.projectId,
-        environmentId: createDeployJobDto.environmentId,
         triggeredByUserId: userId,
         status: DEPLOY_JOB_STATUS.QUEUED,
         currentStep: null,
         steps: this.defaultSteps as unknown as Prisma.InputJsonValue,
         source: (createDeployJobDto.source ?? { origin: 'manual', ref: 'main' }) as unknown as Prisma.InputJsonValue,
-        executionModeSnapshot: environment.executionMode,
-      },
+      } as unknown as Prisma.DeployJobUncheckedCreateInput,
     });
 
     return this.formatDeployJob(deployJob);
@@ -96,7 +80,6 @@ export class DeployJobsService {
     userId: string,
     filters?: {
       projectId?: string;
-      environmentId?: string;
     }
   ): Promise<DeployJob[]> {
     const where: any = {
@@ -109,18 +92,11 @@ export class DeployJobsService {
       where.projectId = filters.projectId;
     }
 
-    if (filters?.environmentId) {
-      // Verify environment ownership first
-      await this.environmentsCrudService.findOne(userId, filters.environmentId);
-      where.environmentId = filters.environmentId;
-    }
-
     const deployJobs = await this.prisma.client.deployJob.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       include: {
         project: true,
-        environment: true,
       },
     });
 
@@ -132,7 +108,6 @@ export class DeployJobsService {
       where: { id: jobId },
       include: {
         project: true,
-        environment: true,
       },
     });
 
@@ -170,7 +145,6 @@ export class DeployJobsService {
       },
       include: {
         project: true,
-        environment: true,
       },
     });
 
@@ -178,12 +152,12 @@ export class DeployJobsService {
   }
 
   /**
-   * Auto-cancel any active (queued or running) jobs for an environment
+   * Auto-cancel any active (queued or running) jobs for a project
    */
-  private async autoCancelActiveJobs(environmentId: string): Promise<void> {
+  private async autoCancelActiveJobs(projectId: string): Promise<void> {
     await this.prisma.client.deployJob.updateMany({
       where: {
-        environmentId,
+        projectId,
         status: {
           in: [DEPLOY_JOB_STATUS.QUEUED, DEPLOY_JOB_STATUS.RUNNING],
         },
@@ -199,13 +173,11 @@ export class DeployJobsService {
     return {
       id: job.id,
       projectId: job.projectId,
-      environmentId: job.environmentId,
       triggeredByUserId: job.triggeredByUserId,
       status: job.status,
       currentStep: job.currentStep,
       steps: job.steps as DeployJobStep[],
       source: job.source,
-      executionModeSnapshot: job.executionModeSnapshot,
       createdAt: job.createdAt.toISOString(),
       startedAt: job.startedAt?.toISOString() || null,
       finishedAt: job.finishedAt?.toISOString() || null,
@@ -215,16 +187,10 @@ export class DeployJobsService {
           slug: job.project.slug,
         }
         : undefined,
-      environment: job.environment
-        ? {
-          envType: job.environment.envType,
-          displayName: job.environment.displayName,
-        }
-        : undefined,
     };
   }
 
-  private deployCreateLockResource(environmentId: string): string {
-    return `lock:deploy:create:${environmentId}`;
+  private deployCreateLockResource(projectId: string): string {
+    return `lock:deploy:create:${projectId}`;
   }
 }

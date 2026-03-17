@@ -11,21 +11,3 @@ export interface Project {
   createdAt: string;
   updatedAt: string;
 }
-
-export interface CreateProjectInput {
-  name: string;
-  slug?: string;
-  repoExportEnabled?: boolean;
-}
-
-export interface UpdateProjectInput {
-  name?: string;
-  slug?: string;
-  repoExportEnabled?: boolean;
-}
-
-export interface ProjectWithStats extends Project {
-  environmentsCount: number;
-  deploymentsCount: number;
-  lastDeployedAt: string | null;
-}

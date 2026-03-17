@@ -1,5 +1,5 @@
-import { Reflector } from '@nestjs/core';
 import type { ExecutionContext } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 
 jest.mock('@thallesp/nestjs-better-auth', () => ({
   AuthService: class MockBetterAuthService {},
@@ -7,33 +7,33 @@ jest.mock('@thallesp/nestjs-better-auth', () => ({
 
 import { BetterAuthGuard } from '../../src/auth/guards/better-auth.guard';
 
-describe('BetterAuthGuard', () => {
-  const makeContext = (req: any): ExecutionContext =>
-    ({
-      getHandler: () => ({}),
-      getClass: () => ({}),
-      switchToHttp: () => ({ getRequest: () => req }),
-    }) as any;
+const makeContext = (req: any): ExecutionContext =>
+  ({
+    getHandler: () => ({}),
+    getClass: () => ({}),
+    switchToHttp: () => ({ getRequest: () => req }),
+  }) as any;
 
-  const makeGuard = (opts?: { isPublic?: boolean; sessionResult?: any; throwError?: Error }) => {
-    const reflector = {
-      getAllAndOverride: jest.fn().mockReturnValue(opts?.isPublic ?? false),
-    } as unknown as Reflector;
+const makeGuard = (opts?: { isPublic?: boolean; sessionResult?: any; throwError?: Error }) => {
+  const reflector = {
+    getAllAndOverride: jest.fn().mockReturnValue(opts?.isPublic ?? false),
+  } as unknown as Reflector;
 
-    const betterAuthService = {
-      instance: {
-        api: {
-          getSession: opts?.throwError
-            ? jest.fn().mockRejectedValue(opts.throwError)
-            : jest.fn().mockResolvedValue(opts?.sessionResult ?? null),
-        },
+  const betterAuthService = {
+    instance: {
+      api: {
+        getSession: opts?.throwError
+          ? jest.fn().mockRejectedValue(opts.throwError)
+          : jest.fn().mockResolvedValue(opts?.sessionResult ?? null),
       },
-    } as any;
+    },
+  } as any;
 
-    const guard = new BetterAuthGuard(reflector, betterAuthService);
-    return { guard };
-  };
+  const guard = new BetterAuthGuard(reflector, betterAuthService);
+  return { guard };
+};
 
+describe('BetterAuthGuard', () => {
   it('allows access on public route without session', async () => {
     const { guard } = makeGuard({ isPublic: true, sessionResult: null });
     const req = { headers: {} };
@@ -45,7 +45,7 @@ describe('BetterAuthGuard', () => {
     const req = { headers: {} };
     await expect(guard.canActivate(makeContext(req))).rejects.toHaveProperty(
       'response.code',
-      'AUTH_UNAUTHENTICATED',
+      'AUTH_UNAUTHENTICATED'
     );
   });
 
@@ -60,7 +60,7 @@ describe('BetterAuthGuard', () => {
     const req = { headers: {} };
     await expect(guard.canActivate(makeContext(req))).rejects.toHaveProperty(
       'response.code',
-      'AUTH_EMAIL_UNVERIFIED',
+      'AUTH_EMAIL_UNVERIFIED'
     );
   });
 
@@ -75,7 +75,7 @@ describe('BetterAuthGuard', () => {
     const req = { headers: {} };
     await expect(guard.canActivate(makeContext(req))).rejects.toHaveProperty(
       'response.code',
-      'AUTH_ACCOUNT_INACTIVE',
+      'AUTH_ACCOUNT_INACTIVE'
     );
   });
 
@@ -102,7 +102,7 @@ describe('BetterAuthGuard', () => {
         email: 'user@example.com',
         isEmailVerified: true,
         isActive: true,
-      }),
+      })
     );
   });
 

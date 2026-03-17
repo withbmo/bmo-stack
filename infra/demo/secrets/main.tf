@@ -136,3 +136,35 @@ resource "aws_secretsmanager_secret_version" "db_prod" {
     password = random_password.db_prod_password.result
   })
 }
+
+# ==============================================================================
+# Supabase Production Database Secrets
+# ==============================================================================
+# These are intentionally created without values. Populate them after `terraform apply`
+# with JSON payloads for runtime DB settings and, optionally, direct-host migration settings.
+
+resource "aws_secretsmanager_secret" "supabase_prod" {
+  name                    = "${var.project_name}/db/prod-supabase"
+  description             = "Supabase production database settings for API runtime"
+  recovery_window_in_days = 0
+
+  tags = merge(var.tags, {
+    Name        = "${var.project_name}-db-prod-supabase"
+    Environment = "prod"
+    Service     = "database"
+    ManagedBy   = "terraform"
+  })
+}
+
+resource "aws_secretsmanager_secret" "supabase_prod_direct" {
+  name                    = "${var.project_name}/db/prod-supabase-direct"
+  description             = "Supabase direct-host migration settings for production Prisma migrations"
+  recovery_window_in_days = 0
+
+  tags = merge(var.tags, {
+    Name        = "${var.project_name}-db-prod-supabase-direct"
+    Environment = "prod"
+    Service     = "database"
+    ManagedBy   = "terraform"
+  })
+}

@@ -20,6 +20,8 @@ export interface ToolingOption {
   label: string;
 }
 
+export type ProjectVisibility = 'public' | 'private';
+
 // Helper for Zap icon (custom SVG) - no JSX so file stays .ts
 const ZapIcon: React.FC<{ size?: number }> = ({ size = 20 }) =>
   React.createElement(
@@ -111,7 +113,7 @@ export interface ProjectWizardConfig {
   buildCommand: string;
   startCommand: string;
   dockerfilePath: string;
-  visibility: import('@pytholit/contracts').EnvironmentVisibility;
+  visibility: ProjectVisibility;
   region: string;
   autoDeploy: boolean;
   repoExportEnabled: boolean;
@@ -143,7 +145,7 @@ export const DEFAULT_PROJECT_CONFIG: ProjectWizardConfig = {
   buildCommand: '',
   startCommand: '',
   dockerfilePath: 'Dockerfile',
-  visibility: 'private' as import('@pytholit/contracts').EnvironmentVisibility,
+  visibility: 'private',
   region: 'us-east-1',
   autoDeploy: true,
   repoExportEnabled: false,

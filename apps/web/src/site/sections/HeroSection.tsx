@@ -6,10 +6,10 @@ import type { ReactNode } from 'react';
 
 import { useHeroAnimation } from '@/shared/hooks/useHeroAnimation';
 import { MockIDE } from '@/site/components/MockIDE';
-import { HERO_PYTHON_CODE, TRUSTED_STACK } from '@/site/data/home';
+import { HERO_PYTHON_CODE } from '@/site/data/home';
 
 // Animation content
-const USER_PROMPT = 'Build a FastAPI health check';
+const USER_PROMPT = 'Build a Python health check';
 const AGENT_REPLY = 'Creating main.py with a health endpoint...';
 const DEPLOY_LINES = [
   '> Building image...',
@@ -93,33 +93,6 @@ const HeroContent = () => (
         <Box size={20} />
         READ DOCS
       </Button>
-    </div>
-
-    {/* Environment Badges */}
-    <div className="flex flex-wrap items-center gap-3 font-mono text-xs">
-      <span className="text-nexus-muted uppercase tracking-wider">Environments:</span>
-      <Badge variant="success" className="px-3 py-1.5">
-        DEV
-      </Badge>
-      <Badge variant="purple" className="px-3 py-1.5">
-        PROD
-      </Badge>
-    </div>
-
-    <div className="border border-nexus-gray/60 bg-nexus-dark/60 backdrop-blur px-4 py-3">
-      <div className="text-[10px] font-mono uppercase tracking-widest text-nexus-muted mb-2">
-        Works with your stack
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {TRUSTED_STACK.map(item => (
-          <span
-            key={item}
-            className="text-[10px] font-mono uppercase tracking-widest border border-nexus-gray/70 px-2 py-1 text-nexus-light/70 bg-black/40"
-          >
-            {item}
-          </span>
-        ))}
-      </div>
     </div>
   </div>
 );

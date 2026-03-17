@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { type AuthHookContext, BeforeHook, Hook } from '@thallesp/nestjs-better-auth';
 
-import { PrismaService } from '../../database/prisma.service';
-import { extractNormalizedEmail } from './auth-hook.utils';
+import { PrismaService } from '../../database/prisma.service.js';
+import { extractNormalizedEmail } from './auth-hook.utils.js';
 
 @Hook()
 @Injectable()

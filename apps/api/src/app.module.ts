@@ -3,35 +3,27 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import type { AdminLevel } from '@pytholit/contracts';
-import { CaslModule } from 'nest-casl';
 import { ClsModule } from 'nestjs-cls';
+import { dirname, resolve } from 'path';
+import { fileURLToPath } from 'url';
 
-import { AdminModule } from './admin/admin.module';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import type { AuthenticatedUser } from './auth/auth.types';
-import { AuthModule } from './auth/auth.module';
-import { appPermissions, type Roles } from './auth-admin/casl/ability.factory';
-import { AdminEnrichmentGuard } from './auth-admin/guards/admin-enrichment.guard';
-import { CaslAuthorizationGuard } from './auth-admin/guards/casl-authorization.guard';
-import { CommonModule } from './common/common.module';
-import { validateEnv } from './config/env';
-import { DatabaseModule } from './database/database.module';
-import { DeployJobsModule } from './deploy-jobs/deploy-jobs.module';
-import { EmailModule } from './email/email.module';
-import { EnvironmentsModule } from './environments/environments.module';
-import { BillingModule } from './billing/billing.module';
-import { NotificationsModule } from './notifications/notifications.module';
-import { ProjectsModule } from './projects/projects.module';
-import { UsersModule } from './users/users.module';
-import { WizardModule } from './wizard/wizard.module';
+import { AppController } from './app.controller.js';
+import { AuthModule } from './auth/auth.module.js';
+import { CommonModule } from './common/common.module.js';
+import { validateEnv } from './config/env.js';
+import { DatabaseModule } from './database/database.module.js';
+import { DeployJobsModule } from './deploy-jobs/deploy-jobs.module.js';
+import { ProjectsModule } from './projects/projects.module.js';
+import { UsersModule } from './users/users.module.js';
+import { WizardModule } from './wizard/wizard.module.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: resolve(__dirname, '../.env'),
       validate: validateEnv,
     }),
     ClsModule.forRoot({
@@ -39,18 +31,6 @@ import { WizardModule } from './wizard/wizard.module';
       middleware: {
         mount: true,
       },
-    }),
-    CaslModule.forRoot({
-      getUserFromRequest: (request: { user?: AuthenticatedUser & { isAdmin?: boolean; adminLevel?: AdminLevel | null; roles?: Roles[] } }) => {
-        const user = request?.user;
-        if (!user?.id) return undefined;
-        const roles = new Set<Roles>(Array.isArray(user.roles) ? user.roles : []);
-        if (user.adminLevel) roles.add(user.adminLevel);
-        return { ...user, roles: [...roles], isAdmin: user.isAdmin, adminLevel: user.adminLevel };
-      },
-    }),
-    CaslModule.forFeature({
-      permissions: appPermissions,
     }),
     ThrottlerModule.forRoot([
       {
@@ -77,13 +57,13 @@ import { WizardModule } from './wizard/wizard.module';
         return {
           connection: redisUrl.startsWith('redis://')
             ? {
-              host: redisUrl.replace('redis://', '').split(':')[0],
-              port: parseInt(redisUrl.replace('redis://', '').split(':')[1] || '6379'),
-            }
+                host: redisUrl.replace('redis://', '').split(':')[0],
+                port: parseInt(redisUrl.replace('redis://', '').split(':')[1] || '6379'),
+              }
             : {
-              host: 'localhost',
-              port: 6379,
-            },
+                host: 'localhost',
+                port: 6379,
+              },
           defaultJobOptions: {
             removeOnComplete: {
               count: 1000,
@@ -98,34 +78,18 @@ import { WizardModule } from './wizard/wizard.module';
     }),
     CommonModule,
     DatabaseModule,
-    AdminModule,
     AuthModule,
     UsersModule,
-    EmailModule,
     ProjectsModule,
-    EnvironmentsModule,
-    BillingModule,
-    NotificationsModule,
     DeployJobsModule,
     WizardModule,
   ],
   controllers: [AppController],
   providers: [
-    AppService,
-    // BetterAuthGuard is registered in AuthModule where AUTH_MODULE_OPTIONS_KEY is available
-    // Guard execution order: BetterAuthGuard (auth) -> AdminEnrichmentGuard (enrich) -> CaslAuthorizationGuard (authorize) -> ThrottlerGuard (rate limit)
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
-    {
-      provide: APP_GUARD,
-      useClass: CaslAuthorizationGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: AdminEnrichmentGuard,
-    },
   ],
 })
-export class AppModule { }
+export class AppModule {}

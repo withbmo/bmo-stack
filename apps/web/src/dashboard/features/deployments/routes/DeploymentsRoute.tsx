@@ -70,7 +70,7 @@ export const DeploymentsRoute = () => {
         onRetry={() => refetch()}
       />
 
-      {!isLoading && !error ? <DeployJobTable jobs={filteredJobs} environmentLookup={{}} /> : null}
+      {!isLoading && !error ? <DeployJobTable jobs={filteredJobs} /> : null}
 
       <DeployModal
         isOpen={showDeployModal}

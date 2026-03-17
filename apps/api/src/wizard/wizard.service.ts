@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
-import path from 'node:path';
+import path, { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import {
   BadRequestException,
@@ -10,20 +11,21 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { readTrimmedStringOrDefault } from '../config/config-readers';
 import {
   WIZARD_DEFAULT_TEMPLATE_ID_DEFAULT,
   WIZARD_DEFAULT_VERSION_DEFAULT,
   WIZARD_LEGACY_TEMPLATE_ID_DEFAULT,
-} from '../config/defaults';
-import { PrismaService } from '../database/prisma.service';
+} from '../config/defaults.js';
+import { PrismaService } from '../database/prisma.service.js';
 import type {
   BlueprintLock,
   WizardInput,
   WizardManifest,
   WizardSchema,
   WizardTemplateSummary,
-} from './wizard.types';
+} from './wizard.types.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 interface ValidationResult {
   inputs: WizardInput;
@@ -146,27 +148,15 @@ export class WizardService {
   ) {}
 
   private getDefaultVersion(): string {
-    return readTrimmedStringOrDefault(
-      this.configService,
-      'WIZARD_DEFAULT_VERSION',
-      WIZARD_DEFAULT_VERSION_DEFAULT
-    );
+    return this.configService.get<string>('WIZARD_DEFAULT_VERSION') ?? WIZARD_DEFAULT_VERSION_DEFAULT;
   }
 
   private getDefaultTemplateIdSync(): string {
-    return readTrimmedStringOrDefault(
-      this.configService,
-      'WIZARD_DEFAULT_TEMPLATE_ID',
-      WIZARD_DEFAULT_TEMPLATE_ID_DEFAULT
-    );
+    return this.configService.get<string>('WIZARD_DEFAULT_TEMPLATE_ID') ?? WIZARD_DEFAULT_TEMPLATE_ID_DEFAULT;
   }
 
   private getLegacyTemplateId(): string {
-    return readTrimmedStringOrDefault(
-      this.configService,
-      'WIZARD_LEGACY_TEMPLATE_ID',
-      WIZARD_LEGACY_TEMPLATE_ID_DEFAULT
-    );
+    return this.configService.get<string>('WIZARD_LEGACY_TEMPLATE_ID') ?? WIZARD_LEGACY_TEMPLATE_ID_DEFAULT;
   }
 
   private sortVersionsDesc(versions: string[]): string[] {

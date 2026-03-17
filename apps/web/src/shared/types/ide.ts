@@ -25,10 +25,29 @@ export interface NormalizedFileState {
   fileContents: Record<string, string>;
 }
 
+export type ToolStep =
+  | { type: 'read'; file: string }
+  | { type: 'edit'; file: string; diff?: string }
+  | { type: 'run'; command: string }
+  | { type: 'search'; query: string };
+
 export interface ChatMessage {
   id: number;
   role: 'user' | 'agent';
   text: string;
+  codeBlocks?: Array<{ language: string; code: string; filename?: string }>;
+  toolSteps?: ToolStep[];
+  status?: 'thinking' | 'done' | 'error';
+  contextFiles?: string[];
+  isStreaming?: boolean;
+  timestamp?: number;
+}
+
+export type AgentMode = 'ask' | 'edit' | 'agent';
+
+export interface AgentContext {
+  files: string[];
+  selection?: { file: string; from: number; to: number };
 }
 
 export interface ContextMenuState {

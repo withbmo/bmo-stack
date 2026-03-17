@@ -1,0 +1,14 @@
+dist/
+node_modules/
+.turbo/
+*.tsbuildinfo
+
+# Local env
+.env
+.env.*
+
+# Logs
+*.log
+
+# Test output
+coverage/

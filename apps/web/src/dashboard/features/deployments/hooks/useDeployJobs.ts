@@ -9,7 +9,7 @@ import {
 } from '@/shared/lib/deploy-jobs';
 import { queryKeys } from '@/shared/lib/query-keys';
 
-export const useDeployJobs = (params: { projectId?: string; envId?: string }, poll = true) => {
+export const useDeployJobs = (params: { projectId?: string }, poll = true) => {
   const { user, hydrated } = useAuth();
   return useQuery({
     queryKey: queryKeys.deployJobs(params),
@@ -39,12 +39,11 @@ export const useCreateDeployJob = (projectId?: string) => {
   const { user, hydrated } = useAuth();
   const client = useQueryClient();
   return useMutation({
-    mutationFn: async (envId: string) => {
+    mutationFn: async () => {
       if (!hydrated || !user) throw new Error('Not authenticated');
       if (!projectId) throw new Error('Missing project');
       return createDeployJob(undefined, {
         projectId,
-        environmentId: envId,
         source: { origin: 'dashboard', ref: 'main' },
       });
     },

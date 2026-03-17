@@ -1,6 +1,5 @@
 /**
- * Auth validation constants
- * Used by class-validator DTOs in dtos/auth.dto.ts
+ * Shared auth validation constants used by API DTOs and web form logic.
  */
 export const AUTH_CONSTANTS = {
   MIN_PASSWORD_LENGTH: 8,

@@ -2,7 +2,6 @@
 // `@pytholit/contracts` for backend shapes and map into these types as needed.
 
 export * from './deployments';
-export * from './environments';
 export * from './ide';
 export * from './marketing';
 export * from './navigation';

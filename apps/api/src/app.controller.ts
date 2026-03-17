@@ -1,16 +1,19 @@
 import { Controller, Get } from '@nestjs/common';
 
-import { AppService } from './app.service';
-import { Public } from './auth/decorators/public.decorator';
+import { Public } from './auth/decorators/public.decorator.js';
+import { APP_CONFIG } from './config/app.js';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
-
   @Public()
   @Get()
   getInfo() {
-    return this.appService.getInfo();
+    return {
+      name: APP_CONFIG.name,
+      version: APP_CONFIG.version,
+      description: APP_CONFIG.description,
+      message: 'Welcome to Pytholit API v2 - Nest.js + Next.js Architecture',
+    };
   }
 
   @Public()

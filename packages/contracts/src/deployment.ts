@@ -29,7 +29,6 @@ export interface DeployJobStep {
 export interface DeployJob {
   id: string;
   projectId: string;
-  environmentId: string;
   triggeredByUserId: string | null;
   status: DeployJobStatus;
   currentStep: string | null;
@@ -38,25 +37,11 @@ export interface DeployJob {
     origin: string;
     ref: string;
   };
-  executionModeSnapshot: string;
   createdAt: string;
   startedAt: string | null;
   finishedAt: string | null;
   project?: {
     name: string;
     slug: string;
-  };
-  environment?: {
-    envType: string;
-    displayName: string;
-  };
-}
-
-export interface CreateDeployJobInput {
-  projectId: string;
-  environmentId: string;
-  source?: {
-    origin: string;
-    ref: string;
   };
 }

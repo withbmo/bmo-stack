@@ -1,6 +1,6 @@
 'use client';
 
-import type { UserProfile } from '@pytholit/contracts';
+import type { User } from '@pytholit/contracts';
 import { usePathname } from 'next/navigation';
 import {
   createContext,
@@ -17,22 +17,22 @@ import { logout as apiLogout } from '@/shared/lib/auth';
 import { getCurrentUser } from '@/shared/lib/user';
 
 type AuthContextValue = {
-  user: UserProfile | null;
+  user: User | null;
   hydrated: boolean;
   isAuthenticated: boolean;
-  refreshSession: () => Promise<UserProfile | null>;
+  refreshSession: () => Promise<User | null>;
   logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const initialSessionCheckDone = useRef(false);
   const pathname = usePathname() ?? '/';
 
-  const refreshSession = useCallback(async (): Promise<UserProfile | null> => {
+  const refreshSession = useCallback(async (): Promise<User | null> => {
     try {
       const me = await getCurrentUser();
       setUser(me);

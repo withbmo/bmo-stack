@@ -3,10 +3,8 @@
 import { Chrome, Github } from 'lucide-react';
 import { useState } from 'react';
 
-import { type OAuthProvider, signInWithOAuth } from '@/shared/lib/auth';
+import { type OAuthProvider, getApiErrorMessage, signInWithOAuth } from '@/shared/lib/auth';
 
-// Static OAuth providers - configured at app build time, not fetched from API
-const DEFAULT_PROVIDERS: OAuthProvider[] = ['github', 'google'];
 type OAuthButtonProvider = 'github' | 'google';
 
 /**
@@ -21,18 +19,20 @@ export const SocialAuthButtons = ({
   providers?: OAuthProvider[];
 }) => {
   const [activeProvider, setActiveProvider] = useState<OAuthButtonProvider | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleOAuthSignIn = async (provider: OAuthButtonProvider) => {
     setActiveProvider(provider);
+    setError(null);
     try {
       await signInWithOAuth(provider, next);
-    } catch (error) {
-      console.error('OAuth sign-in failed:', error);
+    } catch (err) {
       setActiveProvider(null);
+      setError(getApiErrorMessage(err, 'OAuth sign-in failed. Please try again.'));
     }
   };
 
-  const enabled = providers ?? DEFAULT_PROVIDERS;
+  const enabled = providers ?? [];
   if (enabled.length === 0) return null;
 
   return (
@@ -42,6 +42,10 @@ export const SocialAuthButtons = ({
         <span className="font-mono text-[10px] text-nexus-muted uppercase">Or authenticate via</span>
         <div className="h-[1px] bg-nexus-gray flex-1" />
       </div>
+
+      {error ? (
+        <p className="text-xs text-red-400 font-mono text-center -mt-2 mb-2">{error}</p>
+      ) : null}
 
       <div className={`grid gap-4 ${enabled.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
         {enabled.includes('github') ? (

@@ -1,5 +1,4 @@
-// Pytholit Database Schema
-// Converted from SQLAlchemy models to Prisma
+// Pytholit database schema
 
 generator client {
   provider = "prisma-client-js"
@@ -11,20 +10,8 @@ datasource db {
 }
 
 // ============================================================================
-// User & Authentication
+// Auth and users
 // ============================================================================
-
-enum AdminLevel {
-  owner
-  operator
-  viewer
-}
-
-enum SignupBonusStatus {
-  PENDING
-  GRANTED
-  FAILED
-}
 
 model User {
   id              String  @id @default(uuid())
@@ -36,56 +23,21 @@ model User {
   avatarUrl       String? @map("avatar_url")
   hashedPassword  String? @map("hashed_password")
 
-  // Status flags
   isActive        Boolean @default(true) @map("is_active")
   isEmailVerified Boolean @default(false) @map("is_email_verified")
-  currentCredits  Int     @default(0) @map("current_credits")
 
-  // External service IDs
-  novuSubscriberId     String?           @unique @map("novu_subscriber_id")
-  stripeCustomerId     String?           @unique @map("stripe_customer_id")
-
-  // Timestamps
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  // Relations
-  projects      Project[]
-  environments  Environment[]
-  deployJobs    DeployJob[]
-  sessions                Session[]
-  accounts                Account[]
-  billingAccount          BillingAccount?
-  billingEngineState      BillingEngineState?
-  billingUsageLimits      BillingUsageLimit[]
-  billingUsageAggregates  BillingUsageAggregate[]
-  billingUsageReports     BillingUsageReport[]
-  signupBonusGrants       SignupBonusGrant[]
-  adminRecords            Admin[]              @relation("AdminMembership")
-  adminGrants             Admin[]              @relation("AdminGrantedBy")
-
-  auditLogs               AuditLog[]
+  projects   Project[]
+  deployJobs DeployJob[]
+  sessions   Session[]
+  accounts   Account[]
 
   @@map("users")
 }
 
-model Admin {
-  id              String     @id @default(uuid())
-  userId          String     @unique @map("user_id")
-  level           AdminLevel
-  grantedByUserId String?    @map("granted_by_user_id")
-  createdAt       DateTime   @default(now()) @map("created_at")
-  updatedAt       DateTime   @updatedAt @map("updated_at")
-
-  user      User  @relation("AdminMembership", fields: [userId], references: [id], onDelete: Cascade)
-  grantedBy User? @relation("AdminGrantedBy", fields: [grantedByUserId], references: [id], onDelete: SetNull)
-
-  @@index([level])
-  @@index([grantedByUserId])
-  @@map("admins")
-}
-
-// Better Auth session management
+/// Better Auth session records resolved by the global auth guard via `auth.api.getSession`.
 model Session {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
@@ -103,12 +55,12 @@ model Session {
   @@map("sessions")
 }
 
-// Better Auth account table (replaces OAuthAccount for Better Auth)
+/// Better Auth provider accounts, including OAuth tokens and onboarding flags.
 model Account {
   id           String    @id @default(uuid())
   userId       String    @map("user_id")
   accountId    String    @map("account_id")
-  providerId   String    @map("provider_id") // "google" | "github" | "credentials"
+  providerId   String    @map("provider_id")
   accessToken  String?   @map("access_token")
   refreshToken String?   @map("refresh_token")
   idToken      String?   @map("id_token")
@@ -129,12 +81,11 @@ model Account {
   @@map("accounts")
 }
 
-// Better Auth verification table (email verification, password reset)
-// Note: This table is auto-managed by Better Auth
+/// Better Auth verification records used for email verification and password reset flows.
 model Verification {
   id         String   @id @default(uuid())
-  identifier String // email or phone
-  value      String   @unique // token/value
+  identifier String
+  value      String   @unique
   expiresAt  DateTime @map("expiresAt")
   createdAt  DateTime @default(now()) @map("createdAt")
   updatedAt  DateTime @updatedAt @map("updatedAt")
@@ -143,55 +94,11 @@ model Verification {
   @@map("verification")
 }
 
-model AuthLoginAttempt {
-  id             String    @id @default(uuid())
-  email          String    @unique
-  failedAttempts Int       @default(0) @map("failed_attempts")
-  firstFailedAt  DateTime? @map("first_failed_at")
-  lastFailedAt   DateTime? @map("last_failed_at")
-  lockedUntil    DateTime? @map("locked_until")
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
-
-  @@index([lockedUntil])
-  @@map("auth_login_attempts")
-}
-
-model AuthOtpThrottle {
-  id          String    @id @default(uuid())
-  email       String
-  ip          String
-  action      String
-  windowStart DateTime  @map("window_start")
-  windowSec   Int       @map("window_sec")
-  attempts    Int       @default(0)
-  lockedUntil DateTime? @map("locked_until")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-
-  @@unique([email, ip, action, windowStart, windowSec])
-  @@index([email, ip, action, lockedUntil])
-  @@map("auth_otp_throttles")
-}
-
-model SignupBonusGrant {
-  id        String            @id @default(uuid())
-  userId    String            @unique @map("user_id")
-  status    SignupBonusStatus @default(PENDING)
-  grantedAt DateTime?         @map("granted_at")
-  createdAt DateTime          @default(now()) @map("created_at")
-  updatedAt DateTime          @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([status, createdAt])
-  @@map("signup_bonus_grants")
-}
-
 // ============================================================================
-// Projects & Environments
+// Projects
 // ============================================================================
 
+/// User-owned project metadata used by project CRUD and deploy-job ownership checks.
 model Project {
   id                String   @id @default(uuid())
   ownerId           String   @map("owner_id")
@@ -208,46 +115,6 @@ model Project {
   @@map("projects")
 }
 
-model Environment {
-  id            String   @id @default(uuid())
-  ownerId       String   @map("owner_id")
-  projectId     String?  @map("project_id") // Nullable for backward compatibility
-  envType       String   @map("name") // dev, staging, prod
-  displayName   String   @map("display_name")
-  tierPolicy    String   @default("free") @map("tier_policy") // free, pro, enterprise
-  executionMode String   @default("managed") @map("execution_mode") // managed, byo_aws
-  region        String   @default("us-east-1")
-  visibility    String   @default("private") // public, private
-  config        Json? // Environment configuration (JSONB)
-  orchestratorStatus          String   @default("unknown") @map("orchestrator_status")
-  orchestratorStatusUpdatedAt DateTime @default(now()) @map("orchestrator_status_updated_at")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
-  owner      User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  deployJobs DeployJob[]
-
-  @@unique([ownerId, displayName])
-  @@map("environments")
-}
-
-model OrchestratorRegionConfig {
-  id                  String   @id @default(uuid())
-  region              String   @unique
-  subnetIds           String[] @map("subnet_ids")
-  securityGroupIds    String[] @map("security_group_ids")
-  amiIdX86_64         String   @map("ami_id_x86_64")
-  amiIdArm64          String   @map("ami_id_arm64")
-  instanceProfileName String   @map("instance_profile_name")
-  userDataBase64      String?  @map("user_data_base64")
-  dynamodbTable       String   @default("EnvRouting") @map("dynamodb_table")
-  envDomainSuffix     String   @default("envs.pytholit.dev") @map("env_domain_suffix")
-  createdAt           DateTime @default(now()) @map("created_at")
-  updatedAt           DateTime @updatedAt @map("updated_at")
-
-  @@map("orchestrator_region_configs")
-}
-
 // ============================================================================
 // Deployments
 // ============================================================================
@@ -260,214 +127,21 @@ enum DeployJobStatus {
   canceled
 }
 
+/// Deployment job state returned by the deploy-jobs API and rendered by the web dashboard.
 model DeployJob {
   id                    String          @id @default(uuid())
   projectId             String          @map("project_id")
-  environmentId         String          @map("environment_id")
   triggeredByUserId     String?         @map("triggered_by_user_id")
   status                DeployJobStatus @default(queued)
   currentStep           String?         @map("current_step")
-  steps                 Json // Array of deployment steps (JSONB)
-  source                Json // Deployment source info (git, upload, template)
-  executionModeSnapshot String          @map("execution_mode_snapshot")
+  steps                 Json
+  source                Json
   createdAt             DateTime        @default(now()) @map("created_at")
   startedAt             DateTime?       @map("started_at")
   finishedAt            DateTime?       @map("finished_at")
 
   project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  environment Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   triggeredBy User?       @relation(fields: [triggeredByUserId], references: [id], onDelete: SetNull)
 
   @@map("deploy_jobs")
-}
-
-// ============================================================================
-// Billing — Stripe subscriptions, webhook persistence, and access state snapshots
-// ============================================================================
-
-enum BillingAccountType {
-  user
-}
-
-enum PlanId {
-  free
-  pro
-  max
-}
-
-enum BillingInterval {
-  month
-  year
-}
-
-enum SubscriptionStatus {
-  active
-  trialing
-  incomplete
-  incomplete_expired
-  past_due
-  unpaid
-  paused
-  canceled
-  processing_upgrade
-}
-
-enum FeatureAccessState {
-  enabled
-  locked_due_to_payment
-  locked_no_subscription
-}
-
-enum StripeWebhookProcessingStatus {
-  received
-  queued
-  processed
-  failed
-}
-
-enum BillingEngineProvider {
-  stripe
-  lago
-  orb
-}
-
-enum BillingEngineAccessState {
-  enabled
-  locked_due_to_payment
-  locked_wallet_depleted
-  locked_no_subscription
-}
-
-enum EngineWebhookProcessingStatus {
-  received
-  queued
-  processed
-  failed
-}
-
-model BillingAccount {
-  id          String             @id @default(uuid())
-  ownerUserId String             @unique @map("owner_user_id")
-  type        BillingAccountType @default(user)
-  createdAt   DateTime           @default(now()) @map("created_at")
-  updatedAt   DateTime           @updatedAt @map("updated_at")
-
-  ownerUser     User                  @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
-
-  @@map("billing_accounts")
-}
-
-model StripeWebhookEvent {
-  stripeEventId      String                     @id @map("stripe_event_id")
-  eventType          String                     @map("event_type")
-  payloadJson        Json                       @map("payload_json")
-  rawBody            Bytes                      @map("raw_body")
-  signatureHeader    String                     @map("signature_header")
-  processingStatus   StripeWebhookProcessingStatus @default(received) @map("processing_status")
-  processingAttempts Int                        @default(0) @map("processing_attempts")
-  lastError          String?                    @map("last_error")
-  createdAt          DateTime                   @default(now()) @map("created_at")
-  updatedAt          DateTime                   @updatedAt @map("updated_at")
-
-  @@index([processingStatus, createdAt])
-  @@map("stripe_webhook_events")
-}
-
-model BillingEngineState {
-  userId                 String                   @id @map("user_id")
-  provider               BillingEngineProvider
-  externalCustomerId     String                   @unique @map("external_customer_id")
-  engineSubscriptionExternalId String             @unique @map("engine_subscription_external_id")
-  planCode               String                   @map("plan_code")
-  planCatalogVersion     Int?                     @map("plan_catalog_version")
-  accessState            BillingEngineAccessState @map("access_state")
-  lockedReason           String?                  @map("locked_reason")
-  lastStripeEventId      String?                  @map("last_stripe_event_id")
-  lastEngineEventId      String?                  @map("last_engine_event_id")
-  createdAt              DateTime                 @default(now()) @map("created_at")
-  updatedAt              DateTime                 @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([provider, updatedAt])
-  @@map("billing_engine_states")
-}
-
-model EngineWebhookEvent {
-  engineEventId      String                      @id @map("engine_event_id")
-  provider           BillingEngineProvider
-  eventType          String                      @map("event_type")
-  payloadJson        Json                        @map("payload_json")
-  rawBody            Bytes                       @map("raw_body")
-  signatureHeader    String                      @map("signature_header")
-  processingStatus   EngineWebhookProcessingStatus @default(received) @map("processing_status")
-  processingAttempts Int                         @default(0) @map("processing_attempts")
-  lastError          String?                     @map("last_error")
-  createdAt          DateTime                    @default(now()) @map("created_at")
-  updatedAt          DateTime                    @updatedAt @map("updated_at")
-
-  @@index([provider, processingStatus, createdAt])
-  @@map("engine_webhook_events")
-}
-
-model BillingUsageLimit {
-  userId     String   @map("user_id")
-  eventName  String   @map("event_name")
-  maxCredits Int?     @map("max_credits")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@id([userId, eventName])
-  @@index([userId])
-  @@map("billing_usage_limits")
-}
-
-model BillingUsageAggregate {
-  userId          String   @map("user_id")
-  eventName       String   @map("event_name")
-  periodStart     DateTime @map("period_start")
-  consumedCredits Int      @default(0) @map("consumed_credits")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@id([userId, eventName, periodStart])
-  @@index([userId, periodStart])
-  @@map("billing_usage_aggregates")
-}
-
-model BillingUsageReport {
-  idempotencyKey  String   @id @map("idempotency_key")
-  userId          String   @map("user_id")
-  eventName       String   @map("event_name")
-  consumedCredits Int      @map("consumed_credits")
-  occurredAt      DateTime @map("occurred_at")
-  createdAt       DateTime @default(now()) @map("created_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, occurredAt])
-  @@map("billing_usage_reports")
-}
-
-// ============================================================================
-// Admin & Audit
-// ============================================================================
-
-model AuditLog {
-  id          String   @id @default(uuid())
-  actorUserId String   @map("actor_user_id")
-  action      String
-  targetType  String   @map("target_type")
-  targetId    String?  @map("target_id")
-  meta        Json?
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  actor User @relation(fields: [actorUserId], references: [id], onDelete: Cascade)
-
-  @@index([actorUserId])
-  @@map("audit_logs")
 }

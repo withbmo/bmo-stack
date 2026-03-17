@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { prisma } from '@pytholit/db';
 
-import { PrismaTxService } from './prisma-tx.service';
+import { PrismaTxService } from './prisma-tx.service.js';
 
 @Injectable()
 export class PrismaService implements OnModuleInit, OnModuleDestroy {
@@ -14,14 +14,23 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
     return this.prismaTx.client;
   }
 
+  private hasDatabaseConfig(): boolean {
+    return Boolean(
+      process.env.DB_HOST &&
+        process.env.DB_USERNAME &&
+        process.env.DB_PASSWORD &&
+        process.env.DB_NAME
+    );
+  }
+
   async onModuleInit(): Promise<void> {
-    if (!process.env.DATABASE_URL) {
+    if (!this.hasDatabaseConfig()) {
       if (process.env.NODE_ENV === 'production') {
-        throw new Error('DATABASE_URL is required in production.');
+        throw new Error('DB_HOST, DB_PORT, DB_NAME, DB_USERNAME, and DB_PASSWORD are required in production.');
       }
 
       this.logger.warn(
-        'DATABASE_URL is not set. Skipping Prisma connection in non-production mode.'
+        'Database env vars are not set. Skipping Prisma connection in non-production mode.'
       );
       return;
     }
@@ -31,7 +40,7 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy(): Promise<void> {
-    if (!process.env.DATABASE_URL) {
+    if (!this.hasDatabaseConfig()) {
       return;
     }
 

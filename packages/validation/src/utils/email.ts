@@ -1,7 +1,7 @@
 /**
  * Normalizes email values for consistent auth and identity operations.
  */
-export function normalizeEmail(email: string): string {
+function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 

@@ -17,13 +17,13 @@ import {
   deleteAvatar,
   updateCurrentUser,
   uploadAvatar,
-  type UserProfile,
+  type User as CurrentUser,
 } from '@/shared/lib/user';
 
 export const ProfileTab = () => {
   const { user, hydrated, refreshSession } = useAuth();
   const fileRef = useRef<HTMLInputElement | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<CurrentUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [firstName, setFirstName] = useState('');

@@ -1,61 +1,16 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
-
-import * as express from 'express';
 import helmet from 'helmet';
-import * as path from 'path';
 
-import { AppModule } from './app.module';
-import { setupBodyParsers } from './config/body-parser.setup';
-import { getApiAppEnv } from './config/app-env';
-import { PrismaService } from './database/prisma.service';
-import { AllExceptionsFilter } from './common/filters/http-exception.filter';
-
-async function bootstrapInitialAdmin(app: INestApplication) {
-  const configService = app.get(ConfigService);
-  const prismaService = app.get(PrismaService);
-  const initialAdminEmail = (configService.get<string>('INITIAL_ADMIN_EMAIL') ?? '').trim();
-
-  if (!initialAdminEmail) {
-    console.log('ℹ️ INITIAL_ADMIN_EMAIL not set; initial admin bootstrap skipped.');
-    return;
-  }
-
-  const adminCount = await prismaService.client.admin.count();
-  if (adminCount > 0) {
-    console.log('ℹ️ Admin bootstrap skipped: admins already exist.');
-    return;
-  }
-
-  const user = await prismaService.client.user.findUnique({
-    where: { email: initialAdminEmail },
-    select: { id: true },
-  });
-
-  if (!user) {
-    console.log(
-      `⚠️ Admin bootstrap skipped: no user found for INITIAL_ADMIN_EMAIL (${initialAdminEmail}).`
-    );
-    return;
-  }
-
-  await prismaService.client.admin.create({
-    data: {
-      userId: user.id,
-      level: 'owner',
-      grantedByUserId: null,
-    },
-  });
-
-  console.log(`✅ Bootstrapped initial owner admin for ${initialAdminEmail}.`);
-}
+import { AppModule } from './app.module.js';
+import { AllExceptionsFilter } from './common/filters/http-exception.filter.js';
+import { FRONTEND_URL_DEFAULT } from './config/defaults.js';
 
 async function bootstrap() {
-  // Disable Nest's default body parser so we can:
-  // - keep JSON parsing for all routes
-  // - bypass parsing for better-auth routes (it handles its own body parsing)
+  // Better Auth expects Nest's built-in parser to be disabled.
+  // The Nest Better Auth adapter re-adds default parsers for non-auth routes.
   const app = await NestFactory.create(AppModule, { bodyParser: false });
 
   // Security headers
@@ -69,12 +24,10 @@ async function bootstrap() {
       hsts: enableHsts
         ? undefined
         : {
-          maxAge: 0,
-          includeSubDomains: false,
-          preload: false,
-        },
-      // Avatars are served from the API host and rendered by the web app.
-      // Allow cross-origin embedding of these static images.
+            maxAge: 0,
+            includeSubDomains: false,
+            preload: false,
+          },
       crossOriginResourcePolicy: { policy: 'cross-origin' },
     })
   );
@@ -85,7 +38,7 @@ async function bootstrap() {
   // Global exception filters
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  // Global validation pipe - uses class-validator DTOs from @pytholit/validation
+  // Global validation pipe - validates Nest DTOs across the API
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -94,26 +47,24 @@ async function bootstrap() {
     })
   );
 
-  // CORS - explicit origins in production
+  // CORS - allow all origins in development, explicit list in production
   const configService = app.get(ConfigService);
-  const appEnv = getApiAppEnv(configService);
-  const isNodeDev = (configService.get<string>('NODE_ENV') ?? process.env.NODE_ENV) === 'development';
+  const isDevelopment =
+    (configService.get<string>('NODE_ENV') ?? process.env.NODE_ENV) === 'development';
+  const frontendUrl =
+    (configService.get<string>('FRONTEND_URL') ?? FRONTEND_URL_DEFAULT).toString();
+  const frontendOrigins = frontendUrl
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
   app.enableCors({
-    origin: isNodeDev || appEnv.isLocalhost ? true : appEnv.frontendOrigins,
+    origin: isDevelopment ? true : frontendOrigins,
     credentials: true,
   });
-
-  // Static uploads (avatars)
-  app.use(`/${appEnv.uploadDir}`, express.static(path.join(process.cwd(), appEnv.uploadDir)));
 
   // API prefix
   const globalPrefix = 'api/v1';
   app.setGlobalPrefix(globalPrefix);
-
-  await bootstrapInitialAdmin(app);
-
-  // Setup specialized body parsing for webhooks and auth
-  setupBodyParsers(app, globalPrefix);
 
   const port = process.env.PORT || 3001;
   await app.listen(port);

@@ -53,6 +53,16 @@ output "db_prod_password" {
   sensitive   = true
 }
 
+output "supabase_prod_secret_arn" {
+  value       = aws_secretsmanager_secret.supabase_prod.arn
+  description = "ARN of the production Supabase runtime DB settings secret"
+}
+
+output "supabase_prod_direct_secret_arn" {
+  value       = aws_secretsmanager_secret.supabase_prod_direct.arn
+  description = "ARN of the production Supabase direct-host migration secret"
+}
+
 # ==============================================================================
 # GitHub OAuth Secrets (Managed Externally)
 # ==============================================================================

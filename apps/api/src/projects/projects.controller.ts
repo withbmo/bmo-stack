@@ -10,11 +10,11 @@ import {
   Post,
 } from '@nestjs/common';
 import type { Project } from '@pytholit/contracts';
-import { CreateProjectDto } from '@pytholit/validation/class-validator';
 
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { UpdateProjectDto } from './dto/update-project.dto';
-import { ProjectsService } from './projects.service';
+import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
+import { CreateProjectDto } from './dto/create-project.dto.js';
+import { UpdateProjectDto } from './dto/update-project.dto.js';
+import { ProjectsService } from './projects.service.js';
 
 /**
  * Projects Controller

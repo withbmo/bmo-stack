@@ -8,14 +8,14 @@ export interface WizardSchema {
   rules: WizardRules;
 }
 
-export interface WizardStep {
+interface WizardStep {
   id: string;
   title: string;
   description?: string;
   fields: WizardField[];
 }
 
-export interface WizardField {
+interface WizardField {
   id: string;
   label: string;
   type: 'string' | 'number' | 'boolean' | 'select' | 'multi';
@@ -24,22 +24,22 @@ export interface WizardField {
   default?: unknown;
 }
 
-export interface WizardRules {
+interface WizardRules {
   files: Record<string, WizardFileRule>;
 }
 
-export interface WizardFileRule {
+interface WizardFileRule {
   base?: string;
   variants?: WizardRuleVariant[];
   addons?: WizardRuleVariant[];
 }
 
-export interface WizardRuleVariant {
+interface WizardRuleVariant {
   when: Record<string, unknown>;
   use: string;
 }
 
-export interface WizardManifestFile {
+interface WizardManifestFile {
   path: string;
   content: string;
   language?: string;

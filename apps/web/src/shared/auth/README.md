@@ -3,7 +3,9 @@
 This folder contains the client-side state and hooks used by the auth pages. The network/API surface is centralized in `apps/web/src/shared/lib/auth.ts`.
 
 ## Source of truth (contracts)
-- **Shared types**: `packages/contracts/src/auth.ts`
+- **Shared API/domain types**: `packages/contracts/src/index.ts`
+- **Shared validation constants/helpers**: `packages/validation/src/index.ts`
+- Frontend-only auth flow helper types stay local in `apps/web/src/shared/lib/auth.ts`
 
 ## Frontend pages (Next.js routes)
 - **Login**: `apps/web/src/app/(site)/auth/login/page.tsx`
@@ -53,4 +55,4 @@ sequenceDiagram
 
 ## Where to edit things
 - **API calls / auth client**: `apps/web/src/shared/lib/auth.ts`
-- **Token storage + auth state**: `apps/web/src/shared/auth/stores/auth-context.tsx`
+- **Session state + auth state**: `apps/web/src/shared/auth/stores/auth-context.tsx`

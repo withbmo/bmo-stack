@@ -71,6 +71,23 @@ variable "api_database_env" {
   }
 }
 
+variable "api_database_provider" {
+  type        = string
+  default     = "rds"
+  description = "Which database provider the API should use in AWS environments (rds|supabase)."
+
+  validation {
+    condition     = contains(["rds", "supabase"], var.api_database_provider)
+    error_message = "api_database_provider must be one of: rds, supabase."
+  }
+}
+
+variable "api_supabase_direct_url_enabled" {
+  type        = bool
+  default     = false
+  description = "Whether to inject DB_DIRECT_HOST and DB_DIRECT_PORT for production Supabase migrations. Enable only when the direct host is reachable from ECS."
+}
+
 variable "postgres_instances" {
   type = map(object({
     instance_class          = string
@@ -107,7 +124,6 @@ variable "images" {
     api              = string
     terminal_gateway = string
     ingress_router   = string
-    orchestrator     = string
   })
 
   default = {
@@ -115,7 +131,6 @@ variable "images" {
     api              = "public.ecr.aws/docker/library/nginx:stable"
     terminal_gateway = "public.ecr.aws/docker/library/nginx:stable"
     ingress_router   = "public.ecr.aws/docker/library/nginx:stable"
-    orchestrator     = "public.ecr.aws/docker/library/nginx:stable"
   }
 }
 
@@ -137,12 +152,6 @@ variable "route53_extra_cname_records" {
   }))
   default     = []
   description = "Extra CNAME records to manage in the (root) Route53 zone (e.g. ZeptoMail bounce/return-path)."
-}
-
-variable "orchestrator_api_url" {
-  type        = string
-  default     = ""
-  description = "Internal base URL the orchestrator uses to callback the API (e.g. http://api.internal:3001)."
 }
 
 variable "orchestrator_internal_secret" {
@@ -167,92 +176,4 @@ variable "route53_extra_mx_records" {
   }))
   default     = []
   description = "Extra MX records to manage in the (root) Route53 zone (e.g. Zoho inbound mail)."
-}
-
-variable "enable_lago" {
-  type        = bool
-  default     = false
-  description = "Enable Lago ECS services deployment."
-}
-
-variable "lago_api_url" {
-  type        = string
-  default     = "https://lago.pytholit.dev"
-  description = "Public URL for Lago API."
-}
-
-variable "lago_front_url" {
-  type        = string
-  default     = "https://lago.pytholit.dev"
-  description = "Public URL for Lago Front dashboard."
-}
-
-variable "lago_db_name" {
-  type        = string
-  default     = "lago"
-  description = "Lago PostgreSQL database name."
-}
-
-variable "lago_db_user" {
-  type        = string
-  default     = "lago_user"
-  description = "Lago PostgreSQL database user."
-}
-
-variable "lago_db_password" {
-  type        = string
-  default     = ""
-  sensitive   = true
-  description = "Lago PostgreSQL database password."
-}
-
-variable "lago_api_key" {
-  type        = string
-  default     = ""
-  sensitive   = true
-  description = "Lago API key for internal integrations."
-}
-
-variable "lago_secret_key_base" {
-  type        = string
-  default     = ""
-  sensitive   = true
-  description = "Rails SECRET_KEY_BASE for Lago services."
-}
-
-variable "lago_stripe_secret_key" {
-  type        = string
-  default     = ""
-  sensitive   = true
-  description = "Stripe secret key consumed by Lago."
-}
-
-variable "lago_api_image" {
-  type        = string
-  default     = "getlago/api:v1.0.0"
-  description = "Container image for Lago API."
-}
-
-variable "lago_worker_image" {
-  type        = string
-  default     = "getlago/api:v1.0.0"
-  description = "Container image for Lago worker."
-}
-
-variable "lago_front_image" {
-  type        = string
-  default     = "getlago/front:v1.0.0"
-  description = "Container image for Lago front."
-}
-
-variable "lago_enable_front" {
-  type        = bool
-  default     = false
-  description = "Whether to deploy Lago front service."
-}
-
-variable "lago_alarm_actions" {
-  type        = list(string)
-  default     = []
-  description = "Optional CloudWatch alarm action ARNs for Lago alarms (e.g. SNS topic ARN)."
 }

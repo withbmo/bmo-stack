@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/shared/auth';
 import { getApiErrorMessage } from '@/shared/lib';
 import { completeOAuthOnboarding } from '@/shared/lib/user';
-import { AUTH_CONSTANTS } from '@pytholit/validation/zod';
+import { AUTH_CONSTANTS } from '@pytholit/validation';
 import { AuthCard } from '@/site/components/auth/AuthCard';
 import { AuthHeader } from '@/site/components/auth/AuthHeader';
 import { AuthPageLayout } from '@/site/components/auth/AuthPageLayout';

@@ -25,7 +25,7 @@ pytholit-v2/
 
 ### Prerequisites
 
-- Node.js >= 20.0.0
+- Node.js >= 20.19.0
 - pnpm >= 9.0.0
 
 ### Installation
@@ -37,9 +37,15 @@ pnpm install
 # Generate Prisma client
 pnpm db:generate
 
-# Run database migrations
-pnpm db:migrate
+# Push the current schema into a fresh local database
+pnpm --filter @pytholit/db db:push
 ```
+
+### Database topology
+
+- Local development: any local PostgreSQL instance configured through `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, and `DB_PASSWORD`
+- Production API: PostgreSQL-compatible managed database, now designed to use Supabase via `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, and `DB_PASSWORD`
+- Production Prisma migrations: optionally use `DB_DIRECT_HOST` when migrations should bypass the runtime host
 
 ### Development
 
@@ -82,6 +88,7 @@ pnpm test
 - [Architecture Overview](./docs/architecture.md)
 - [Development Guide](./docs/development.md)
 - [Deployment](./docs/deployment.md)
+- [API Database Docs](./apps/api/docs/database/README.md)
 
 ## License
 

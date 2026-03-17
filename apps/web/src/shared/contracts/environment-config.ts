@@ -1,10 +1,18 @@
-import type {
-  ConfigMode,
-  Ec2Architecture,
-  MarketType,
-  RootVolumeType,
-  ServerPreset,
-} from '@pytholit/contracts';
+export type ConfigMode = 'preset' | 'custom';
+export type Ec2Architecture = 'x86_64' | 'arm64';
+export type MarketType = 'on-demand' | 'spot';
+export type RootVolumeType = 'gp3' | 'st1' | 'sc1';
+
+export interface ServerPreset {
+  id: string;
+  label: string;
+  region: string;
+  instanceType: string;
+  cpu: string;
+  memory: string;
+  storage: string;
+  network: string;
+}
 
 export type EnvironmentConfig = EnvironmentConfig1 & EnvironmentConfig2;
 export type EnvironmentConfig1 = {

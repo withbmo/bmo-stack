@@ -4,6 +4,7 @@
   "private": true,
   "description": "Pytholit monorepo - Next.js + Nest.js architecture",
   "scripts": {
+    "preinstall": "node scripts/check-node-version.mjs",
     "dev": "turbo run dev --concurrency=20",
     "build": "turbo run build",
     "lint": "turbo run lint",
@@ -14,12 +15,7 @@
     "db:generate": "pnpm --filter @pytholit/db db:generate",
     "db:migrate": "pnpm --filter @pytholit/db db:migrate",
     "db:studio": "pnpm --filter @pytholit/db prisma studio",
-    "validate:plans": "node scripts/validate-plans.mjs",
-    "plans:sync:providers": "node scripts/sync-plans-to-providers.mjs --stripe --orb",
-    "plans:sync:providers:dry-run": "node scripts/sync-plans-to-providers.mjs --stripe --orb --dry-run",
-    "plans:sync:lago": "pnpm --filter @pytholit/api exec ts-node ../../scripts/migrate-plans-to-lago.ts",
     "export:apps": "node scripts/export-apps-to-txt.mjs",
-    "cleanup:subscriptions": "node scripts/cleanup-subscriptions.mjs",
     "demo:build-images": "./scripts/build-and-push-demo-images.sh"
   },
   "devDependencies": {
@@ -35,7 +31,7 @@
   },
   "packageManager": "pnpm@9.15.4",
   "engines": {
-    "node": ">=20.0.0",
+    "node": "^20.19.0 || ^22.12.0 || >=24.0.0",
     "pnpm": ">=9.0.0"
   }
 }

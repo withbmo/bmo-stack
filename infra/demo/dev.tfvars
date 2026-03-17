@@ -48,5 +48,4 @@ images = {
   api              = "600161850626.dkr.ecr.us-east-1.amazonaws.com/api:demo-20260216072044"
   terminal_gateway = "public.ecr.aws/docker/library/nginx:stable"
   ingress_router   = "public.ecr.aws/docker/library/nginx:stable"
-  orchestrator     = "public.ecr.aws/docker/library/nginx:stable"
 }

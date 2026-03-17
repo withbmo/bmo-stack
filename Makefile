@@ -1,40 +1,18 @@
-.PHONY: help up down restart dev install db-migrate db-studio logs ps kill-ports
-
-COMPOSE := docker compose -f docker-compose.dev.yml
+.PHONY: help dev install db-migrate db-push db-studio kill-ports
 
 # ── Default ────────────────────────────────────────────────────────────────────
 help:
 	@echo ""
-	@echo "  make up           Start infra (postgres, redis) — orchestrator runs locally via pnpm dev"
-	@echo "  make down         Stop and remove infra containers"
-	@echo "  make restart      Restart infra containers"
 	@echo "  make dev          Run all apps in watch mode (turbo dev)"
 	@echo "  make install      Install all dependencies"
 	@echo "  make db-migrate   Run Prisma migrations"
+	@echo "  make db-push      Push the current Prisma schema to a fresh local database"
 	@echo "  make db-studio    Open Prisma Studio"
-	@echo "  make logs         Tail infra container logs"
-	@echo "  make ps           Show running containers"
 	@echo "  make kill-ports   Free ports 3000 3001 3003 (dev ports)"
 	@echo ""
 
-# ── Infrastructure ──────────────────────────────────────────────────────────────
-up:
-	$(COMPOSE) up -d postgres redis
-
-down:
-	$(COMPOSE) down
-
-restart:
-	$(COMPOSE) restart postgres redis
-
-logs:
-	$(COMPOSE) logs -f postgres redis
-
-ps:
-	$(COMPOSE) ps
-
 # ── App ────────────────────────────────────────────────────────────────────────
-dev: up
+dev:
 	pnpm dev
 
 install:
@@ -43,6 +21,9 @@ install:
 # ── Database ───────────────────────────────────────────────────────────────────
 db-migrate:
 	pnpm db:migrate
+
+db-push:
+	pnpm --filter @pytholit/db db:push
 
 db-studio:
 	pnpm db:studio

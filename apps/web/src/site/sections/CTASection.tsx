@@ -42,9 +42,9 @@ export const CTASection = () => {
               <Play fill="white" size={20} />
               START RUNTIME
             </Button>
-            <Button variant="secondary" size="lg" to="/pricing">
+            <Button variant="secondary" size="lg" to="/docs">
               <ArrowUpRight size={18} />
-              VIEW PRICING
+              VIEW DOCS
             </Button>
           </div>
         </div>

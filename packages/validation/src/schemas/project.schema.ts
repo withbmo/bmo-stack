@@ -1,6 +1,5 @@
 /**
- * Project validation constants
- * Used by apps/api projects dto (e.g. update-project.dto.ts)
+ * Shared project validation constants used by API request DTOs.
  */
 export const PROJECT_CONSTANTS = {
   MIN_NAME_LENGTH: 1,

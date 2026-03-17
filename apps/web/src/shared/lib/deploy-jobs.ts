@@ -17,7 +17,6 @@ const mapStepStatus = (status: ContractDeployJobStep['status']): ViewDeployJobSt
 const mapDeployJob = (job: ApiDeployJob): ViewDeployJob => ({
   id: job.id,
   projectId: job.projectId,
-  environmentId: job.environmentId,
   triggeredBy: job.triggeredByUserId ? `user_${job.triggeredByUserId}` : 'system',
   status: job.status,
   currentStep: job.currentStep ?? null,
@@ -26,7 +25,6 @@ const mapDeployJob = (job: ApiDeployJob): ViewDeployJob => ({
     status: mapStepStatus(step.status),
   })),
   source: job.source as Record<string, unknown>,
-  executionModeSnapshot: job.executionModeSnapshot === 'byo_aws' ? 'byo_aws' : 'managed',
   createdAt: job.createdAt,
   startedAt: job.startedAt ?? null,
   finishedAt: job.finishedAt ?? null,
@@ -34,11 +32,10 @@ const mapDeployJob = (job: ApiDeployJob): ViewDeployJob => ({
 
 export async function listDeployJobs(
   token: string | undefined,
-  params: { projectId?: string; envId?: string }
+  params: { projectId?: string }
 ): Promise<ViewDeployJob[]> {
   const query = new URLSearchParams();
   if (params.projectId) query.set('project_id', params.projectId);
-  if (params.envId) query.set('env_id', params.envId);
   const path = `${API_V1}/deploy-jobs${query.toString() ? `?${query}` : ''}`;
   const jobs = snakeToCamel(await apiRequest<ApiDeployJob[]>(path, { method: 'GET', token }));
   return jobs.map(mapDeployJob);
@@ -58,7 +55,6 @@ export async function createDeployJob(
   token: string | undefined,
   payload: {
     projectId: string;
-    environmentId: string;
     source?: { origin: string; ref: string };
   }
 ): Promise<ViewDeployJob> {

@@ -1,9 +1,9 @@
 import { Body, Controller, Get, Param, Post, UsePipes, ValidationPipe } from '@nestjs/common';
 
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { WizardGenerateDto } from './dto/wizard-generate.dto';
-import { WizardService } from './wizard.service';
-import type { WizardManifest, WizardSchema, WizardTemplateSummary } from './wizard.types';
+import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
+import { WizardGenerateDto } from './dto/wizard-generate.dto.js';
+import { WizardService } from './wizard.service.js';
+import type { WizardManifest, WizardSchema, WizardTemplateSummary } from './wizard.types.js';
 
 @Controller('wizard')
 export class WizardController {

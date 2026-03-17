@@ -4,54 +4,38 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import type { UserProfile } from '@pytholit/contracts';
+import type { User } from '@pytholit/contracts';
 import { exclude } from '@pytholit/db';
-import * as fs from 'fs/promises';
-import * as path from 'path';
 
-import { readTrimmedStringOrDefault } from '../config/config-readers';
-import { UPLOAD_DIR_DEFAULT } from '../config/defaults';
-import { isPrismaUniqueViolation } from '../common/utils/prisma-error.utils';
-import { PrismaService } from '../database/prisma.service';
-import { CompleteOAuthOnboardingDto } from './dto/complete-oauth-onboarding.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { isPrismaUniqueViolation } from '../common/utils/prisma-error.utils.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { validateAndProcessAvatar } from '../storage/image.utils.js';
+import { StorageService } from '../storage/storage.service.js';
+import { CompleteOAuthOnboardingDto } from './dto/complete-oauth-onboarding.dto.js';
+import { UpdateUserDto } from './dto/update-user.dto.js';
 
-/**
- * Users Service
- * Handles user profile operations
- */
 @Injectable()
 export class UsersService {
-  private uploadDir: string;
   private readonly emailPasswordProviderId = 'email-password';
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService
-  ) {
-    this.uploadDir = readTrimmedStringOrDefault(this.configService, 'UPLOAD_DIR', UPLOAD_DIR_DEFAULT);
-  }
+    private readonly storage: StorageService
+  ) {}
 
-  async getUserProfile(userId: string): Promise<UserProfile> {
-    const [user, adminMembership] = await Promise.all([
-      this.prisma.client.user.findUnique({
-        where: { id: userId },
-        include: {
-          accounts: {
-            where: { providerId: { not: this.emailPasswordProviderId } },
-            select: {
-              oauthOnboardingRequired: true,
-              oauthOnboardingCompletedAt: true,
-            },
+  async getUserProfile(userId: string): Promise<User> {
+    const user = await this.prisma.client.user.findUnique({
+      where: { id: userId },
+      include: {
+        accounts: {
+          where: { providerId: { not: this.emailPasswordProviderId } },
+          select: {
+            oauthOnboardingRequired: true,
+            oauthOnboardingCompletedAt: true,
           },
         },
-      }),
-      this.prisma.client.admin.findUnique({
-        where: { userId },
-        select: { level: true },
-      }),
-    ]);
+      },
+    });
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -80,30 +64,18 @@ export class UsersService {
       isActive: userWithoutPassword.isActive,
       oauthOnboardingRequired,
       oauthOnboardingCompletedAt: oauthCompletedAt ? oauthCompletedAt.toISOString() : null,
-      isAdmin: !!adminMembership,
-      adminLevel: adminMembership?.level ?? null,
-      novuSubscriberId: userWithoutPassword.novuSubscriberId ?? null,
       createdAt: userWithoutPassword.createdAt.toISOString(),
       updatedAt: userWithoutPassword.updatedAt.toISOString(),
       plan: null,
     };
   }
 
-  async updateProfile(userId: string, updateUserDto: UpdateUserDto): Promise<UserProfile> {
-    const user = await this.prisma.client.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
+  async updateProfile(userId: string, dto: UpdateUserDto): Promise<User> {
     try {
       await this.prisma.client.user.update({
         where: { id: userId },
-        data: {
-          ...updateUserDto,
-        },
+        data: { ...dto },
+        select: { id: true },
       });
     } catch (err) {
       if (isPrismaUniqueViolation(err)) {
@@ -132,10 +104,13 @@ export class UsersService {
         },
       },
     });
+
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    const required = !user.username || user.accounts.some(account => account.oauthOnboardingRequired);
+
+    const required =
+      !user.username || user.accounts.some(account => account.oauthOnboardingRequired);
     const completedAt =
       user.accounts
         .map(account => account.oauthOnboardingCompletedAt)
@@ -148,18 +123,7 @@ export class UsersService {
     };
   }
 
-  async completeOAuthOnboarding(
-    userId: string,
-    input: CompleteOAuthOnboardingDto
-  ): Promise<UserProfile> {
-    const user = await this.prisma.client.user.findUnique({
-      where: { id: userId },
-      select: { id: true },
-    });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
+  async completeOAuthOnboarding(userId: string, input: CompleteOAuthOnboardingDto): Promise<User> {
     try {
       await this.prisma.client.user.update({
         where: { id: userId },
@@ -190,52 +154,24 @@ export class UsersService {
     return this.getUserProfile(userId);
   }
 
-  async uploadAvatar(userId: string, file: Express.Multer.File): Promise<UserProfile> {
-    const user = await this.prisma.client.user.findUnique({
-      where: { id: userId },
-    });
+  async uploadAvatar(userId: string, file: Express.Multer.File): Promise<User> {
+    const processed = await validateAndProcessAvatar(file.buffer);
+    const key = `avatars/${userId}.webp`;
+    const { publicUrl } = await this.storage.uploadFile(key, processed, 'image/webp');
 
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    // Delete old avatar if exists
-    if (user.avatarUrl) {
-      try {
-        const relative = user.avatarUrl.replace(/^\/+/, '');
-        const oldPath = path.join(process.cwd(), relative);
-        await fs.unlink(oldPath);
-      } catch (error) {
-        // Ignore if file doesn't exist
-      }
-    }
-
-    // Create avatars directory if it doesn't exist
-    const avatarsDir = path.join(process.cwd(), this.uploadDir, 'avatars');
-    await fs.mkdir(avatarsDir, { recursive: true });
-
-    // Generate unique filename
-    const fileExtension = path.extname(file.originalname);
-    const timestamp = Date.now();
-    const filename = `${userId}-${timestamp}${fileExtension}`;
-    const filepath = path.join(avatarsDir, filename);
-
-    // Save file
-    await fs.writeFile(filepath, file.buffer);
-
-    // Update user avatar URL
-    const avatarUrl = `/${this.uploadDir}/avatars/${filename}`;
     await this.prisma.client.user.update({
       where: { id: userId },
-      data: { avatarUrl },
+      data: { avatarUrl: publicUrl },
+      select: { id: true },
     });
 
     return this.getUserProfile(userId);
   }
 
-  async deleteAvatar(userId: string): Promise<UserProfile> {
+  async deleteAvatar(userId: string): Promise<User> {
     const user = await this.prisma.client.user.findUnique({
       where: { id: userId },
+      select: { id: true, avatarUrl: true },
     });
 
     if (!user) {
@@ -246,19 +182,12 @@ export class UsersService {
       throw new BadRequestException('No avatar to delete');
     }
 
-    // Delete file
-    try {
-      const relative = user.avatarUrl.replace(/^\/+/, '');
-      const filepath = path.join(process.cwd(), relative);
-      await fs.unlink(filepath);
-    } catch (error) {
-      // Ignore if file doesn't exist
-    }
+    await this.storage.deleteFile(`avatars/${userId}.webp`);
 
-    // Update user
     await this.prisma.client.user.update({
       where: { id: userId },
       data: { avatarUrl: null },
+      select: { id: true },
     });
 
     return this.getUserProfile(userId);

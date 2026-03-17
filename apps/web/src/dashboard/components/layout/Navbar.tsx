@@ -9,15 +9,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { NovuInbox } from '@/dashboard/components/notifications/NovuInbox';
 import { useAuth } from '@/shared/auth';
 import { resolveAvatarUrl } from '@/shared/lib/avatar';
-import { getPlans,getSubscription } from '@/shared/lib/billing';
-import type { UserProfile } from '@/shared/lib/user';
+import type { User as CurrentUser } from '@/shared/lib/user';
 
 const DASH_LINKS = [
   { to: '/dashboard', label: 'PROJECTS' },
   { to: '/dashboard/hub', label: 'HUB' },
   { to: '/dashboard/templates', label: 'TEMPLATES' },
   { to: '/dashboard/deployments', label: 'DEPLOYMENTS' },
-  { to: '/dashboard/environments', label: 'ENVIRONMENTS' },
 ] as const;
 
 /** App shell navbar for /dashboard/*: projects/hub/templates/deployments, notifications, user menu */
@@ -25,33 +23,12 @@ export const Navbar = () => {
   const pathname = usePathname();
   const router = useRouter();
   const { logout, user, hydrated } = useAuth();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [planLabel, setPlanLabel] = useState<string>('FREE TIER');
+  const [profile, setProfile] = useState<CurrentUser | null>(null);
 
   useEffect(() => {
     if (!hydrated) return;
     setProfile(user);
   }, [hydrated, user]);
-
-  useEffect(() => {
-    if (!hydrated || !user) return;
-    if (!pathname.startsWith('/dashboard/settings/billing')) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const [sub, plans] = await Promise.all([getSubscription(undefined), getPlans()]);
-        if (cancelled) return;
-        const activePlanId = sub.subscription?.planId;
-        const active = activePlanId ? plans.find(p => p.id === activePlanId) : plans[0] || null;
-        setPlanLabel((active?.name || 'FREE TIER').toUpperCase().replace(/_/g, ' '));
-      } catch {
-        if (!cancelled) setPlanLabel('FREE TIER');
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [hydrated, pathname, user]);
 
   const avatarUrl = useMemo(() => resolveAvatarUrl(profile?.avatarUrl), [profile?.avatarUrl]);
 
@@ -98,7 +75,6 @@ export const Navbar = () => {
                 <div className="font-mono text-xs text-text-primary group-hover:text-brand-primary transition-colors">
                   {profile?.username || 'USER'}
                 </div>
-                <div className="font-mono text-[10px] text-text-secondary">{planLabel}</div>
               </div>
               <div className="w-8 h-8 bg-bg-surface border border-border-default flex items-center justify-center text-text-primary group-hover:border-brand-primary group-hover:text-white group-hover:bg-brand-primary transition-all overflow-hidden">
                 {avatarUrl ? (

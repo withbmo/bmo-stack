@@ -1,1 +1,1 @@
-export { normalizeEmail, normalizeEmailOrNull } from './email';
+export { normalizeEmailOrNull } from './email';

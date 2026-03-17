@@ -75,7 +75,6 @@ All migrations complete. Pages now following the plan:
 - `app/(site)/auth/login/page.tsx` → `LoginRoute`
 - `app/(site)/auth/signup/page.tsx` → `SignupRoute`
 - `app/(site)/auth/callback/page.tsx` → `CallbackRoute`
-- `app/(site)/pricing/page.tsx` → `PricingRoute`
 - `app/(site)/docs/page.tsx`, `app/(site)/docs/[slug]/page.tsx` → `DocsRoute`
 
 Pages already following the plan:
@@ -89,8 +88,7 @@ Pages already following the plan:
 ## Implementation Order
 
 1. **Auth routes** – Extract LoginRoute, SignupRoute, CallbackRoute into `common/features/auth/routes/`. Auth pages become thin wrappers. (Done)
-2. **Pricing** – Extract PricingRoute to `common/features/pricing/routes/`. (Done)
-3. **Docs** – Extract DocsRoute to `common/features/docs/routes/`. (Done)
+2. **Docs** – Extract DocsRoute to `common/features/docs/routes/`. (Done)
 
 ---
 

@@ -1,11 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AfterHook, type AuthHookContext, Hook } from '@thallesp/nestjs-better-auth';
 
-import { BillingStateService } from '../../billing/billing-state.service';
-import { BILLING_ACCESS_STATE } from '../../billing/billing.interface';
-import { getDefaultBillingPlanCode } from '../../billing/billing-plan-code';
-import { StripeCustomerService } from '../../billing/stripe-customer.service';
-import { PrismaService } from '../../database/prisma.service';
+import { PrismaService } from '../../database/prisma.service.js';
 
 @Hook()
 @Injectable()
@@ -14,36 +10,28 @@ export class AuthEventsHook {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly stripeCustomers: StripeCustomerService,
-    private readonly billingState: BillingStateService
   ) {}
 
   @AfterHook('/verify-email')
   async onVerifyEmail(ctx: AuthHookContext): Promise<void> {
-    await this.ensureBillingStateSnapshot(ctx, 'verify-email');
-    await this.tryProvisionBillingCustomer(ctx, 'verify-email');
+    await this.tryHydrateUserNamesFromAuthContext(ctx, 'verify-email');
   }
 
   @AfterHook('/email-otp/verify-email')
   async onOtpVerifyEmail(ctx: AuthHookContext): Promise<void> {
-    await this.ensureBillingStateSnapshot(ctx, 'otp-verify-email');
-    await this.tryProvisionBillingCustomer(ctx, 'otp-verify-email');
+    await this.tryHydrateUserNamesFromAuthContext(ctx, 'otp-verify-email');
   }
 
   @AfterHook('/callback/google')
   async onGoogleCallback(ctx: AuthHookContext): Promise<void> {
     await this.tryHydrateUserNamesFromAuthContext(ctx, 'oauth-google-callback');
     await this.markOAuthOnboardingRequiredForNewUser(ctx, 'oauth-google-callback', 'google');
-    await this.ensureBillingStateSnapshot(ctx, 'oauth-google-callback');
-    await this.tryProvisionBillingCustomer(ctx, 'oauth-google-callback');
   }
 
   @AfterHook('/callback/github')
   async onGithubCallback(ctx: AuthHookContext): Promise<void> {
     await this.tryHydrateUserNamesFromAuthContext(ctx, 'oauth-github-callback');
     await this.markOAuthOnboardingRequiredForNewUser(ctx, 'oauth-github-callback', 'github');
-    await this.ensureBillingStateSnapshot(ctx, 'oauth-github-callback');
-    await this.tryProvisionBillingCustomer(ctx, 'oauth-github-callback');
   }
 
   private async markOAuthOnboardingRequiredForNewUser(
@@ -91,48 +79,6 @@ export class AuthEventsHook {
     } catch (err) {
       this.logger.warn(`oauth_onboarding_mark_failed source=${source} userId=${userId}`);
       this.logger.debug(err as object);
-    }
-  }
-
-  private async ensureBillingStateSnapshot(ctx: AuthHookContext, source: string): Promise<void> {
-    const userId = this.extractUserId(ctx);
-    if (!userId) return;
-
-    try {
-      await this.billingState.upsertState({
-        userId,
-        planCode: getDefaultBillingPlanCode(),
-        accessState: BILLING_ACCESS_STATE.Enabled,
-      });
-    } catch (err) {
-      this.logger.warn(`billing_state_seed_failed source=${source} userId=${userId}`);
-      this.logger.debug(err as object);
-    }
-  }
-
-  private async tryProvisionBillingCustomer(ctx: AuthHookContext, source: string): Promise<void> {
-    const userId = this.extractUserId(ctx);
-    if (!userId) {
-      this.logger.warn(`billing_provision_skipped source=${source} reason=no_user_id`);
-      return;
-    }
-
-    try {
-      const user = await this.prisma.client.user.findUnique({
-        where: { id: userId },
-        select: { email: true },
-      });
-
-      if (!user?.email) {
-        this.logger.warn(`billing_provision_skipped source=${source} userId=${userId} reason=no_email`);
-        return;
-      }
-
-      await this.stripeCustomers.getOrCreateStripeCustomerIdForUser(userId);
-      this.logger.log(`billing_customer_provisioned source=${source} userId=${userId}`);
-    } catch (err) {
-      // Non-fatal: log and continue — idempotent on retry
-      this.logger.error(`billing_provision_failed source=${source} userId=${userId}`, err);
     }
   }
 

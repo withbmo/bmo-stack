@@ -1,3 +1,5 @@
+import type { ProjectVisibility } from '../constants/project-wizard';
+
 export interface Template {
   id: string;
   title: string;
@@ -29,7 +31,7 @@ export interface TemplateParts {
   cpu: number;
   memory: number;
   port: number;
-  visibility: import('@pytholit/contracts').EnvironmentVisibility;
+  visibility: ProjectVisibility;
   region: string;
   envVars: { key: string; value: string }[];
 }

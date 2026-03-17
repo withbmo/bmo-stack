@@ -65,7 +65,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-run_cmd="set -euo pipefail; DATABASE_URL=\$(node -e 'const enc=encodeURIComponent; const host=process.env.DB_HOST; const user=process.env.DB_USER; const pass=process.env.DB_PASSWORD; const db=process.env.DB_NAME; const port=process.env.DB_PORT||\"5432\"; const ssl=process.env.DB_SSLMODE; if(!host||!user||!pass||!db) process.exit(2); const params=new URLSearchParams({schema:\"public\"}); if(ssl) params.set(\"sslmode\", ssl); process.stdout.write(\"postgresql://\"+enc(user)+\":\"+enc(pass)+\"@\"+host+\":\"+port+\"/\"+db+\"?\"+params.toString());'); export DATABASE_URL; echo 'Running prisma migrate deploy...'; ./packages/db/node_modules/.bin/prisma migrate deploy --schema ${schema_path}"
+run_cmd="set -euo pipefail; DATABASE_URL=\$(node -e 'const enc=encodeURIComponent; const host=process.env.DB_DIRECT_HOST || process.env.DB_HOST; const port=process.env.DB_DIRECT_PORT || process.env.DB_PORT || \"5432\"; const user=process.env.DB_USERNAME; const pass=process.env.DB_PASSWORD; const db=process.env.DB_NAME; const ssl=process.env.DB_SSLMODE || \"require\"; if(!host||!user||!pass||!db) process.exit(2); const params=new URLSearchParams({schema:\"public\", sslmode: ssl}); process.stdout.write(\"postgresql://\"+enc(user)+\":\"+enc(pass)+\"@\"+host+\":\"+port+\"/\"+db+\"?\"+params.toString());'); export DATABASE_URL; echo 'Running prisma migrate deploy...'; ./packages/db/node_modules/.bin/prisma migrate deploy --schema ${schema_path}"
 
 jq -n \
   --arg name "$container_name" \

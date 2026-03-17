@@ -53,16 +53,34 @@ variable "upload_dir" {
   description = "Local upload directory used for avatars and other uploads."
 }
 
+variable "storage_driver" {
+  type        = string
+  default     = "s3"
+  description = "Storage driver for uploads: 's3' or 'local'."
+}
+
+variable "s3_bucket" {
+  type        = string
+  default     = ""
+  description = "S3 bucket name for avatar storage."
+}
+
+variable "s3_region" {
+  type        = string
+  default     = "us-east-1"
+  description = "AWS region for the S3 bucket."
+}
+
+variable "s3_public_url" {
+  type        = string
+  default     = ""
+  description = "Public base URL for S3 objects (e.g. https://<bucket>.s3.<region>.amazonaws.com)."
+}
+
 variable "node_env" {
   type        = string
   default     = "production"
   description = "NODE_ENV for the API container."
-}
-
-variable "app_env" {
-  type        = string
-  default     = null
-  description = "APP_ENV for the API container (localhost|development|production)."
 }
 
 variable "redis_url" {
@@ -99,6 +117,14 @@ variable "db_credentials_secret_arn" {
   type    = string
   default = null
 }
+variable "supabase_db_secret_arn" {
+  type    = string
+  default = null
+}
+variable "supabase_direct_db_secret_arn" {
+  type    = string
+  default = null
+}
 variable "target_group_arn" {
   type    = string
   default = null
@@ -126,12 +152,6 @@ variable "autoscaling_max_capacity" {
 variable "tags" {
   type    = map(string)
   default = {}
-}
-
-variable "orchestrator_url" {
-  type        = string
-  default     = ""
-  description = "Internal URL of the env-orchestrator service (e.g. http://<private-ip>:3401)."
 }
 
 variable "internal_secret" {

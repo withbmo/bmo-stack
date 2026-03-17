@@ -1,6 +1,5 @@
 /**
- * Zod schemas entry point
- * Use this import path for frontend (Next.js) and other Zod consumers
+ * Frontend-friendly entry point for shared validation constants.
  */
 
 export * from './schemas';

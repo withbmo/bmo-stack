@@ -1,9 +1,9 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
 import type { DeployJob } from '@pytholit/contracts';
-import { CreateDeployJobDto } from '@pytholit/validation/class-validator';
 
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { DeployJobsService } from './deploy-jobs.service';
+import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
+import { CreateDeployJobDto } from './dto/create-deploy-job.dto.js';
+import { DeployJobsService } from './deploy-jobs.service.js';
 
 /**
  * Deploy Jobs Controller
@@ -25,12 +25,10 @@ export class DeployJobsController {
   @Get()
   async findAll(
     @CurrentUser('id') userId: string,
-    @Query('projectId') projectId?: string,
-    @Query('environmentId') environmentId?: string
+    @Query('projectId') projectId?: string
   ): Promise<DeployJob[]> {
     return this.deployJobsService.findAll(userId, {
       projectId,
-      environmentId,
     });
   }
 

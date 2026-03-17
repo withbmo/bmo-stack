@@ -1,4 +1,3 @@
-import { ENVIRONMENT_VISIBILITY } from '@pytholit/contracts';
 import { ArrowRight, Box, Plus, Settings2, Trash2 } from 'lucide-react';
 import { type ChangeEvent, useMemo, useState } from 'react';
 
@@ -9,6 +8,7 @@ import {
   FASTAPI_STRUCTURES,
   FRAMEWORKS,
   type ProjectWizardConfig,
+  type ProjectVisibility,
   type StructureOption,
   type TechStackOption,
   TOOLING_OPTIONS,
@@ -74,6 +74,7 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
   }, [schemaDependencyField]);
   const structures: StructureOption[] =
     config.framework === 'fastapi' ? FASTAPI_STRUCTURES : DJANGO_STRUCTURES;
+  const visibilityOptions: ProjectVisibility[] = ['public', 'private'];
 
   const toggleDatabase = (id: string) => {
     setConfig((prev: ProjectWizardConfig) => ({
@@ -130,11 +131,7 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                 Visibility
               </div>
               <div className="flex gap-2">
-                {(
-                  Object.values(ENVIRONMENT_VISIBILITY) as Array<
-                    (typeof ENVIRONMENT_VISIBILITY)[keyof typeof ENVIRONMENT_VISIBILITY]
-                  >
-                ).map(vis => (
+                {visibilityOptions.map(vis => (
                   <Button
                     key={vis}
                     onClick={() => setConfig(c => ({ ...c, visibility: vis }))}

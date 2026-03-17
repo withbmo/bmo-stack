@@ -7,7 +7,6 @@ set -euo pipefail
 : "${DOMAIN_NAME:=pytholit.dev}"
 : "${APP_DOMAIN_PREFIX:=}"
 : "${NEXT_PUBLIC_API_URL:=}"
-: "${NEXT_PUBLIC_APP_ENV:=}"
 PLATFORM="linux/amd64"
 
 if [[ "$DEPLOY_ENV" == "dev" && "$APP_DOMAIN_PREFIX" == "" ]]; then
@@ -26,19 +25,10 @@ if [[ "$NEXT_PUBLIC_API_URL" == "" ]]; then
   NEXT_PUBLIC_API_URL="https://api.${APP_DOMAIN_NAME}"
 fi
 
-if [[ "$NEXT_PUBLIC_APP_ENV" == "" ]]; then
-  if [[ "$DEPLOY_ENV" == "prod" ]]; then
-    NEXT_PUBLIC_APP_ENV="production"
-  else
-    NEXT_PUBLIC_APP_ENV="development"
-  fi
-fi
-
 services=(
   "web:docker/web.Dockerfile"
   "api:docker/api.Dockerfile"
   "ingress-router:docker/ingress-router.Dockerfile"
-  "env-orchestrator:docker/env-orchestrator.Dockerfile"
   "terminal-gateway:docker/terminal-gateway.Dockerfile"
 )
 
@@ -107,7 +97,6 @@ for entry in "${services[@]}"; do
       "${build_args[@]}" \
       --build-arg NEXT_PUBLIC_TURNSTILE_SITE_KEY="$TURNSTILE_SITE_KEY" \
       --build-arg NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
-      --build-arg NEXT_PUBLIC_APP_ENV="$NEXT_PUBLIC_APP_ENV" \
       .
   else
     docker buildx build "${cache_args[@]}" "${build_args[@]}" .

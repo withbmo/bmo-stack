@@ -5,16 +5,12 @@ import 'swagger-ui-react/swagger-ui.css';
 import {
   Activity,
   AlertTriangle,
-  Bot,
-  ChevronDown,
   Code2,
   Database,
   Globe,
-  MessageSquare,
   Play,
   Plus,
   Save,
-  Send,
   Settings,
   Trash2,
   X,
@@ -28,6 +24,7 @@ import { Input } from '@/dashboard/components';
 import { useAuth } from '@/shared/auth';
 
 import {
+  AgentPanel,
   CHAT_MAX,
   CHAT_MIN,
   EDITOR_MIN,
@@ -45,13 +42,6 @@ function pathToId(path: string): string {
 }
 
 const OPENAPI_SPEC_URL = '/openapi.json';
-
-const LLM_OPTIONS = [
-  { id: 'claude', label: 'Claude' },
-  { id: 'gpt', label: 'GPT' },
-  { id: 'gemini', label: 'Gemini' },
-  { id: 'mistral', label: 'Mistral' },
-] as const;
 
 const ResizeHandle = ({
   onResize,
@@ -147,7 +137,6 @@ export const IDERoute = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, hydrated } = useAuth();
-  const environmentId = searchParams?.get('envId') ?? undefined;
 
   const {
     chatMessages,
@@ -162,7 +151,11 @@ export const IDERoute = () => {
     setModeDropdownOpen,
     llmDropdownOpen,
     setLlmDropdownOpen,
+    isThinking,
+    agentContext,
     chatFormRef,
+    messagesEndRef,
+    clearChat,
     activeView,
     setActiveView,
     chatPanelWidth,
@@ -267,148 +260,27 @@ export const IDERoute = () => {
           {/* IDE VIEW */}
           {activeView === 'ide' && (
             <div className="flex-1 flex overflow-hidden min-w-0">
-              {/* AI Chat */}
-              <div
-                className="shrink-0 flex flex-col bg-nexus-dark"
-                style={{
-                  width: chatPanelWidth,
-                  minWidth: CHAT_MIN,
-                  maxWidth: CHAT_MAX,
-                }}
-              >
-                <div className="h-10 shrink-0 px-3 border-b border-nexus-gray flex items-center gap-2 text-xs font-mono font-bold text-nexus-accent">
-                  <Bot size={14} /> AI ARCHITECT
-                </div>
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {chatMessages.map(msg => (
-                    <div
-                      key={msg.id}
-                      className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
-                    >
-                      <div
-                        className={`w-6 h-6 rounded-none flex items-center justify-center shrink-0 border
-                        ${
-                          msg.role === 'agent'
-                            ? 'bg-nexus-purple/20 border-nexus-purple text-nexus-purple'
-                            : 'bg-nexus-gray/20 border-nexus-gray text-nexus-muted'
-                        }`}
-                      >
-                        {msg.role === 'agent' ? <Bot size={14} /> : <MessageSquare size={14} />}
-                      </div>
-                      <div
-                        className={`p-3 text-xs leading-relaxed border max-w-[85%] font-mono
-                        ${
-                          msg.role === 'agent'
-                            ? 'bg-nexus-dark border-nexus-gray text-nexus-light/80'
-                            : 'bg-nexus-purple/10 border-nexus-purple/30 text-white'
-                        }`}
-                      >
-                        {msg.text}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <form
-                  ref={chatFormRef}
-                  onSubmit={handleChatSubmit}
-                  className="border-t border-nexus-gray bg-nexus-dark"
-                >
-                  <div className="px-3 pt-3 pb-3">
-                    <Input
-                      type="text"
-                      value={chatInput}
-                      onChange={e => setChatInput(e.target.value)}
-                      placeholder={
-                        chatMode === 'ask'
-                          ? `Ask ${LLM_OPTIONS.find(o => o.id === selectedLLM)?.label ?? 'AI'}...`
-                          : 'Describe edit or paste code...'
-                      }
-                      variant="ide"
-                      intent="brand"
-                      size="sm"
-                    />
-                    <div className="flex items-center gap-2 pt-2">
-                      <div className="relative shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setLlmDropdownOpen(false);
-                            setModeDropdownOpen(o => !o);
-                          }}
-                          className="flex items-center gap-1 px-2 py-1.5 bg-nexus-dark border border-nexus-gray text-nexus-muted hover:text-white hover:border-nexus-gray/70 transition-colors"
-                        >
-                          {chatMode === 'ask' ? <MessageSquare size={14} /> : <Code2 size={14} />}
-                          <ChevronDown size={12} className="opacity-70" />
-                        </button>
-                        {modeDropdownOpen && (
-                          <div className="absolute left-0 bottom-full mb-1 z-10 min-w-[100%] bg-nexus-dark border border-nexus-gray shadow-lg">
-                            {(['ask', 'editor'] as const).map(mode => (
-                              <button
-                                key={mode}
-                                type="button"
-                                onClick={() => {
-                                  setChatMode(mode);
-                                  setModeDropdownOpen(false);
-                                }}
-                                className={`w-full flex items-center gap-2 px-3 py-2 text-left text-xs font-mono transition-colors ${
-                                  chatMode === mode
-                                    ? 'bg-nexus-purple/20 text-nexus-purple'
-                                    : 'text-nexus-muted hover:bg-nexus-gray/20 hover:text-white'
-                                }`}
-                              >
-                                {mode === 'ask' ? <MessageSquare size={12} /> : <Code2 size={12} />}
-                                {mode === 'ask' ? 'Ask' : 'Editor'}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <div className="relative shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setModeDropdownOpen(false);
-                            setLlmDropdownOpen(o => !o);
-                          }}
-                          className="flex items-center gap-1 px-2 py-1.5 text-nexus-muted hover:text-white transition-colors text-xs font-mono"
-                        >
-                          {LLM_OPTIONS.find(o => o.id === selectedLLM)?.label ?? 'LLM'}
-                          <ChevronDown size={12} className="opacity-70" />
-                        </button>
-                        {llmDropdownOpen && (
-                          <div className="absolute left-0 bottom-full mb-1 z-10 min-w-[100%] bg-nexus-dark border border-nexus-gray shadow-lg">
-                            {LLM_OPTIONS.map(opt => (
-                              <button
-                                key={opt.id}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedLLM(opt.id);
-                                  setLlmDropdownOpen(false);
-                                }}
-                                className={`w-full flex items-center gap-2 px-3 py-2 text-left text-xs font-mono transition-colors ${
-                                  selectedLLM === opt.id
-                                    ? 'bg-nexus-purple/20 text-nexus-purple'
-                                    : 'text-nexus-muted hover:bg-nexus-gray/20 hover:text-white'
-                                }`}
-                              >
-                                <Bot size={12} />
-                                {opt.label}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0" />
-                      <button
-                        type="submit"
-                        className="shrink-0 p-1.5 text-nexus-muted hover:text-nexus-purple transition-colors"
-                      >
-                        <Send size={14} />
-                      </button>
-                    </div>
-                  </div>
-                </form>
-              </div>
+              {/* AI Agent Panel */}
+              <AgentPanel
+                chatMessages={chatMessages}
+                chatInput={chatInput}
+                setChatInput={setChatInput}
+                handleChatSubmit={handleChatSubmit}
+                chatMode={chatMode}
+                setChatMode={setChatMode}
+                selectedLLM={selectedLLM}
+                setSelectedLLM={setSelectedLLM}
+                modeDropdownOpen={modeDropdownOpen}
+                setModeDropdownOpen={setModeDropdownOpen}
+                llmDropdownOpen={llmDropdownOpen}
+                setLlmDropdownOpen={setLlmDropdownOpen}
+                isThinking={isThinking}
+                agentContext={agentContext}
+                chatFormRef={chatFormRef}
+                messagesEndRef={messagesEndRef}
+                clearChat={clearChat}
+                width={chatPanelWidth}
+              />
 
               <ResizeHandle
                 onResize={deltaX => {
@@ -429,7 +301,7 @@ export const IDERoute = () => {
                 style={{ minWidth: EDITOR_MIN }}
               >
                 <EditorArea />
-                <TerminalPanel environmentId={environmentId} />
+                <TerminalPanel />
               </div>
             </div>
           )}
