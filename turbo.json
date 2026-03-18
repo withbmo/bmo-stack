@@ -1,7 +1,7 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
-  "globalEnv": ["PORT"],
+  "globalEnv": ["PORT", "NODE_ENV"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -23,7 +23,7 @@
       "cache": false
     },
     "type-check": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^type-check"],
       "outputs": []
     }
   }

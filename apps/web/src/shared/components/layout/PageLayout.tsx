@@ -1,4 +1,4 @@
-import { BackgroundLayers, cn } from '@pytholit/ui';
+import { BackgroundLayers, cn, PageTransition } from '@pytholit/ui';
 import type { ReactNode } from 'react';
 
 export interface PageLayoutProps {
@@ -13,7 +13,7 @@ export const PageLayout = ({ children, className = '' }: PageLayoutProps) => {
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <BackgroundLayers />
       </div>
-      <div className="max-w-7xl mx-auto relative z-10">{children}</div>
+      <PageTransition className="max-w-7xl mx-auto relative z-10">{children}</PageTransition>
     </div>
   );
 };

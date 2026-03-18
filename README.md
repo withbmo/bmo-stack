@@ -90,6 +90,17 @@ pnpm test
 - [Deployment](./docs/deployment.md)
 - [API Database Docs](./apps/api/docs/database/README.md)
 
+## Templates
+
+Starter projects now live under `templates/`.
+
+Each template uses `pytholit.toml` as the standard root project spec filename.
+
+Useful commands:
+
+- `pnpm templates:generate`
+- `pnpm templates:validate`
+
 ## License
 
 MIT

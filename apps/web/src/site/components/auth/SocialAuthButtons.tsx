@@ -3,7 +3,7 @@
 import { Chrome, Github } from 'lucide-react';
 import { useState } from 'react';
 
-import { type OAuthProvider, getApiErrorMessage, signInWithOAuth } from '@/shared/lib/auth';
+import { getApiErrorMessage, type OAuthProvider,signInWithOAuth } from '@/shared/lib/auth';
 
 type OAuthButtonProvider = 'github' | 'google';
 

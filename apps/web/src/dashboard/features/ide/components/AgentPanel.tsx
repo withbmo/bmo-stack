@@ -309,7 +309,7 @@ export const AgentPanel = ({
 
   const insertAtTrigger = () => {
     setMentionMarkup(prev => prev + '@');
-    setChatInput(prev => prev + '@');
+    setChatInput(`${chatInput}@`);
   };
 
   const placeholder =

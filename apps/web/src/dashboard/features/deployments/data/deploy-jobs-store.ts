@@ -1,4 +1,5 @@
 import { DEPLOY_JOB_STATUS, DEPLOY_JOB_STEP_STATUS } from '@pytholit/contracts';
+
 import type { DeployJob, DeployJobStep, DeployStepStatus } from '@/shared/types';
 
 const BASE_STEPS: DeployJobStep[] = [

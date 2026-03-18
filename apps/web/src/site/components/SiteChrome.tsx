@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@pytholit/ui';
+import { Button, MotionFade, MotionSlideIn } from '@pytholit/ui';
 import { ChevronRight, Terminal } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -28,7 +28,8 @@ function SiteNavbar() {
   }, []);
 
   return (
-    <nav
+    <MotionFade
+      as="nav"
       className={`fixed top-0 left-0 w-full z-50 h-20 flex items-center transition-all duration-300 border-b px-6 py-5 md:px-8 ${
         scrolled
           ? 'bg-nexus-black/90 border-nexus-purple/30 backdrop-blur-md'
@@ -36,15 +37,21 @@ function SiteNavbar() {
       }`}
     >
       <div className="max-w-7xl mx-auto flex justify-between items-center w-full">
+        <MotionSlideIn
+          as="div"
+          delay={0.06}
+          className="fixed left-8 top-10 -translate-y-1/2 z-[60]"
+        >
         <Link
           href="/"
-          className="fixed left-8 top-10 -translate-y-1/2 z-[60] flex items-center gap-3 group p-4"
+          className="flex items-center gap-3 group p-4"
         >
           <div className="w-8 h-8 bg-nexus-purple flex items-center justify-center border border-white group-hover:bg-nexus-neon transition-colors shrink-0">
             <Terminal size={18} className="text-white" />
           </div>
           <span className="font-mono font-bold text-xl tracking-tighter truncate">pytholit</span>
         </Link>
+        </MotionSlideIn>
 
         <div className="w-[140px] shrink-0" aria-hidden />
 
@@ -79,7 +86,7 @@ function SiteNavbar() {
           </div>
         )}
       </div>
-    </nav>
+    </MotionFade>
   );
 }
 

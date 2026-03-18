@@ -1,0 +1,60 @@
+version = 1
+
+[project]
+id = "hello-http"
+name = "Hello HTTP"
+description = "Minimal single-service project"
+
+[runtime]
+modules = ["nodejs-24"]
+
+[deployment]
+target = "autoscale"
+router = "application"
+defaultEnvironment = "development"
+
+[[artifacts]]
+id = "api"
+kind = "server"
+path = "services/api"
+
+[artifacts.build]
+command = "pnpm --filter @workspace/api run build"
+outputDir = "dist"
+
+[artifacts.dev]
+command = "pnpm --filter @workspace/api run dev"
+port = 3000
+
+[artifacts.env]
+LOG_LEVEL = "debug"
+
+[[services]]
+id = "api-http"
+artifact = "api"
+kind = "http"
+public = true
+secrets = ["DATABASE_URL", "JWT_SECRET"]
+
+[services.run]
+command = "node ./dist/index.js"
+port = 3000
+
+[services.env]
+PORT = "3000"
+
+[services.healthcheck]
+path = "/health"
+intervalSeconds = 10
+timeoutSeconds = 3
+
+[[routes]]
+service = "api-http"
+path = "/"
+stripPrefix = false
+
+[environments.development]
+domain = "localhost"
+
+[environments.production]
+domain = "api.example.com"

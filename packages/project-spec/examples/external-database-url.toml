@@ -1,0 +1,53 @@
+version = 1
+
+[project]
+id = "external-db-api"
+name = "External DB API"
+
+[runtime]
+modules = ["python-3.12"]
+
+[deployment]
+target = "autoscale"
+router = "application"
+defaultEnvironment = "development"
+
+[[artifacts]]
+id = "api"
+kind = "server"
+path = "services/api"
+
+[artifacts.build]
+command = "uv build"
+outputDir = "dist"
+
+[artifacts.dev]
+command = "uv run uvicorn app.main:app --reload --port 8000"
+port = 8000
+
+[[services]]
+id = "api-http"
+artifact = "api"
+kind = "http"
+public = true
+secrets = ["DATABASE_URL", "JWT_SECRET", "SUPABASE_URL"]
+
+[services.run]
+command = "uv run uvicorn app.main:app --host 0.0.0.0 --port 8000"
+port = 8000
+
+[services.healthcheck]
+path = "/health"
+intervalSeconds = 10
+timeoutSeconds = 3
+
+[[routes]]
+service = "api-http"
+path = "/api/"
+stripPrefix = true
+
+[environments.development]
+domain = "localhost"
+
+[environments.production]
+domain = "api.example.com"

@@ -6,8 +6,9 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0",
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+    "type-check": "next typegen && tsc --noEmit --incremental false"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

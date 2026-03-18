@@ -1,0 +1,57 @@
+version = 1
+
+[project]
+id = "fastify-api"
+name = "Fastify API"
+description = "Lightweight TypeScript HTTP API starter"
+
+[runtime]
+modules = ["nodejs-24"]
+
+[deployment]
+target = "autoscale"
+router = "application"
+defaultEnvironment = "development"
+
+[[artifacts]]
+id = "api"
+kind = "server"
+path = "."
+
+[artifacts.build]
+command = "npm run build"
+outputDir = "dist"
+
+[artifacts.dev]
+command = "npm run dev"
+port = 3001
+
+[[services]]
+id = "api-http"
+artifact = "api"
+kind = "http"
+public = true
+secrets = []
+
+[services.run]
+command = "npm run start"
+port = 3001
+
+[services.env]
+PORT = "3001"
+
+[services.healthcheck]
+path = "/health"
+intervalSeconds = 10
+timeoutSeconds = 3
+
+[[routes]]
+service = "api-http"
+path = "/"
+stripPrefix = false
+
+[environments.development]
+domain = "localhost"
+
+[environments.production]
+domain = "api.example.com"

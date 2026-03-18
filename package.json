@@ -8,7 +8,9 @@
     "dev": "turbo run dev --concurrency=20",
     "build": "turbo run build",
     "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
     "test": "turbo run test",
+    "check": "pnpm lint && pnpm type-check && pnpm build",
     "postinstall": "pnpm db:generate",
     "clean": "turbo run clean && rm -rf node_modules",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
@@ -16,7 +18,9 @@
     "db:migrate": "pnpm --filter @pytholit/db db:migrate",
     "db:studio": "pnpm --filter @pytholit/db prisma studio",
     "export:apps": "node scripts/export-apps-to-txt.mjs",
-    "demo:build-images": "./scripts/build-and-push-demo-images.sh"
+    "demo:build-images": "./scripts/build-and-push-demo-images.sh",
+    "templates:generate": "pnpm --filter @pytholit/project-spec exec tsx ../../scripts/templates/generate-templates.ts",
+    "templates:validate": "pnpm --filter @pytholit/project-spec exec tsx ../../scripts/templates/validate-templates.ts"
   },
   "devDependencies": {
     "@turbo/gen": "^2.3.3",

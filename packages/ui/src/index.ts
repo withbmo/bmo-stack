@@ -13,3 +13,6 @@ export type * from './types';
 
 // Components
 export * from './components';
+
+// Motion
+export * from './motion';

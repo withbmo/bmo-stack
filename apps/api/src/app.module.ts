@@ -14,6 +14,7 @@ import { validateEnv } from './config/env.js';
 import { DatabaseModule } from './database/database.module.js';
 import { DeployJobsModule } from './deploy-jobs/deploy-jobs.module.js';
 import { ProjectsModule } from './projects/projects.module.js';
+import { ProjectSpecModule } from './project-spec/project-spec.module.js';
 import { UsersModule } from './users/users.module.js';
 import { WizardModule } from './wizard/wizard.module.js';
 
@@ -81,6 +82,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
     AuthModule,
     UsersModule,
     ProjectsModule,
+    ProjectSpecModule,
     DeployJobsModule,
     WizardModule,
   ],

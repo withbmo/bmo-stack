@@ -4,6 +4,7 @@ import { User } from 'lucide-react';
 export const SETTINGS_TABS = [
   { id: 'profile', icon: User, label: 'Profile' },
   { id: 'billing', icon: User, label: 'Billing' },
+  { id: 'usage', icon: User, label: 'Usage' },
 ] as const;
 
 export type SettingsTabId = (typeof SETTINGS_TABS)[number]["id"];

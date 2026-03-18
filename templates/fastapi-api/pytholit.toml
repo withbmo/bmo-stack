@@ -1,0 +1,53 @@
+version = 1
+
+[project]
+id = "fastapi-api"
+name = "FastAPI API"
+description = "Modern Python API starter powered by uv and FastAPI"
+
+[runtime]
+modules = ["python-3.14"]
+
+[deployment]
+target = "autoscale"
+router = "application"
+defaultEnvironment = "development"
+
+[[artifacts]]
+id = "api"
+kind = "server"
+path = "."
+
+[artifacts.dev]
+command = "uv run uvicorn fastapi_api.app:app --reload --host 0.0.0.0 --port 8000"
+port = 8000
+
+[[services]]
+id = "api-http"
+artifact = "api"
+kind = "http"
+public = true
+secrets = []
+
+[services.run]
+command = "uv run uvicorn fastapi_api.app:app --host 0.0.0.0 --port 8000"
+port = 8000
+
+[services.env]
+PORT = "8000"
+
+[services.healthcheck]
+path = "/health"
+intervalSeconds = 10
+timeoutSeconds = 3
+
+[[routes]]
+service = "api-http"
+path = "/"
+stripPrefix = false
+
+[environments.development]
+domain = "localhost"
+
+[environments.production]
+domain = "api.example.com"

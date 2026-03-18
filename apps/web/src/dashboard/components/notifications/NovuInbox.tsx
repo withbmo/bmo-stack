@@ -1,4 +1,5 @@
 import { NovuProvider, useCounts, useNotifications } from '@novu/react';
+import { MotionPopover, Presence } from '@pytholit/ui';
 import { Bell, X } from 'lucide-react';
 import { type RefObject,useEffect, useRef, useState } from 'react';
 
@@ -121,6 +122,7 @@ export const NovuInbox = () => {
     >
       <div className="relative">
         <CustomBell open={open} onToggle={() => setOpen(prev => !prev)} />
+        <Presence>
         {open ? (
           <CustomPanel
             panelRef={panelRef as React.RefObject<HTMLDivElement>}
@@ -128,6 +130,7 @@ export const NovuInbox = () => {
             renderNotification={renderNotification}
           />
         ) : null}
+        </Presence>
       </div>
     </NovuProvider>
   );
@@ -188,9 +191,9 @@ const CustomPanel = ({ panelRef, onClose, renderNotification }: CustomPanelProps
   }, [onClose, panelRef]);
 
   return (
-    <div
+    <MotionPopover
       ref={panelRef}
-      className="absolute right-0 top-12 w-[380px] bg-[#050505] border border-nexus-gray shadow-[0_0_60px_-16px_rgba(109,40,217,0.6)] z-[100] animate-in fade-in slide-in-from-top-2 duration-200"
+      className="absolute right-0 top-12 w-[380px] bg-[#050505] border border-nexus-gray shadow-[0_0_60px_-16px_rgba(109,40,217,0.6)] z-[100]"
     >
       <div className="flex justify-between items-center p-3 border-b border-nexus-gray bg-black/80 backdrop-blur">
         <div className="flex items-center gap-2">
@@ -244,6 +247,6 @@ const CustomPanel = ({ panelRef, onClose, renderNotification }: CustomPanelProps
           MARK ALL READ
         </button>
       </div>
-    </div>
+    </MotionPopover>
   );
 };

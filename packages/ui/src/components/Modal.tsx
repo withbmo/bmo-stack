@@ -1,8 +1,10 @@
-import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
-import { X } from "lucide-react";
-import { cn } from "../utils/cn";
+import type { ReactNode } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { X } from 'lucide-react';
+
+import { MotionBackdrop, MotionScaleIn, Presence } from '../motion';
+import { cn } from '../utils/cn';
 
 export interface ModalProps {
   /** Whether the modal is open */
@@ -14,7 +16,7 @@ export interface ModalProps {
   /** Modal content */
   children: ReactNode;
   /** Size variant */
-  variant?: "default" | "wide" | "fullscreen";
+  variant?: 'default' | 'wide' | 'fullscreen';
   /** Disable close when loading/submitting */
   isLoading?: boolean;
   /** Additional className for the panel */
@@ -22,9 +24,9 @@ export interface ModalProps {
 }
 
 const variants = {
-  default: "w-full max-w-md",
-  wide: "w-full max-w-2xl",
-  fullscreen: "w-full max-w-6xl h-[90vh]",
+  default: 'w-full max-w-md',
+  wide: 'w-full max-w-2xl',
+  fullscreen: 'w-full max-w-6xl h-[90vh]',
 };
 
 export const Modal = ({
@@ -41,77 +43,79 @@ export const Modal = ({
     if (!isOpen || isLoading) return;
 
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === 'Escape') {
         onClose();
       }
     };
 
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, isLoading, onClose]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = "";
+      document.body.style.overflow = '';
     }
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = '';
     };
   }, [isOpen]);
 
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  if (!isOpen || !mounted) return null;
+  if (!mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-        onClick={() => !isLoading && onClose()}
-        aria-hidden="true"
-      />
-
-      {/* Panel */}
-      <div
-        className={cn(
-          "relative bg-bg-panel border border-border-dim shadow-[0_0_60px_-10px_rgba(109,40,217,0.4)] p-6",
-          variants[variant],
-          className
-        )}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={title ? "modal-title" : undefined}
-      >
-        {/* Header with close button */}
-        <div className="flex justify-between items-center mb-6">
-          {title && (
-            <span
-              id="modal-title"
-              className="font-mono text-xs font-bold text-brand-primary tracking-widest uppercase"
-            >
-              {title}
-            </span>
-          )}
-          <button
-            type="button"
+    <Presence>
+      {isOpen ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <MotionBackdrop
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
             onClick={() => !isLoading && onClose()}
-            disabled={isLoading}
-            className="ml-auto text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Close modal"
-          >
-            <X size={18} />
-          </button>
-        </div>
+            aria-hidden="true"
+          />
 
-        {/* Content */}
-        <div>{children}</div>
-      </div>
-    </div>,
+          <MotionScaleIn
+            className={cn(
+              'relative bg-bg-panel border border-border-dim shadow-[0_0_60px_-10px_rgba(109,40,217,0.4)] p-6',
+              variants[variant],
+              className
+            )}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={title ? 'modal-title' : undefined}
+          >
+            <div className="flex justify-between items-center mb-6">
+              {title && (
+                <span
+                  id="modal-title"
+                  className="font-mono text-xs font-bold text-brand-primary tracking-widest uppercase"
+                >
+                  {title}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => !isLoading && onClose()}
+                disabled={isLoading}
+                className="ml-auto text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Close modal"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div>{children}</div>
+          </MotionScaleIn>
+        </div>
+      ) : null}
+    </Presence>,
     document.body
   );
 };

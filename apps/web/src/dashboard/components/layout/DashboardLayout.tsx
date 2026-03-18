@@ -1,3 +1,5 @@
+import { MotionFade } from '@pytholit/ui';
+
 import { Navbar } from './Navbar';
 
 /**
@@ -8,7 +10,9 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
   return (
     <div className="min-h-screen bg-bg-dashboard text-white font-sans flex flex-col">
       <Navbar />
-      <main className="flex-grow min-h-[calc(100vh-4rem)] flex flex-col pt-16">{children}</main>
+      <MotionFade as="main" className="flex-grow min-h-[calc(100vh-4rem)] flex flex-col pt-16">
+        {children}
+      </MotionFade>
     </div>
   );
 };

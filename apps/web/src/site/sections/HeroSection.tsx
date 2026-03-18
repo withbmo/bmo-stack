@@ -1,6 +1,6 @@
 'use client';
 
-import { BackgroundLayers, Badge, Button,GlitchText } from '@pytholit/ui';
+import { BackgroundLayers, Button, GlitchText, MotionSlideIn, MotionStagger } from '@pytholit/ui';
 import { Box, Globe, ShieldCheck, Terminal, Zap } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -57,23 +57,25 @@ export const HeroSection = () => {
 };
 
 const HeroContent = () => (
-  <div className="space-y-8">
+  <MotionStagger className="space-y-8">
     {/* Headline */}
-    <h2 className="text-6xl md:text-8xl font-sans font-bold leading-[0.9] tracking-tighter">
+    <MotionSlideIn as="div">
+      <h2 className="text-6xl md:text-8xl font-sans font-bold leading-[0.9] tracking-tighter">
       Build Python <br />
       <GlitchText
         text="RUNTIMES"
         className="text-transparent bg-clip-text bg-gradient-to-r from-white via-nexus-light to-nexus-purple"
       />
-    </h2>
+      </h2>
+    </MotionSlideIn>
 
     {/* Description */}
-    <p className="font-mono text-nexus-light/70 text-lg md:text-xl max-w-xl border-l-2 border-nexus-purple pl-6 py-3 bg-black/30 backdrop-blur-sm">
+    <MotionSlideIn as="p" className="font-mono text-nexus-light/70 text-lg md:text-xl max-w-xl border-l-2 border-nexus-purple pl-6 py-3 bg-black/30 backdrop-blur-sm">
       A brutalist runtime for teams that ship fast. Prompt the runtime, edit code, and deploy
       globally without leaving the browser.
-    </p>
+    </MotionSlideIn>
 
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+    <MotionStagger className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
       <HeroPill icon={<Zap size={16} />} title="Sub-second boot" detail="Zero-config containers" />
       <HeroPill
         icon={<ShieldCheck size={16} />}
@@ -81,10 +83,10 @@ const HeroContent = () => (
         detail="Secure defaults"
       />
       <HeroPill icon={<Globe size={16} />} title="Global edge" detail="Multi-region deploys" />
-    </div>
+    </MotionStagger>
 
     {/* CTA Buttons */}
-    <div className="flex flex-col sm:flex-row gap-4 pt-2 items-start">
+    <MotionSlideIn as="div" className="flex flex-col sm:flex-row gap-4 pt-2 items-start">
       <Button variant="primary" size="md" to="/auth/signup">
         <Terminal size={20} />
         START FREE
@@ -93,8 +95,8 @@ const HeroContent = () => (
         <Box size={20} />
         READ DOCS
       </Button>
-    </div>
-  </div>
+    </MotionSlideIn>
+  </MotionStagger>
 );
 
 interface HeroPillProps {
@@ -104,11 +106,11 @@ interface HeroPillProps {
 }
 
 const HeroPill = ({ icon, title, detail }: HeroPillProps) => (
-  <div className="border border-nexus-gray/70 bg-nexus-dark/70 px-4 py-3 flex flex-col gap-2">
+  <MotionSlideIn className="border border-nexus-gray/70 bg-nexus-dark/70 px-4 py-3 flex flex-col gap-2">
     <div className="flex items-center gap-2 text-nexus-purple">
       {icon}
       <span className="font-mono text-xs uppercase tracking-widest">{title}</span>
     </div>
     <div className="text-nexus-light/70 font-mono text-xs">{detail}</div>
-  </div>
+  </MotionSlideIn>
 );

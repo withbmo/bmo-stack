@@ -1,0 +1,117 @@
+version = 1
+
+[project]
+id = "open-studio"
+name = "Open Studio"
+
+[runtime]
+modules = ["nodejs-24"]
+
+[deployment]
+target = "autoscale"
+router = "application"
+defaultEnvironment = "development"
+
+[[artifacts]]
+id = "landing"
+kind = "web"
+path = "apps/landing"
+
+[artifacts.build]
+command = "pnpm --filter @workspace/landing run build"
+outputDir = "dist"
+
+[artifacts.dev]
+command = "pnpm --filter @workspace/landing run dev"
+port = 5173
+
+[artifacts.env]
+BASE_PATH = "/"
+
+[[artifacts]]
+id = "admin"
+kind = "web"
+path = "apps/admin"
+
+[artifacts.build]
+command = "pnpm --filter @workspace/admin run build"
+outputDir = "dist"
+
+[artifacts.dev]
+command = "pnpm --filter @workspace/admin run dev"
+port = 5174
+
+[artifacts.env]
+BASE_PATH = "/admin/"
+
+[[artifacts]]
+id = "api"
+kind = "server"
+path = "services/api"
+
+[artifacts.build]
+command = "pnpm --filter @workspace/api run build"
+outputDir = "dist"
+
+[artifacts.dev]
+command = "pnpm --filter @workspace/api run dev"
+port = 3000
+
+[[services]]
+id = "landing-web"
+artifact = "landing"
+kind = "static"
+public = true
+
+[services.static]
+publicDir = "dist"
+spa = true
+indexFile = "index.html"
+
+[[routes]]
+service = "landing-web"
+path = "/"
+stripPrefix = false
+
+[[services]]
+id = "admin-web"
+artifact = "admin"
+kind = "static"
+public = true
+
+[services.static]
+publicDir = "dist"
+spa = true
+indexFile = "index.html"
+
+[[routes]]
+service = "admin-web"
+path = "/admin/"
+stripPrefix = false
+
+[[services]]
+id = "api-http"
+artifact = "api"
+kind = "http"
+public = true
+secrets = ["DATABASE_URL", "JWT_SECRET"]
+
+[services.run]
+command = "node ./dist/index.cjs"
+port = 3000
+
+[services.env]
+PORT = "3000"
+
+[services.healthcheck]
+path = "/health"
+intervalSeconds = 10
+timeoutSeconds = 3
+
+[[routes]]
+service = "api-http"
+path = "/api/"
+stripPrefix = true
+
+[environments.development]
+domain = "localhost"

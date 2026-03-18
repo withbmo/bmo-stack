@@ -1,0 +1,52 @@
+version = 1
+
+[project]
+id = "next-web"
+name = "Next Web"
+description = "Production-ready Next.js web starter"
+
+[runtime]
+modules = ["nodejs-24"]
+
+[deployment]
+target = "autoscale"
+router = "application"
+defaultEnvironment = "development"
+
+[[artifacts]]
+id = "web"
+kind = "web"
+path = "."
+
+[artifacts.build]
+command = "pnpm build"
+outputDir = ".next"
+
+[artifacts.dev]
+command = "pnpm dev"
+port = 3000
+
+[[services]]
+id = "web-http"
+artifact = "web"
+kind = "http"
+public = true
+secrets = []
+
+[services.run]
+command = "pnpm start -- --hostname 0.0.0.0 --port 3000"
+port = 3000
+
+[services.env]
+PORT = "3000"
+
+[[routes]]
+service = "web-http"
+path = "/"
+stripPrefix = false
+
+[environments.development]
+domain = "localhost"
+
+[environments.production]
+domain = "app.example.com"

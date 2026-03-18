@@ -1,0 +1,62 @@
+version = 1
+
+[project]
+id = "managed-db-app"
+name = "Managed DB App"
+
+[runtime]
+modules = ["nodejs-24", "postgres-16"]
+
+[deployment]
+target = "autoscale"
+router = "application"
+defaultEnvironment = "production"
+
+[[artifacts]]
+id = "api"
+kind = "server"
+path = "services/api"
+
+[artifacts.build]
+command = "pnpm --filter @workspace/api run build"
+outputDir = "dist"
+
+[artifacts.dev]
+command = "pnpm --filter @workspace/api run dev"
+port = 3000
+
+[[services]]
+id = "api-http"
+artifact = "api"
+kind = "http"
+public = true
+secrets = ["DATABASE_URL", "JWT_SECRET"]
+
+[services.run]
+command = "node ./dist/index.js"
+port = 3000
+
+[[routes]]
+service = "api-http"
+path = "/api/"
+stripPrefix = true
+
+[[resources]]
+id = "main-db"
+kind = "postgres"
+mode = "managed"
+version = "16"
+enabled = true
+
+[resources.config]
+database = "app"
+username = "app"
+
+[[bindings]]
+service = "api-http"
+resource = "main-db"
+whenEnabled = true
+inject = { DATABASE_URL = "connectionString" }
+
+[environments.production]
+domain = "api.example.com"

@@ -1,4 +1,4 @@
-import { BackgroundLayers, cn } from '@pytholit/ui';
+import { BackgroundLayers, cn, MotionScaleIn } from '@pytholit/ui';
 import type { CSSProperties, ReactNode } from 'react';
 
 interface AuthPageLayoutProps {
@@ -24,8 +24,11 @@ export const AuthPageLayout = ({
       <BackgroundLayers />
     </div>
 
-    <div className={cn('relative z-10 w-full max-w-md', contentClassName)} style={contentStyle}>
+    <MotionScaleIn
+      className={cn('relative z-10 w-full max-w-md', contentClassName)}
+      style={contentStyle}
+    >
       {children}
-    </div>
+    </MotionScaleIn>
   </div>
 );

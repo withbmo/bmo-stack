@@ -1,0 +1,53 @@
+version = 1
+
+[project]
+id = "vite-react-web"
+name = "Vite React Web"
+description = "Lean React SPA starter powered by Vite"
+
+[runtime]
+modules = ["nodejs-24"]
+
+[deployment]
+target = "autoscale"
+router = "application"
+defaultEnvironment = "development"
+
+[[artifacts]]
+id = "web"
+kind = "web"
+path = "."
+
+[artifacts.build]
+command = "pnpm build"
+outputDir = "dist"
+
+[artifacts.dev]
+command = "pnpm dev"
+port = 5173
+
+[artifacts.env]
+BASE_PATH = "/"
+
+[[services]]
+id = "web-static"
+artifact = "web"
+kind = "static"
+public = true
+secrets = []
+
+[services.static]
+publicDir = "dist"
+spa = true
+indexFile = "index.html"
+
+[[routes]]
+service = "web-static"
+path = "/"
+stripPrefix = false
+
+[environments.development]
+domain = "localhost"
+
+[environments.production]
+domain = "app.example.com"

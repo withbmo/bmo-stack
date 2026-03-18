@@ -1,6 +1,7 @@
 'use client';
 
 import { Button, Input } from '@pytholit/ui';
+import { AUTH_CONSTANTS } from '@pytholit/validation';
 import { Loader2, Save } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -9,7 +10,6 @@ import { toast } from 'sonner';
 import { useAuth } from '@/shared/auth';
 import { getApiErrorMessage } from '@/shared/lib';
 import { completeOAuthOnboarding } from '@/shared/lib/user';
-import { AUTH_CONSTANTS } from '@pytholit/validation';
 import { AuthCard } from '@/site/components/auth/AuthCard';
 import { AuthHeader } from '@/site/components/auth/AuthHeader';
 import { AuthPageLayout } from '@/site/components/auth/AuthPageLayout';
