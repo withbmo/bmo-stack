@@ -7,13 +7,16 @@ import { API_V1, apiRequest, snakeToCamel } from './client';
 // Prefer @pytholit/contracts when API shapes match.
 
 type ApiProject = ContractProject;
+export type ProjectListState = 'active' | 'archived' | 'all';
 
 const mapProject = (project: ApiProject): ViewProject => ({
   id: project.id,
   name: project.name,
   framework: 'FastAPI',
   region: 'us-east-1',
-  status: 'running',
+  status: project.lifecycleState === 'archived' ? 'stopped' : 'running',
+  lifecycleState: project.lifecycleState,
+  archivedAt: project.archivedAt,
   lastDeployed: project.updatedAt,
   cpuUsage: 0,
   memoryUsage: 0,
@@ -21,11 +24,15 @@ const mapProject = (project: ApiProject): ViewProject => ({
 
 const PROJECTS_PREFIX = `${API_V1}/projects`;
 
-export async function listProjects(token?: string): Promise<ViewProject[]> {
+export async function listProjects(
+  token?: string,
+  state: ProjectListState = 'active',
+): Promise<ViewProject[]> {
   const projects = snakeToCamel(
     await apiRequest<ApiProject[]>(PROJECTS_PREFIX, {
       method: 'GET',
       token,
+      query: { state },
     })
   );
   return projects.map(mapProject);
@@ -70,5 +77,33 @@ export async function updateProject(
       body: JSON.stringify(payload),
     })
   );
+  return mapProject(project);
+}
+
+export async function archiveProject(
+  token: string | undefined,
+  projectId: string,
+): Promise<ViewProject> {
+  const project = snakeToCamel(
+    await apiRequest<ApiProject>(`${PROJECTS_PREFIX}/${projectId}/archive`, {
+      method: 'PATCH',
+      token,
+    }),
+  );
+
+  return mapProject(project);
+}
+
+export async function restoreProject(
+  token: string | undefined,
+  projectId: string,
+): Promise<ViewProject> {
+  const project = snakeToCamel(
+    await apiRequest<ApiProject>(`${PROJECTS_PREFIX}/${projectId}/restore`, {
+      method: 'PATCH',
+      token,
+    }),
+  );
+
   return mapProject(project);
 }

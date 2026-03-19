@@ -7,7 +7,7 @@
 
 export const queryKeys = {
   // Projects
-  projects: () => ['projects'] as const,
+  projects: (state: 'active' | 'archived' | 'all' = 'active') => ['projects', state] as const,
   project: (id: string) => ['project', id] as const,
 
   // Deploy Jobs

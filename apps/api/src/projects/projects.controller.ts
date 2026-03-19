@@ -8,11 +8,13 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import type { Project } from '@pytholit/contracts';
 
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 import { CreateProjectDto } from './dto/create-project.dto.js';
+import { ListProjectsDto } from './dto/list-projects.dto.js';
 import { UpdateProjectDto } from './dto/update-project.dto.js';
 import { ProjectsService } from './projects.service.js';
 
@@ -34,8 +36,11 @@ export class ProjectsController {
   }
 
   @Get()
-  async findAll(@CurrentUser('id') userId: string): Promise<Project[]> {
-    return this.projectsService.findAll(userId);
+  async findAll(
+    @CurrentUser('id') userId: string,
+    @Query() query: ListProjectsDto,
+  ): Promise<Project[]> {
+    return this.projectsService.findAll(userId, query.state ?? 'active');
   }
 
   @Get(':id')
@@ -50,6 +55,22 @@ export class ProjectsController {
     @Body() updateProjectDto: UpdateProjectDto
   ): Promise<Project> {
     return this.projectsService.update(userId, id, updateProjectDto);
+  }
+
+  @Patch(':id/archive')
+  async archive(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+  ): Promise<Project> {
+    return this.projectsService.archive(userId, id);
+  }
+
+  @Patch(':id/restore')
+  async restore(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+  ): Promise<Project> {
+    return this.projectsService.restore(userId, id);
   }
 
   @Delete(':id')

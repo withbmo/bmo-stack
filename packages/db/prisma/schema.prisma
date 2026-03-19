@@ -105,6 +105,7 @@ model Project {
   name              String
   slug              String
   repoExportEnabled Boolean  @default(false) @map("repo_export_enabled")
+  archivedAt        DateTime? @map("archived_at")
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 

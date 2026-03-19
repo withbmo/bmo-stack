@@ -67,11 +67,17 @@ export function getApiFieldErrors(err: unknown): Record<string, string> {
 
 export async function apiRequest<T>(
   path: string,
-  options: RequestInit & { token?: string } = {}
+  options: RequestInit & { token?: string; query?: Record<string, string | number | boolean | undefined> } = {}
 ): Promise<T> {
-  const { token, ...init } = options;
+  const { token, query, ...init } = options;
   const base = API_BASE || "";
-  const url = base ? `${base}${path}` : path;
+  const url = new URL(base ? `${base}${path}` : path, typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
+  if (query) {
+    for (const [key, value] of Object.entries(query)) {
+      if (value === undefined) continue;
+      url.searchParams.set(key, String(value));
+    }
+  }
   const headers = new Headers(init.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
   if (

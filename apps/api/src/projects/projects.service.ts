@@ -16,6 +16,41 @@ export class ProjectsService {
     private readonly prisma: PrismaService,
   ) {}
 
+  private buildStateWhere(state: 'active' | 'archived' | 'all') {
+    if (state === 'active') {
+      return { archivedAt: null } as const;
+    }
+
+    if (state === 'archived') {
+      return { archivedAt: { not: null } } as const;
+    }
+
+    return {};
+  }
+
+  private toContractProject(project: {
+    id: string;
+    ownerId: string;
+    name: string;
+    slug: string;
+    repoExportEnabled: boolean;
+    archivedAt: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }): Project {
+    return {
+      id: project.id,
+      ownerId: project.ownerId,
+      name: project.name,
+      slug: project.slug,
+      repoExportEnabled: project.repoExportEnabled,
+      lifecycleState: project.archivedAt ? 'archived' : 'active',
+      archivedAt: project.archivedAt?.toISOString() ?? null,
+      createdAt: project.createdAt.toISOString(),
+      updatedAt: project.updatedAt.toISOString(),
+    };
+  }
+
   async create(
     userId: string,
     createProjectDto: CreateProjectDto
@@ -48,32 +83,19 @@ export class ProjectsService {
       },
     });
 
-    return {
-      id: project.id,
-      ownerId: project.ownerId,
-      name: project.name,
-      slug: project.slug,
-      repoExportEnabled: project.repoExportEnabled,
-      createdAt: project.createdAt.toISOString(),
-      updatedAt: project.updatedAt.toISOString(),
-    };
+    return this.toContractProject(project);
   }
 
-  async findAll(userId: string): Promise<Project[]> {
+  async findAll(userId: string, state: 'active' | 'archived' | 'all' = 'active'): Promise<Project[]> {
     const projects = await this.prisma.client.project.findMany({
-      where: { ownerId: userId },
+      where: {
+        ownerId: userId,
+        ...this.buildStateWhere(state),
+      },
       orderBy: { createdAt: 'desc' },
     });
 
-    return projects.map((project) => ({
-      id: project.id,
-      ownerId: project.ownerId,
-      name: project.name,
-      slug: project.slug,
-      repoExportEnabled: project.repoExportEnabled,
-      createdAt: project.createdAt.toISOString(),
-      updatedAt: project.updatedAt.toISOString(),
-    }));
+    return projects.map((project) => this.toContractProject(project));
   }
 
   async findOne(userId: string, projectId: string): Promise<Project> {
@@ -90,15 +112,7 @@ export class ProjectsService {
       throw new ForbiddenException('Access denied to this project');
     }
 
-    return {
-      id: project.id,
-      ownerId: project.ownerId,
-      name: project.name,
-      slug: project.slug,
-      repoExportEnabled: project.repoExportEnabled,
-      createdAt: project.createdAt.toISOString(),
-      updatedAt: project.updatedAt.toISOString(),
-    };
+    return this.toContractProject(project);
   }
 
   async update(
@@ -131,15 +145,33 @@ export class ProjectsService {
       data: updateProjectDto,
     });
 
-    return {
-      id: updatedProject.id,
-      ownerId: updatedProject.ownerId,
-      name: updatedProject.name,
-      slug: updatedProject.slug,
-      repoExportEnabled: updatedProject.repoExportEnabled,
-      createdAt: updatedProject.createdAt.toISOString(),
-      updatedAt: updatedProject.updatedAt.toISOString(),
-    };
+    return this.toContractProject(updatedProject);
+  }
+
+  async archive(userId: string, projectId: string): Promise<Project> {
+    await this.findOne(userId, projectId);
+
+    const project = await this.prisma.client.project.update({
+      where: { id: projectId },
+      data: {
+        archivedAt: new Date(),
+      },
+    });
+
+    return this.toContractProject(project);
+  }
+
+  async restore(userId: string, projectId: string): Promise<Project> {
+    await this.findOne(userId, projectId);
+
+    const project = await this.prisma.client.project.update({
+      where: { id: projectId },
+      data: {
+        archivedAt: null,
+      },
+    });
+
+    return this.toContractProject(project);
   }
 
   async remove(userId: string, projectId: string): Promise<void> {

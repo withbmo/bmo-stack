@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Globe, MoreVertical, Play, Settings, Square } from 'lucide-react';
+import { Archive, Box, Globe, MoreVertical, Play, RotateCcw, Settings, Square } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { Button, Card, StatusBadge } from '@/dashboard/components';
@@ -10,9 +10,12 @@ import type { Project } from '../types';
 
 interface ProjectCardProps {
   project: Project;
+  onArchive?: (projectId: string) => void;
+  onRestore?: (projectId: string) => void;
+  actionPending?: boolean;
 }
 
-export const ProjectCard = ({ project }: ProjectCardProps) => {
+export const ProjectCard = ({ project, onArchive, onRestore, actionPending = false }: ProjectCardProps) => {
   const router = useRouter();
 
   return (
@@ -84,6 +87,7 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
                 size="sm"
                 className="px-2 py-1 border-border-dim hover:border-red-500 text-nexus-muted hover:text-red-500"
                 title="Stop"
+                disabled={project.lifecycleState === 'archived'}
               >
                 <Square size={12} className="fill-current" />
               </Button>
@@ -93,8 +97,32 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
                 size="sm"
                 className="px-2 py-1 border-border-dim hover:border-brand-accent text-nexus-muted hover:text-brand-accent"
                 title="Start"
+                disabled={project.lifecycleState === 'archived'}
               >
                 <Play size={12} className="fill-current" />
+              </Button>
+            )}
+            {project.lifecycleState === 'archived' ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="px-2 py-1 border-border-dim hover:border-brand-accent text-nexus-muted hover:text-brand-accent"
+                title="Restore"
+                disabled={actionPending}
+                onClick={() => onRestore?.(project.id)}
+              >
+                <RotateCcw size={12} />
+              </Button>
+            ) : (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="px-2 py-1 border-border-dim hover:border-yellow-400 text-nexus-muted hover:text-yellow-400"
+                title="Archive"
+                disabled={actionPending}
+                onClick={() => onArchive?.(project.id)}
+              >
+                <Archive size={12} />
               </Button>
             )}
             <Button

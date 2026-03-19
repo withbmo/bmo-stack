@@ -6,6 +6,8 @@ export const ProjectSchema = z.object({
   framework: z.string(),
   region: z.string(),
   status: z.enum(["running", "stopped", "building", "error"]),
+  lifecycleState: z.enum(["active", "archived"]),
+  archivedAt: z.string().nullable(),
   lastDeployed: z.string(),
   cpuUsage: z.number().optional(),
   memoryUsage: z.number().optional(),

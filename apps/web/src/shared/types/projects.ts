@@ -1,4 +1,5 @@
 export type ProjectStatus = 'running' | 'stopped' | 'building' | 'error';
+export type ProjectLifecycleState = 'active' | 'archived';
 
 export interface Project {
   id: string;
@@ -6,6 +7,8 @@ export interface Project {
   framework: string;
   region: string;
   status: ProjectStatus;
+  lifecycleState: ProjectLifecycleState;
+  archivedAt: string | null;
   lastDeployed: string;
   cpuUsage: number;
   memoryUsage: number;
