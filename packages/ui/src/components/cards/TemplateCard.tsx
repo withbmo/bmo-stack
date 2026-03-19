@@ -1,5 +1,6 @@
+import { Box, Play, ShieldCheck, Star } from 'lucide-react';
 import type { MouseEvent } from 'react';
-import { Star, ShieldCheck, Play, Box } from 'lucide-react';
+
 import type { Template } from '../../types';
 import { BaseInteractiveCard } from './BaseInteractiveCard';
 

@@ -1,7 +1,9 @@
+'use client';
+
+import { X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
 
 import { MotionBackdrop, MotionScaleIn, Presence } from '../motion';
 import { cn } from '../utils/cn';
@@ -29,12 +31,14 @@ const variants = {
   fullscreen: 'w-full max-w-6xl h-[90vh]',
 };
 
+const MODAL_TITLE_ID = 'pytholit-ui-modal-title';
+
 export const Modal = ({
   isOpen,
   onClose,
   title,
   children,
-  variant = "default",
+  variant = 'default',
   isLoading = false,
   className,
 }: ModalProps) => {
@@ -89,12 +93,12 @@ export const Modal = ({
             )}
             role="dialog"
             aria-modal="true"
-            aria-labelledby={title ? 'modal-title' : undefined}
+            aria-labelledby={title ? MODAL_TITLE_ID : undefined}
           >
             <div className="flex justify-between items-center mb-6">
               {title && (
                 <span
-                  id="modal-title"
+                  id={MODAL_TITLE_ID}
                   className="font-mono text-xs font-bold text-brand-primary tracking-widest uppercase"
                 >
                   {title}
@@ -120,4 +124,4 @@ export const Modal = ({
   );
 };
 
-Modal.displayName = "Modal";
+Modal.displayName = 'Modal';

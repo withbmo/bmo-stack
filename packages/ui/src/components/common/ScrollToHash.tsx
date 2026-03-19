@@ -1,15 +1,21 @@
+'use client';
+
 import { useEffect } from 'react';
 
 export const ScrollToHash = () => {
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    let timeoutId: ReturnType<typeof window.setTimeout> | undefined;
 
     const scrollToHash = () => {
       const { hash } = window.location;
 
       if (hash) {
         const elementId = hash.replace('#', '');
-        setTimeout(() => {
+        if (timeoutId != null) {
+          window.clearTimeout(timeoutId);
+        }
+        timeoutId = window.setTimeout(() => {
           const element = document.getElementById(elementId);
           if (element) {
             const headerOffset = 100;
@@ -30,6 +36,9 @@ export const ScrollToHash = () => {
     window.addEventListener('hashchange', scrollToHash);
 
     return () => {
+      if (timeoutId != null) {
+        window.clearTimeout(timeoutId);
+      }
       window.removeEventListener('hashchange', scrollToHash);
     };
   }, []);

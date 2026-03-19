@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+
 import { cn } from '../../utils/cn';
 
 export interface BaseInteractiveCardProps {
@@ -41,10 +42,10 @@ export const BaseInteractiveCard = ({
     <div
       onClick={onClick}
       className={cn(
-        "group relative flex flex-col h-full overflow-hidden transition-all duration-300",
-        "bg-bg-panel border border-border-dim",
-        "hover:border-brand-primary hover:translate-y-[-2px]",
-        onClick && "cursor-pointer",
+        'group relative flex flex-col h-full overflow-hidden transition-all duration-300',
+        'bg-bg-panel border border-border-dim',
+        'hover:border-brand-primary hover:translate-y-[-2px]',
+        onClick && 'cursor-pointer',
         className
       )}
     >
@@ -69,7 +70,7 @@ export const BaseInteractiveCard = ({
 
         {/* Tags */}
         <div className="flex flex-wrap gap-2 mt-auto">
-          {tags.map((tag) => (
+          {tags.map(tag => (
             <span
               key={tag}
               className="text-[10px] font-mono text-text-secondary border border-border-dim px-2 py-0.5 uppercase group-hover:border-brand-primary/30 group-hover:text-brand-primary/70 transition-colors"
@@ -88,4 +89,4 @@ export const BaseInteractiveCard = ({
   );
 };
 
-BaseInteractiveCard.displayName = "BaseInteractiveCard";
+BaseInteractiveCard.displayName = 'BaseInteractiveCard';

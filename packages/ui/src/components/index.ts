@@ -1,11 +1,11 @@
 /**
  * Base UI Components
  */
-export { Badge, StatusBadge, DeploymentStatusBadge, DeployJobStatusBadge } from './Badge';
+export { Badge, DeployJobStatusBadge, DeploymentStatusBadge, StatusBadge } from './Badge';
 export { Button } from './Button';
 export { Card } from './Card';
-export { DashboardTabs } from './DashboardTabs';
 export type { DashboardTab, DashboardTabsProps } from './DashboardTabs';
+export { DashboardTabs } from './DashboardTabs';
 export {
   DynamicSkeletonProvider,
   DynamicSlot,

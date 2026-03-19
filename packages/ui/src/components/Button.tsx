@@ -1,11 +1,13 @@
+import { Loader2 } from 'lucide-react';
 import {
-  forwardRef,
+  type AnchorHTMLAttributes,
   type ButtonHTMLAttributes,
+  forwardRef,
   type MouseEvent,
   type ReactNode,
   type Ref,
 } from 'react';
-import { Loader2 } from 'lucide-react';
+
 import { cn } from '../utils/cn';
 
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'xl';
@@ -30,15 +32,28 @@ const variantClasses: Record<ButtonVariant, string> = {
     'inline-flex items-center justify-center gap-2 font-mono border border-red-500/50 text-red-500 hover:bg-red-500 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-red-500',
 };
 
-export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'size'> {
+interface ButtonBaseProps {
   variant?: ButtonVariant;
   size?: ButtonSize;
   isLoading?: boolean;
-  /** When set, renders as a React Router Link (same visual styles) */
-  to?: string;
   fullWidth?: boolean;
   children?: ReactNode;
 }
+
+type ButtonAsButtonProps = ButtonBaseProps &
+  Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'size'> & {
+    /** When omitted, renders a native button */
+    to?: undefined;
+  };
+
+type ButtonAsAnchorProps = ButtonBaseProps &
+  Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'children' | 'href'> & {
+    /** When set, renders an anchor with the same visual styles */
+    to: string;
+    disabled?: boolean;
+  };
+
+export type ButtonProps = ButtonAsButtonProps | ButtonAsAnchorProps;
 
 export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(
   function Button(
@@ -48,14 +63,13 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
       variant = 'primary',
       size = 'md',
       isLoading = false,
-      to,
       fullWidth = false,
       disabled,
-      type = 'button',
       ...props
     },
     ref
   ) {
+    const to = 'to' in props ? props.to : undefined;
     const isDisabled = disabled ?? isLoading;
     const sizeClass = sizeClasses[size];
     const widthClass = fullWidth ? 'w-full min-w-0' : '';
@@ -74,6 +88,8 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
         ? 'nexus-shadow-btn-wrapper block w-full'
         : 'nexus-shadow-btn-wrapper inline-block';
       if (to != null) {
+        const { to: _to, ...anchorProps } = props as ButtonAsAnchorProps;
+        void _to;
         const onClick = (event: MouseEvent<HTMLAnchorElement>) => {
           if (isDisabled) {
             event.preventDefault();
@@ -93,12 +109,15 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
                 isDisabled && 'opacity-60 pointer-events-none'
               )}
               aria-disabled={isDisabled}
+              {...anchorProps}
             >
               {content}
             </a>
           </div>
         );
       }
+
+      const { type = 'button', ...buttonProps } = props as ButtonAsButtonProps;
       return (
         <div className={wrapperClass}>
           <span className="nexus-shadow-btn-back" aria-hidden />
@@ -107,7 +126,7 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
             type={type}
             disabled={isDisabled}
             className={innerClassName}
-            {...props}
+            {...buttonProps}
           >
             {content}
           </button>
@@ -116,6 +135,8 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
     }
 
     if (to != null) {
+      const { to: _to, ...anchorProps } = props as ButtonAsAnchorProps;
+      void _to;
       const onClick = (event: MouseEvent<HTMLAnchorElement>) => {
         if (isDisabled) {
           event.preventDefault();
@@ -129,11 +150,14 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
           onClick={onClick}
           className={cn(innerClassName, isDisabled && 'opacity-60 pointer-events-none')}
           aria-disabled={isDisabled}
+          {...anchorProps}
         >
           {content}
         </a>
       );
     }
+
+    const { type = 'button', ...buttonProps } = props as ButtonAsButtonProps;
 
     return (
       <button
@@ -141,7 +165,7 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
         type={type}
         disabled={isDisabled}
         className={innerClassName}
-        {...props}
+        {...buttonProps}
       >
         {content}
       </button>

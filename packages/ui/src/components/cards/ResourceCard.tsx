@@ -1,4 +1,5 @@
-import { FileText, Brain, Star, GitBranch, ShieldCheck } from 'lucide-react';
+import { Brain, FileText, GitBranch, ShieldCheck, Star } from 'lucide-react';
+
 import type { HubResource } from '../../types';
 import { BaseInteractiveCard } from './BaseInteractiveCard';
 
@@ -21,9 +22,7 @@ export const ResourceCard = ({ resource }: ResourceCardProps) => {
         )
       }
       topBarRight={
-        <span className="text-[10px] font-mono text-text-secondary">
-          {resource.updatedAt}
-        </span>
+        <span className="text-[10px] font-mono text-text-secondary">{resource.updatedAt}</span>
       }
       title={resource.title}
       titleIcon={
@@ -41,9 +40,7 @@ export const ResourceCard = ({ resource }: ResourceCardProps) => {
             <div className="w-5 h-5 bg-border-dim/20 border border-border-dim flex items-center justify-center text-[10px] text-white font-bold group-hover:border-brand-primary/50 transition-colors">
               {resource.author.charAt(0).toUpperCase()}
             </div>
-            <span className="group-hover:text-white transition-colors">
-              {resource.author}
-            </span>
+            <span className="group-hover:text-white transition-colors">{resource.author}</span>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1">
@@ -61,4 +58,4 @@ export const ResourceCard = ({ resource }: ResourceCardProps) => {
   );
 };
 
-ResourceCard.displayName = "ResourceCard";
+ResourceCard.displayName = 'ResourceCard';

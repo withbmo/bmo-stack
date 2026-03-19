@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react';
+
 import type { PricingPlan } from '../../types';
 import { Button } from '../Button';
 

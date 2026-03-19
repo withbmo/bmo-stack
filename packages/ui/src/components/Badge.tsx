@@ -1,26 +1,23 @@
-import type { ReactNode } from "react";
-import { Zap, Square, RefreshCw, Activity, XCircle } from "lucide-react";
-import type {
-  ProjectStatus,
-  DeploymentStatus,
-  DeployJobStatus,
-} from "../types";
-import { cn } from "../utils/cn";
+import { Activity, RefreshCw, Square, XCircle, Zap } from 'lucide-react';
+import type { ReactNode } from 'react';
+
+import type { DeployJobStatus, DeploymentStatus, ProjectStatus } from '../types';
+import { cn } from '../utils/cn';
 
 // ─── Variants ─────────────────────────────────────────────────────────────
 
-export type BadgeVariant = "success" | "warning" | "error" | "muted" | "purple";
+export type BadgeVariant = 'success' | 'warning' | 'error' | 'muted' | 'purple';
 
 const variantClasses: Record<BadgeVariant, string> = {
-  success: "text-brand-accent border-brand-accent/30 bg-brand-accent/10",
-  warning: "text-yellow-400 border-yellow-400/30 bg-yellow-400/10",
-  error: "text-red-500 border-red-500/30 bg-red-500/10",
-  muted: "text-text-secondary border-border-dim bg-border-dim/10",
-  purple: "text-brand-primary border-brand-primary/50 bg-brand-primary/10",
+  success: 'text-brand-accent border-brand-accent/30 bg-brand-accent/10',
+  warning: 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10',
+  error: 'text-red-500 border-red-500/30 bg-red-500/10',
+  muted: 'text-text-secondary border-border-dim bg-border-dim/10',
+  purple: 'text-brand-primary border-brand-primary/50 bg-brand-primary/10',
 };
 
 const baseClass =
-  "inline-flex items-center gap-1.5 px-2 py-1 border text-[10px] font-mono font-bold uppercase tracking-wider";
+  'inline-flex items-center gap-1.5 px-2 py-1 border text-[10px] font-mono font-bold uppercase tracking-wider';
 
 // ─── Base Badge ──────────────────────────────────────────────────────────
 
@@ -41,10 +38,10 @@ export const Badge = ({ variant, icon, children, className }: BadgeProps) => (
 // ─── Project status (running, stopped, building, error) ────────────────────
 
 const statusVariant: Record<ProjectStatus, BadgeVariant> = {
-  running: "success",
-  stopped: "muted",
-  building: "warning",
-  error: "error",
+  running: 'success',
+  stopped: 'muted',
+  building: 'warning',
+  error: 'error',
 };
 
 const statusIcon: Record<ProjectStatus, ReactNode> = {
@@ -59,10 +56,7 @@ export interface StatusBadgeProps {
 }
 
 export const StatusBadge = ({ status }: StatusBadgeProps) => (
-  <Badge
-    variant={statusVariant[status] ?? "muted"}
-    icon={statusIcon[status] ?? null}
-  >
+  <Badge variant={statusVariant[status] ?? 'muted'} icon={statusIcon[status] ?? null}>
     {status}
   </Badge>
 );
@@ -70,10 +64,10 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => (
 // ─── Deployment status (live, stopped, deploying, failed) ──────────────────
 
 const deployVariant: Record<DeploymentStatus, BadgeVariant> = {
-  live: "success",
-  stopped: "muted",
-  deploying: "warning",
-  failed: "error",
+  live: 'success',
+  stopped: 'muted',
+  deploying: 'warning',
+  failed: 'error',
 };
 
 const deployIcon: Record<DeploymentStatus, ReactNode> = {
@@ -87,13 +81,8 @@ export interface DeploymentStatusBadgeProps {
   status: DeploymentStatus;
 }
 
-export const DeploymentStatusBadge = ({
-  status,
-}: DeploymentStatusBadgeProps) => (
-  <Badge
-    variant={deployVariant[status] ?? "muted"}
-    icon={deployIcon[status] ?? null}
-  >
+export const DeploymentStatusBadge = ({ status }: DeploymentStatusBadgeProps) => (
+  <Badge variant={deployVariant[status] ?? 'muted'} icon={deployIcon[status] ?? null}>
     {status}
   </Badge>
 );
@@ -101,11 +90,11 @@ export const DeploymentStatusBadge = ({
 // ─── Deploy job status (queued, running, succeeded, failed, canceled) ──────
 
 const jobVariant: Record<DeployJobStatus, BadgeVariant> = {
-  queued: "muted",
-  running: "warning",
-  succeeded: "success",
-  failed: "error",
-  canceled: "muted",
+  queued: 'muted',
+  running: 'warning',
+  succeeded: 'success',
+  failed: 'error',
+  canceled: 'muted',
 };
 
 const jobIcon: Record<DeployJobStatus, ReactNode> = {
@@ -121,15 +110,12 @@ export interface DeployJobStatusBadgeProps {
 }
 
 export const DeployJobStatusBadge = ({ status }: DeployJobStatusBadgeProps) => (
-  <Badge
-    variant={jobVariant[status] ?? "muted"}
-    icon={jobIcon[status] ?? null}
-  >
+  <Badge variant={jobVariant[status] ?? 'muted'} icon={jobIcon[status] ?? null}>
     {status}
   </Badge>
 );
 
-Badge.displayName = "Badge";
-StatusBadge.displayName = "StatusBadge";
-DeploymentStatusBadge.displayName = "DeploymentStatusBadge";
-DeployJobStatusBadge.displayName = "DeployJobStatusBadge";
+Badge.displayName = 'Badge';
+StatusBadge.displayName = 'StatusBadge';
+DeploymentStatusBadge.displayName = 'DeploymentStatusBadge';
+DeployJobStatusBadge.displayName = 'DeployJobStatusBadge';

@@ -1,4 +1,5 @@
 import { forwardRef, type InputHTMLAttributes, type Ref, type TextareaHTMLAttributes } from 'react';
+
 import { cn } from '../utils/cn';
 
 export type InputVariant = 'default' | 'panel' | 'ide' | 'terminal';

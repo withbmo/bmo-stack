@@ -25,7 +25,7 @@
 .api-playground-swagger .swagger-ui .wrapper,
 .api-playground-swagger .swagger-ui > div,
 .api-playground-swagger .swagger-ui section.block,
-.api-playground-swagger .swagger-ui [class*="col-12"] {
+.api-playground-swagger .swagger-ui [class*='col-12'] {
   width: 100% !important;
   max-width: 100% !important;
   box-sizing: border-box !important;
@@ -175,10 +175,7 @@
 }
 
 .api-playground-swagger .swagger-ui .opblock.is-open .opblock-summary-control,
-.api-playground-swagger
-  .swagger-ui
-  .opblock.opblock-is-open
-  .opblock-summary-control {
+.api-playground-swagger .swagger-ui .opblock.opblock-is-open .opblock-summary-control {
   border-bottom: 1px solid var(--color-nexus-gray) !important;
   background: var(--color-nexus-dark) !important;
 }
@@ -192,34 +189,22 @@
   text-align: center !important;
 }
 
-.api-playground-swagger
-  .swagger-ui
-  .opblock.opblock-get
-  .opblock-summary-method {
+.api-playground-swagger .swagger-ui .opblock.opblock-get .opblock-summary-method {
   background: var(--color-brand-primary) !important;
   color: #fff !important;
 }
 
-.api-playground-swagger
-  .swagger-ui
-  .opblock.opblock-post
-  .opblock-summary-method {
+.api-playground-swagger .swagger-ui .opblock.opblock-post .opblock-summary-method {
   background: var(--color-brand-accent) !important;
   color: var(--color-bg-app) !important;
 }
 
-.api-playground-swagger
-  .swagger-ui
-  .opblock.opblock-put
-  .opblock-summary-method {
+.api-playground-swagger .swagger-ui .opblock.opblock-put .opblock-summary-method {
   background: var(--color-nexus-neon) !important;
   color: #fff !important;
 }
 
-.api-playground-swagger
-  .swagger-ui
-  .opblock.opblock-delete
-  .opblock-summary-method {
+.api-playground-swagger .swagger-ui .opblock.opblock-delete .opblock-summary-method {
   background: #ef4444 !important;
   color: #fff !important;
 }
@@ -350,8 +335,8 @@
 }
 
 /* Inputs */
-.api-playground-swagger .swagger-ui input[type="text"],
-.api-playground-swagger .swagger-ui input[type="password"],
+.api-playground-swagger .swagger-ui input[type='text'],
+.api-playground-swagger .swagger-ui input[type='password'],
 .api-playground-swagger .swagger-ui textarea,
 .api-playground-swagger .swagger-ui select {
   background: var(--color-nexus-dark) !important;

@@ -1,5 +1,8 @@
+'use client';
+
+import { ArrowUpRight, Cloud, Code2, Cpu, Database, Zap } from 'lucide-react';
 import { useState } from 'react';
-import { Zap, Cloud, Code2, Cpu, ArrowUpRight, Database } from 'lucide-react';
+
 import type { Feature } from '../../types';
 
 function getFeatureIcon(icon: string) {

@@ -6,7 +6,13 @@ import { forwardRef, type ReactNode } from 'react';
 
 import { cn } from '../utils/cn';
 import { MOTION_DISTANCE, MOTION_DURATION, MOTION_EASE } from './tokens';
-import { fadeVariants, scaleInVariants, slideRightVariants, slideUpVariants, staggerContainerVariants } from './variants';
+import {
+  fadeVariants,
+  scaleInVariants,
+  slideRightVariants,
+  slideUpVariants,
+  staggerContainerVariants,
+} from './variants';
 
 const MOTION_ELEMENTS = {
   article: motion.article,
@@ -28,12 +34,14 @@ const MOTION_ELEMENTS = {
 type MotionElementTag = keyof typeof MOTION_ELEMENTS;
 
 type SharedMotionProps = {
-  as?: MotionElementTag;
-  className?: string;
-  children: ReactNode;
-  delay?: number;
-  once?: boolean;
-} & Record<string, unknown>;
+  [T in MotionElementTag]: Omit<HTMLMotionProps<T>, 'children' | 'className'> & {
+    as?: T;
+    className?: string;
+    children: ReactNode;
+    delay?: number;
+    once?: boolean;
+  };
+}[MotionElementTag];
 
 function renderMotion(as: MotionElementTag, props: Record<string, unknown>) {
   const Component = MOTION_ELEMENTS[as] as any;
@@ -168,7 +176,10 @@ export const Presence = AnimatePresence;
 
 export const MotionPopover = forwardRef<
   HTMLDivElement,
-  Omit<HTMLMotionProps<'div'>, 'children' | 'className'> & { children: ReactNode; className?: string }
+  Omit<HTMLMotionProps<'div'>, 'children' | 'className'> & {
+    children: ReactNode;
+    className?: string;
+  }
 >(function MotionPopover({ children, className, ...props }, ref) {
   const prefersReducedMotion = useReducedMotion();
   return (
@@ -177,7 +188,9 @@ export const MotionPopover = forwardRef<
       initial="hidden"
       animate="visible"
       exit="exit"
-      variants={prefersReducedMotion ? fadeVariants() : slideUpVariants(0, MOTION_DISTANCE.sm as number)}
+      variants={
+        prefersReducedMotion ? fadeVariants() : slideUpVariants(0, MOTION_DISTANCE.sm as number)
+      }
       className={className}
       {...props}
     >
@@ -190,7 +203,10 @@ export function MotionBackdrop({
   children,
   className,
   ...props
-}: Omit<HTMLMotionProps<'div'>, 'children' | 'className'> & { children?: ReactNode; className?: string }) {
+}: Omit<HTMLMotionProps<'div'>, 'children' | 'className'> & {
+  children?: ReactNode;
+  className?: string;
+}) {
   return (
     <motion.div
       initial={{ opacity: 0 }}

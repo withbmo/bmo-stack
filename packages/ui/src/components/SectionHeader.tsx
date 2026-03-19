@@ -1,6 +1,7 @@
-import type { ReactNode } from "react";
-import type { LucideIcon } from "lucide-react";
-import { cn } from "../utils/cn";
+import type { LucideIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
+
+import { cn } from '../utils/cn';
 
 export interface SectionHeaderProps {
   /** Short label shown in the badge (e.g. API_PLAYGROUND) */
@@ -19,21 +20,19 @@ export const SectionHeader = ({
   icon: Icon,
   title,
   subtitle,
-  className = "",
+  className = '',
 }: SectionHeaderProps) => {
   return (
-    <div className={cn("mb-8", className)}>
+    <div className={cn('mb-8', className)}>
       {badge && Icon ? (
         <div className="flex items-center gap-2 px-3 py-1 mb-6 border border-brand-primary/50 bg-brand-primary/10 text-brand-primary font-mono text-xs tracking-widest w-fit">
           <Icon size={12} /> {badge}
         </div>
       ) : null}
-      <h1 className="text-4xl md:text-5xl font-sans font-bold text-white mb-2">
-        {title}
-      </h1>
+      <h1 className="text-4xl md:text-5xl font-sans font-bold text-white mb-2">{title}</h1>
       <p className="font-mono text-sm text-text-secondary max-w-2xl">{subtitle}</p>
     </div>
   );
 };
 
-SectionHeader.displayName = "SectionHeader";
+SectionHeader.displayName = 'SectionHeader';

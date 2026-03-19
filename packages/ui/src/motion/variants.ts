@@ -23,7 +23,11 @@ export function slideUpVariants(
   return {
     hidden: { opacity: 0, y: distance },
     visible: { opacity: 1, y: 0, transition: transition(delay, MOTION_DURATION.base) },
-    exit: { opacity: 0, y: Math.max(4, distance / 2), transition: transition(0, MOTION_DURATION.fast) },
+    exit: {
+      opacity: 0,
+      y: Math.max(4, distance / 2),
+      transition: transition(0, MOTION_DURATION.fast),
+    },
   };
 }
 
@@ -34,7 +38,11 @@ export function slideRightVariants(
   return {
     hidden: { opacity: 0, x: -distance },
     visible: { opacity: 1, x: 0, transition: transition(delay, MOTION_DURATION.base) },
-    exit: { opacity: 0, x: -Math.max(4, distance / 2), transition: transition(0, MOTION_DURATION.fast) },
+    exit: {
+      opacity: 0,
+      x: -Math.max(4, distance / 2),
+      transition: transition(0, MOTION_DURATION.fast),
+    },
   };
 }
 

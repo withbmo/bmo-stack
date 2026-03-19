@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useRef } from 'react';
 
 export const LivingGrid = () => {
@@ -23,8 +25,11 @@ export const LivingGrid = () => {
     window.addEventListener('resize', resize);
 
     const colors = ['#6D28D9', '#A855F7', '#00FF94', '#1F1F1F'];
+    let animationFrameId = 0;
+    let isDisposed = false;
 
     const animate = () => {
+      if (isDisposed) return;
       ctx.clearRect(0, 0, width, height);
 
       // Subtle full-page grid (keeps the page visually divided)
@@ -81,20 +86,16 @@ export const LivingGrid = () => {
       }
       ctx.globalAlpha = 1;
 
-      requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
     };
 
-    const animationId = requestAnimationFrame(animate);
+    animationFrameId = requestAnimationFrame(animate);
     return () => {
+      isDisposed = true;
       window.removeEventListener('resize', resize);
-      cancelAnimationFrame(animationId);
+      cancelAnimationFrame(animationFrameId);
     };
   }, []);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      className="absolute inset-0 z-0 pointer-events-none opacity-60"
-    />
-  );
+  return <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none opacity-60" />;
 };
