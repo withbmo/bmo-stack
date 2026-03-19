@@ -54,17 +54,19 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        const redisUrl = config.get<string>('REDIS_URL') || '';
+        const redisUrl = config.get<string>('REDIS_URL')?.trim();
+        if (!redisUrl) {
+          throw new Error('REDIS_URL is required.');
+        }
+
+        const parsedRedisUrl = new URL(redisUrl);
         return {
-          connection: redisUrl.startsWith('redis://')
-            ? {
-                host: redisUrl.replace('redis://', '').split(':')[0],
-                port: parseInt(redisUrl.replace('redis://', '').split(':')[1] || '6379'),
-              }
-            : {
-                host: 'localhost',
-                port: 6379,
-              },
+          connection: {
+            host: parsedRedisUrl.hostname,
+            port: parseInt(parsedRedisUrl.port || '6379'),
+            username: parsedRedisUrl.username || undefined,
+            password: parsedRedisUrl.password || undefined,
+          },
           defaultJobOptions: {
             removeOnComplete: {
               count: 1000,

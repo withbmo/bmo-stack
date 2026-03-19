@@ -15,9 +15,11 @@ export class DistributedLockService implements OnModuleDestroy {
 
   constructor(private readonly configService: ConfigService) {
     const redisUrl = this.configService.get<string>('REDIS_URL')?.trim();
-    this.redis = redisUrl
-      ? new Redis(redisUrl, { maxRetriesPerRequest: null })
-      : new Redis({ host: 'localhost', port: 6379, maxRetriesPerRequest: null });
+    if (!redisUrl) {
+      throw new Error('REDIS_URL is required.');
+    }
+
+    this.redis = new Redis(redisUrl, { maxRetriesPerRequest: null });
 
     this.redlock = new Redlock([this.redis], { retryCount: 0 });
     this.redlock.on('clientError', (error: unknown) => {
