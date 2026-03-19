@@ -77,7 +77,6 @@ export async function createBetterAuth(configService: ConfigService): Promise<un
 
   const encryptionSecret = configService.get<string>('INTERNAL_SECRET') ?? 'temp-dev-secret-123456';
   const isProd = configService.get<string>('NODE_ENV') === 'production';
-  const isDev = !isProd;
   const jwtSecret = configService.get<string>('JWT_SECRET') ?? '';
   const authSecret = jwtSecret || (isProd ? (() => {
     throw new Error('JWT_SECRET must be set in production');
