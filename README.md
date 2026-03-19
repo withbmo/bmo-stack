@@ -4,21 +4,21 @@ Modern monorepo architecture for Pytholit using Next.js + Nest.js.
 
 ## Architecture
 
-```
+```text
 pytholit-v2/
 ├── apps/
-│   ├── web/           # Next.js 15 frontend
-│   ├── api/           # Nest.js backend
-│   ├── admin/         # Admin dashboard
-│   └── docs/          # Documentation site
+│   ├── web/               # Next.js frontend
+│   ├── api/               # Nest.js backend
+│   ├── ingress-router/    # Ingress/routing service
+│   └── terminal-gateway/  # Terminal session gateway
 ├── packages/
-│   ├── contracts/     # Shared TypeScript types
-│   ├── validation/    # Zod schemas & DTOs
-│   ├── config/        # Shared configuration
-│   ├── utils/         # Utilities
-│   ├── ui/            # Design system
-│   ├── api-client/    # Type-safe API client
-│   └── db/            # Prisma schema & client
+│   ├── contracts/         # Shared TypeScript types
+│   ├── db/                # Prisma schema & client
+│   ├── project-spec/      # TOML project spec parser/validator/planner
+│   ├── ui/                # Design system
+│   └── validation/        # Zod schemas & DTOs
+├── templates/             # Full starter projects with pytholit.toml
+└── .devcontainer/         # Reproducible development environment
 ```
 
 ## Getting Started
@@ -63,8 +63,8 @@ pnpm build
 # Run linting
 pnpm lint
 
-# Run tests
-pnpm test
+# Validate templates
+pnpm templates:validate
 ```
 
 ## Key Features
@@ -85,12 +85,12 @@ pnpm test
 
 ## Documentation
 
-- [Architecture Overview](./docs/architecture.md)
-- [Development Guide](./docs/development.md)
-- [Deployment](./docs/deployment.md)
-- [API Database Docs](./apps/api/docs/database/README.md)
 - [Contributing](./CONTRIBUTING.md)
 - [Security](./SECURITY.md)
+- [API Database Docs](./apps/api/docs/database/README.md)
+- [Project Spec Docs](./packages/project-spec/docs/README.md)
+- [Template Catalog](./templates/README.md)
+- [Devcontainer](./.devcontainer/devcontainer.json)
 
 ## Templates
 
