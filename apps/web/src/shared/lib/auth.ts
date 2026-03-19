@@ -127,7 +127,7 @@ export async function signup(
     body: JSON.stringify({
       email,
       password,
-      name: [firstName, lastName].filter(Boolean).join(' ').trim() || email,
+      name: username,
       username,
       firstName,
       lastName,

@@ -20,6 +20,9 @@ describe('AuthController', () => {
     expect(result).toHaveProperty('label');
     expect(result).toHaveProperty('crackTime');
     expect(result).toHaveProperty('feedback');
+    expect(result).toHaveProperty('strengths');
+    expect(result).toHaveProperty('weaknesses');
+    expect(result).toHaveProperty('warning');
     expect(result).toHaveProperty('isStrong');
   });
 
@@ -29,5 +32,6 @@ describe('AuthController', () => {
     const result = controller.checkPasswordStrength(body);
 
     expect(result.isStrong).toBe(false);
+    expect(result.weaknesses.length).toBeGreaterThan(0);
   });
 });

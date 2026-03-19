@@ -1,4 +1,5 @@
 import { AUTH_CONSTANTS } from '@pytholit/validation';
+import type { Dispatch, SetStateAction } from 'react';
 import { useCallback, useState } from "react";
 
 type AuthMode = "login" | "register";
@@ -27,10 +28,9 @@ interface UseAuthFormReturn {
   setLastName: (name: string) => void;
 
   // Validation state
-  passwordMismatch: boolean;
-  setPasswordMismatch: (mismatch: boolean) => void;
   fieldErrors: Record<string, string>;
-  setFieldErrors: (errors: Record<string, string>) => void;
+  setFieldErrors: Dispatch<SetStateAction<Record<string, string>>>;
+  setFieldError: (field: string, error?: string) => void;
 
   // UI state
   error: string | null;
@@ -59,7 +59,6 @@ export function useAuthForm({ mode }: UseAuthFormOptions): UseAuthFormReturn {
   const [lastName, setLastName] = useState("");
 
   // Validation
-  const [passwordMismatch, setPasswordMismatch] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // UI state
@@ -68,10 +67,18 @@ export function useAuthForm({ mode }: UseAuthFormOptions): UseAuthFormReturn {
 
   const validatePasswords = useCallback(() => {
     if (mode === "register" && password !== confirmPassword) {
-      setPasswordMismatch(true);
+      setFieldErrors((current) => ({
+        ...current,
+        confirmPassword: 'Passwords do not match.',
+      }));
       return false;
     }
-    setPasswordMismatch(false);
+    setFieldErrors((current) => {
+      if (!current.confirmPassword) return current;
+      const next = { ...current };
+      delete next.confirmPassword;
+      return next;
+    });
     return true;
   }, [mode, password, confirmPassword]);
 
@@ -97,6 +104,18 @@ export function useAuthForm({ mode }: UseAuthFormOptions): UseAuthFormReturn {
     setFieldErrors({});
   }, []);
 
+  const setFieldError = useCallback((field: string, error?: string) => {
+    setFieldErrors((current) => {
+      const next = { ...current };
+      if (error) {
+        next[field] = error;
+      } else {
+        delete next[field];
+      }
+      return next;
+    });
+  }, []);
+
   const resetForm = useCallback(() => {
     setEmail("");
     setPassword("");
@@ -104,7 +123,6 @@ export function useAuthForm({ mode }: UseAuthFormOptions): UseAuthFormReturn {
     setUsername("");
     setFirstName("");
     setLastName("");
-    setPasswordMismatch(false);
     setFieldErrors({});
     setError(null);
     setIsLoading(false);
@@ -123,10 +141,9 @@ export function useAuthForm({ mode }: UseAuthFormOptions): UseAuthFormReturn {
     setFirstName,
     lastName,
     setLastName,
-    passwordMismatch,
-    setPasswordMismatch,
     fieldErrors,
     setFieldErrors,
+    setFieldError,
     error,
     setError,
     isLoading,

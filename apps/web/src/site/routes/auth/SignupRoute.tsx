@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { env } from '@/env';
 import { useAuth } from '@/shared/auth';
 import { useAuthForm } from '@/shared/auth/hooks/useAuthForm';
+import { usePasswordStrength } from '@/shared/auth/hooks/usePasswordStrength';
 import { useOAuthProviders } from '@/shared/auth/hooks/useOAuthProviders';
 import {
   type ApiError,
@@ -22,6 +23,7 @@ import { AuthCard } from '@/site/components/auth/AuthCard';
 import { AuthHeader } from '@/site/components/auth/AuthHeader';
 import { AuthPageLayout } from '@/site/components/auth/AuthPageLayout';
 import { AuthPanelLoader } from '@/site/components/auth/AuthPanelLoader';
+import { PasswordStrengthGuidance } from '@/site/components/auth/PasswordStrengthGuidance';
 import { AuthSubmitButton } from '@/site/components/auth/AuthSubmitButton';
 import {
   EmailField,
@@ -70,10 +72,9 @@ export function SignupRoute() {
     setFirstName,
     lastName,
     setLastName,
-    passwordMismatch,
-    setPasswordMismatch,
     fieldErrors,
     setFieldErrors,
+    setFieldError,
     isLoading,
     setIsLoading,
     validatePasswords,
@@ -85,6 +86,7 @@ export function SignupRoute() {
   const [turnstileToken, setTurnstileToken] = useState('');
   const { providers: oauthProviders, isLoading: isPanelLoading } = useOAuthProviders();
   const turnstileRef = useRef<TurnstileInstance | null>(null);
+  const passwordStrength = usePasswordStrength(password);
 
   const resetTurnstile = useCallback(() => {
     turnstileRef.current?.reset();
@@ -101,8 +103,12 @@ export function SignupRoute() {
       return;
     }
 
-    // Validate fields
     if (!validateSignupFields() || !validatePasswords()) {
+      return;
+    }
+
+    if (!passwordStrength?.isStrong) {
+      setFieldError('password', 'Choose a stronger password before continuing.');
       return;
     }
 
@@ -157,9 +163,14 @@ export function SignupRoute() {
       const d = (apiErr.detail as string).toLowerCase();
       if (d.includes('username already taken')) {
         toast.error('Username already taken. Please choose another username.');
-        setFieldErrors({ ...fieldErrors, username: 'Username already taken.' });
+        setFieldErrors((current) => ({ ...current, username: 'Username already taken.' }));
         return;
       }
+    }
+
+    if (apiErr.code === 'AUTH_WEAK_PASSWORD') {
+      setFieldError('password', typeof apiErr.detail === 'string' ? apiErr.detail : 'Choose a stronger password.');
+      return;
     }
 
     // 422: Validation errors
@@ -208,23 +219,38 @@ export function SignupRoute() {
               />
 
               {/* Password Field */}
-              <PasswordField value={password} onChange={setPassword} required />
+              <PasswordField
+                value={password}
+                onChange={(value) => {
+                  setPassword(value);
+                  setFieldErrors((current) => {
+                    if (!current.password) return current;
+                    const next = { ...current };
+                    delete next.password;
+                    return next;
+                  });
+                }}
+                error={!!fieldErrors.password}
+                required
+              />
+              <PasswordStrengthGuidance
+                strength={passwordStrength}
+                error={fieldErrors.password}
+              />
 
               {/* Confirm Password Field */}
               <PasswordField
                 value={confirmPassword}
                 onChange={(val) => {
                   setConfirmPassword(val);
-                  setPasswordMismatch(false);
+                  setFieldError('confirmPassword');
                 }}
                 label="Confirm Password"
-                error={passwordMismatch}
+                error={!!fieldErrors.confirmPassword}
               />
-              {passwordMismatch && (
-                <p className="font-mono text-xs text-red-500">
-                  Passwords do not match
-                </p>
-              )}
+              {fieldErrors.confirmPassword ? (
+                <p className="font-mono text-xs text-red-500">{fieldErrors.confirmPassword}</p>
+              ) : null}
 
               {/* Turnstile */}
               {!IS_DEV && TURNSTILE_SITE_KEY && (

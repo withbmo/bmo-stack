@@ -67,7 +67,7 @@ Main responsibilities:
 - email verification and OTP configuration (emails sent via `@better-auth/infra`)
 - OAuth provider configuration
 - account token encryption hooks
-- plugin registration: emailHarmony, password validator, **captcha (Better Auth built-in cloudflare-turnstile)**, provider gate, username, emailOTP
+- plugin registration: password validator, **captcha (Better Auth built-in cloudflare-turnstile)**, provider gate, emailOTP
 
 Operational notes:
 

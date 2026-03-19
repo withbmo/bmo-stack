@@ -6,10 +6,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 
+import { usePasswordStrength } from '@/shared/auth/hooks/usePasswordStrength';
 import { type ApiError, getApiErrorMessage, resetPassword } from '@/shared/lib/auth';
 import { AuthCard } from '@/site/components/auth/AuthCard';
 import { AuthHeader } from '@/site/components/auth/AuthHeader';
 import { AuthPageLayout } from '@/site/components/auth/AuthPageLayout';
+import { PasswordStrengthGuidance } from '@/site/components/auth/PasswordStrengthGuidance';
 import { AuthSubmitButton } from '@/site/components/auth/AuthSubmitButton';
 import { PasswordField } from '@/site/components/auth/FormFields';
 
@@ -33,8 +35,9 @@ export function ResetPasswordRoute() {
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordMismatch, setPasswordMismatch] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const passwordStrength = usePasswordStrength(password);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -48,17 +51,22 @@ export function ResetPasswordRoute() {
 
       // Validate passwords match
       if (password !== confirmPassword) {
-        setPasswordMismatch(true);
-        toast.error('Passwords do not match.');
+        setFieldErrors({ confirmPassword: 'Passwords do not match.' });
         return;
       }
 
       // Validate password not empty
       if (!password.trim()) {
-        toast.error('Password is required.');
+        setFieldErrors({ password: 'Password is required.' });
         return;
       }
 
+      if (!passwordStrength?.isStrong) {
+        setFieldErrors({ password: 'Choose a stronger password before continuing.' });
+        return;
+      }
+
+      setFieldErrors({});
       setIsLoading(true);
 
       try {
@@ -82,8 +90,13 @@ export function ResetPasswordRoute() {
         // Handle specific error cases
         if (apiErr.detail?.includes?.('expired') || apiErr.detail?.includes?.('invalid')) {
           toast.error('Your reset link has expired. Please request a new one.');
-        } else if (apiErr.detail?.includes?.('password')) {
-          toast.error('Password does not meet requirements. Please try a different password.');
+        } else if (apiErr.code === 'AUTH_WEAK_PASSWORD' || apiErr.detail?.includes?.('password')) {
+          setFieldErrors({
+            password:
+              typeof apiErr.detail === 'string'
+                ? apiErr.detail
+                : 'Password does not meet requirements. Please try a different password.',
+          });
         } else {
           toast.error(message);
         }
@@ -142,9 +155,22 @@ export function ResetPasswordRoute() {
           {/* New Password */}
           <PasswordField
             value={password}
-            onChange={setPassword}
+            onChange={(value) => {
+              setPassword(value);
+              setFieldErrors((current) => {
+                if (!current.password) return current;
+                const next = { ...current };
+                delete next.password;
+                return next;
+              });
+            }}
             label="New Password"
+            error={!!fieldErrors.password}
             required
+          />
+          <PasswordStrengthGuidance
+            strength={passwordStrength}
+            error={fieldErrors.password}
           />
 
           {/* Confirm Password */}
@@ -152,16 +178,21 @@ export function ResetPasswordRoute() {
             value={confirmPassword}
             onChange={(val) => {
               setConfirmPassword(val);
-              setPasswordMismatch(false);
+              setFieldErrors((current) => {
+                if (!current.confirmPassword) return current;
+                const next = { ...current };
+                delete next.confirmPassword;
+                return next;
+              });
             }}
             label="Confirm Password"
-            error={passwordMismatch}
+            error={!!fieldErrors.confirmPassword}
             required
           />
 
-          {passwordMismatch && (
-            <p className="font-mono text-xs text-red-500">Passwords do not match</p>
-          )}
+          {fieldErrors.confirmPassword ? (
+            <p className="font-mono text-xs text-red-500">{fieldErrors.confirmPassword}</p>
+          ) : null}
 
           {/* Submit Button */}
           <AuthSubmitButton type="submit" disabled={isLoading}>

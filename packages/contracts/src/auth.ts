@@ -3,6 +3,9 @@ export interface PasswordStrengthResponse {
   label: string; // "Too Weak", "Weak", "Fair", "Strong", "Very Strong"
   crackTime: string; // Human-readable crack time estimate
   feedback: string[]; // Actionable suggestions
+  strengths: string[]; // Positive password traits for inline UX
+  weaknesses: string[]; // Inline weaknesses and improvement prompts
+  warning: string | null; // Primary zxcvbn warning when available
   isStrong: boolean; // true if score >= 3
 }
 

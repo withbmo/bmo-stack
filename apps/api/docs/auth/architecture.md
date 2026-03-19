@@ -65,7 +65,7 @@ Because the module is marked `@Global()`, the rest of the API can rely on the au
 - email verification behavior (emails sent via `@better-auth/infra`)
 - OTP behavior (OTP emails via `@better-auth/infra`)
 - **captcha**: Better Auth's built-in cloudflare-turnstile plugin on sign-up, sign-in, and send-verification-otp
-- **emailHarmony** plugin (better-auth-harmony) for disposable-email blocking and normalization
+- canonical email storage via the `normalized_email` database column mapped to Better Auth's `email` field
 - username validation
 - OAuth provider registration
 - account linking behavior

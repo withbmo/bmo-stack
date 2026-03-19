@@ -209,7 +209,7 @@ Email templates by flow:
 
 ### Username rules
 
-The username plugin enforces:
+The signup flow currently enforces:
 
 - minimum length `3`
 - maximum length `30`

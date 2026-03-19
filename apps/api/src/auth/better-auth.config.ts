@@ -1,5 +1,5 @@
+import { Logger } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
-import { emailHarmony } from 'better-auth-harmony';
 
 import {
   API_URL_DEFAULT,
@@ -24,6 +24,7 @@ const DEFAULT_LOCAL_DB = {
   password: 'postgres',
   sslMode: 'disable',
 } as const;
+const authLogger = new Logger('BetterAuthConfig');
 
 function resolveDatabaseUrl(configService: ConfigService): string {
   const host = configService.get<string>('DB_HOST')?.trim();
@@ -66,7 +67,7 @@ function buildDatabaseUrl(options: {
 export async function createBetterAuth(configService: ConfigService): Promise<unknown> {
   // Dynamic imports to avoid loading during module initialization
   const { betterAuth } = await import('better-auth');
-  const { captcha, emailOTP, username } = await import('better-auth/plugins');
+  const { captcha, emailOTP } = await import('better-auth/plugins');
   const { PostgresDialect } = await import('kysely');
   const { Pool } = await import('pg');
 
@@ -282,6 +283,7 @@ export async function createBetterAuth(configService: ConfigService): Promise<un
       },
       fields: {
         name: 'username',
+        email: 'normalized_email',
         emailVerified: 'is_email_verified',
         image: 'avatar_url',
         createdAt: 'created_at',
@@ -319,7 +321,6 @@ export async function createBetterAuth(configService: ConfigService): Promise<un
     secret: authSecret,
 
     plugins: [
-      emailHarmony(),
       passwordValidatorPlugin(),
       ...(isProd
         ? [
@@ -331,20 +332,6 @@ export async function createBetterAuth(configService: ConfigService): Promise<un
           ]
         : []),
       providerGatePlugin(configService),
-      username({
-        minUsernameLength: 3,
-        maxUsernameLength: 30,
-        usernameValidator: (value: string) => {
-          const reserved = new Set(['admin', 'support', 'root', 'system']);
-          if (reserved.has(value.toLowerCase())) return false;
-          // Alphanumeric, underscore and dot only
-          return /^[a-zA-Z0-9._]+$/.test(value);
-        },
-        displayUsernameValidator: (display: string) => {
-          // Allow letters, numbers, space, underscore and hyphen
-          return /^[a-zA-Z0-9 _-]+$/.test(display);
-        },
-      }),
       emailOTP({
         otpLength: 6,
         expiresIn: 10 * 60,
@@ -355,6 +342,12 @@ export async function createBetterAuth(configService: ConfigService): Promise<un
         sendVerificationOTP: async ({ email, otp, type }) => {
           const normalizedEmail = email.trim().toLowerCase();
           const { sendEmail } = await import('@better-auth/infra');
+
+          if (!isProd) {
+            authLogger.log(
+              `DEV OTP [${type}] for ${normalizedEmail}: ${otp}`
+            );
+          }
 
           if (type === 'sign-in') {
             await sendEmail({

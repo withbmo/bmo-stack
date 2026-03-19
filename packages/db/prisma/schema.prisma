@@ -15,7 +15,7 @@ datasource db {
 
 model User {
   id              String  @id @default(uuid())
-  email           String  @unique
+  email           String  @unique @map("normalized_email")
   username        String? @unique
   firstName       String? @map("first_name")
   lastName        String? @map("last_name")
