@@ -1,5 +1,3 @@
 packages:
   - "apps/*"
   - "packages/*"
-  - "!packages/stripe-sync"
-  - "!packages/stripe-sync-nest"
