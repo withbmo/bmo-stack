@@ -1,5 +1,6 @@
 /* Pytholit Utility Classes
- * Reusable utility classes for borders, shadows, scrollbars, and patterns
+ * Reusable utility classes for borders, shadows, scrollbars, and patterns.
+ * Uses semantic tokens from theme.css — never raw color values here.
  */
 
 /* ===== Borders ===== */
@@ -11,11 +12,14 @@
   border: 2px solid var(--color-border-default);
 }
 
-/* ===== Nexus Shadow Effects ===== */
-.nexus-shadow {
-  box-shadow: 8px 8px 0px 0px var(--color-brand-primary);
-}
-
+/* ===== Nexus Shadow Button Effect ===== */
+/*
+ * Usage: wrap a <button class="nexus-shadow-btn"> inside
+ *        <div class="nexus-shadow-btn-wrapper">.
+ *
+ * On hover, the pseudo-element behind the button slides to align,
+ * creating a retro offset-shadow reveal effect.
+ */
 .nexus-shadow-btn-wrapper {
   position: relative;
   display: inline-block;
@@ -40,11 +44,7 @@
 
 .nexus-shadow-btn-wrapper:hover::before {
   transform: translate(0px, 0px);
-  background-color: var(--color-nexus-neon);
-}
-
-.nexus-shadow-btn-back {
-  display: none;
+  background-color: var(--color-brand-neon);
 }
 
 .nexus-shadow-btn {
@@ -59,21 +59,27 @@
 
 .nexus-shadow-btn-wrapper:hover .nexus-shadow-btn {
   transform: translate(0px, 0px);
-  background-color: var(--color-nexus-neon);
+  background-color: var(--color-brand-neon);
+}
+
+/* Static shadow variant (no wrapper needed) */
+.nexus-shadow {
+  box-shadow: 8px 8px 0px 0px var(--color-brand-primary);
 }
 
 .nexus-shadow-hover:hover {
-  box-shadow: 4px 4px 0px 0px var(--color-nexus-neon);
+  box-shadow: 4px 4px 0px 0px var(--color-brand-neon);
   transform: translate(2px, 2px);
 }
 
 /* ===== Glass Effects ===== */
 .glass-panel {
-  background: rgba(20, 20, 20, 0.75);
+  background: color-mix(in srgb, var(--color-bg-panel) 80%, transparent);
   backdrop-filter: blur(12px);
 }
 
 /* ===== Custom Scrollbars ===== */
+/* Thin sidebar / panel scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
@@ -87,17 +93,17 @@
   background: var(--color-brand-primary);
 }
 
-/* Editor tabs bar: thin horizontal scrollbar only */
+/* Editor tabs: horizontal-only scrollbar */
 .editor-tabs-scroll::-webkit-scrollbar {
   height: 5px;
 }
 
 .editor-tabs-scroll::-webkit-scrollbar-track {
-  background: var(--color-nexus-dark);
+  background: var(--color-bg-panel);
 }
 
 .editor-tabs-scroll::-webkit-scrollbar-thumb {
-  background: var(--color-nexus-gray);
+  background: var(--color-border-default);
   border: none;
 }
 
@@ -105,7 +111,7 @@
   background: var(--color-brand-primary);
 }
 
-/* Hide scrollbar utility */
+/* Completely hide scrollbar (scroll still works) */
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }

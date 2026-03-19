@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import { cn } from '../utils/cn';
+import { cn } from '../../utils/cn';
 
 export interface SectionHeaderProps {
   /** Short label shown in the badge (e.g. API_PLAYGROUND) */

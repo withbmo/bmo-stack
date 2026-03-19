@@ -3,7 +3,7 @@
 import { ArrowUpRight, Cloud, Code2, Cpu, Database, Zap } from 'lucide-react';
 import { useState } from 'react';
 
-import type { Feature } from '../../types';
+import type { Feature } from '../../../types';
 
 function getFeatureIcon(icon: string) {
   switch (icon) {

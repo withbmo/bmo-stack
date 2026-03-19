@@ -1,8 +1,8 @@
 import { Activity, RefreshCw, Square, XCircle, Zap } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import type { DeployJobStatus, DeploymentStatus, ProjectStatus } from '../types';
-import { cn } from '../utils/cn';
+import type { DeployJobStatus, DeploymentStatus, ProjectStatus } from '../../types';
+import { cn } from '../../utils/cn';
 
 // ─── Variants ─────────────────────────────────────────────────────────────
 

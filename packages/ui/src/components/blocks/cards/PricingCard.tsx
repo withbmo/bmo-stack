@@ -1,7 +1,7 @@
 import { Check } from 'lucide-react';
 
-import type { PricingPlan } from '../../types';
-import { Button } from '../Button';
+import type { PricingPlan } from '../../../types';
+import { Button } from '../../ui/Button';
 
 interface PricingCardProps {
   plan: PricingPlan;
@@ -24,10 +24,9 @@ export const PricingCard = ({ plan, onAction, actionDisabled }: PricingCardProps
   return (
     <div
       className={`relative min-w-0 bg-bg-panel/90 backdrop-blur border-2 p-8 transition-all duration-300 hover:-translate-y-2 group
-        ${
-          recommended
-            ? 'border-brand-primary nexus-shadow'
-            : 'border-border-dim hover:border-border-default'
+        ${recommended
+          ? 'border-brand-primary nexus-shadow'
+          : 'border-border-dim hover:border-border-default'
         }
       `}
     >
@@ -103,11 +102,10 @@ const FeaturesList = ({ features, recommended }: FeaturesListProps) => (
         >
           <Check
             size={16}
-            className={`shrink-0 mt-0.5 ${
-              recommended
+            className={`shrink-0 mt-0.5 ${recommended
                 ? 'text-brand-accent'
                 : 'text-text-secondary group-hover:text-brand-primary'
-            }`}
+              }`}
           />
           <span>{featureName}</span>
         </li>

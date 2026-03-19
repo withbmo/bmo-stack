@@ -17,9 +17,14 @@
     "db:migrate": "pnpm --filter @pytholit/db db:migrate",
     "db:studio": "pnpm --filter @pytholit/db prisma studio",
     "templates:generate": "pnpm --filter @pytholit/project-spec exec tsx ../../scripts/templates/generate-templates.ts",
-    "templates:validate": "pnpm --filter @pytholit/project-spec exec tsx ../../scripts/templates/validate-templates.ts"
+    "templates:validate": "pnpm --filter @pytholit/project-spec exec tsx ../../scripts/templates/validate-templates.ts",
+    "changeset": "changeset",
+    "changeset:version": "changeset version",
+    "changeset:publish": "changeset publish",
+    "test": "turbo run test"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.30.0",
     "@turbo/gen": "^2.3.3",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",

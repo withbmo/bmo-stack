@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 export const ScrollToHash = () => {
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    let timeoutId: ReturnType<typeof window.setTimeout> | undefined;
+    let timeoutId: number | undefined;
 
     const scrollToHash = () => {
       const { hash } = window.location;

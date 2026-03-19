@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import { cn } from '../utils/cn';
+import { cn } from '../../utils/cn';
 
 export interface FilterTabButtonProps {
   /** Whether this tab is currently active */
@@ -39,10 +39,10 @@ export const FilterTabButton = ({
         'px-6 py-3 font-mono text-xs font-bold border transition-all whitespace-nowrap tracking-wider',
         // Active state
         active &&
-          'bg-brand-primary text-white border-brand-primary shadow-[0_0_10px_rgba(109,40,217,0.4)]',
+        'bg-brand-primary text-white border-brand-primary shadow-[0_0_10px_rgba(109,40,217,0.4)]',
         // Inactive state
         !active &&
-          'bg-bg-surface text-text-secondary border-border-dim hover:text-white hover:border-brand-primary hover:text-brand-primary',
+        'bg-bg-surface text-text-secondary border-border-dim hover:text-white hover:border-brand-primary hover:text-brand-primary',
         // Icon spacing if icon is present
         Icon && 'flex items-center gap-2',
         className

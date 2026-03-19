@@ -1,5 +1,6 @@
 /* Pytholit Base Styles
  * HTML/body, scrollbar, and selection styles
+ * Uses semantic tokens from theme.css — never raw color values here.
  */
 
 /* Smooth scrolling */
@@ -9,29 +10,29 @@ html {
 
 /* App background and typography */
 body {
-  background-color: var(--color-nexus-black);
-  color: var(--color-nexus-light);
+  background-color: var(--color-bg-app);
+  color: var(--color-text-primary);
   overflow-x: hidden;
   font-family: var(--font-sans);
 }
 
-/* ===== Main Scrollbar ===== */
+/* ===== Global Scrollbar ===== */
 ::-webkit-scrollbar {
   width: 12px;
-  background: var(--color-nexus-dark);
+  background: var(--color-bg-panel);
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--color-brand-primary);
-  border: 2px solid var(--color-nexus-dark);
+  border: 2px solid var(--color-bg-panel);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-nexus-neon);
+  background: var(--color-brand-neon);
 }
 
 /* ===== Text Selection ===== */
 ::selection {
-  background: var(--color-nexus-neon);
+  background: var(--color-brand-neon);
   color: #000;
 }
