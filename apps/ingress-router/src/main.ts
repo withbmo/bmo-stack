@@ -4,6 +4,8 @@ import cors from '@fastify/cors';
 import jwt from 'jsonwebtoken';
 import { createHash, timingSafeEqual } from 'crypto';
 
+import { port, tokenSecret } from './config.js';
+
 const app = Fastify({ logger: true });
 
 type ProxySessionClaims = {
@@ -13,14 +15,6 @@ type ProxySessionClaims = {
   serviceKey?: string;
   exp?: number;
 };
-
-function tokenSecret(): string {
-  const secret = process.env.ENV_SESSION_SECRET || process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('ENV_SESSION_SECRET (or JWT_SECRET) must be set');
-  }
-  return secret;
-}
 
 function parseBearerToken(header?: string): string | null {
   if (!header) return null;
@@ -118,8 +112,7 @@ async function bootstrap() {
     };
   });
 
-  const port = Number(process.env.PORT || 3402);
-  await app.listen({ port, host: '0.0.0.0' });
+  await app.listen({ port: port(), host: '0.0.0.0' });
 }
 
 void bootstrap();

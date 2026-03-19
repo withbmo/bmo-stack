@@ -24,7 +24,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: resolve(__dirname, '../.env'),
+      envFilePath: [resolve(__dirname, '../.env.local'), resolve(__dirname, '../.env')],
       validate: validateEnv,
     }),
     ClsModule.forRoot({

@@ -13,8 +13,12 @@ copy_env_if_missing() {
 }
 
 copy_env_if_missing "apps/api/.env.example" "apps/api/.env"
+copy_env_if_missing "apps/api/.env.example" "apps/api/.env.local"
+copy_env_if_missing "apps/ingress-router/.env.example" "apps/ingress-router/.env"
+copy_env_if_missing "apps/ingress-router/.env.example" "apps/ingress-router/.env.local"
 copy_env_if_missing "apps/web/.env.example" "apps/web/.env.local"
 copy_env_if_missing "apps/terminal-gateway/.env.example" "apps/terminal-gateway/.env"
+copy_env_if_missing "apps/terminal-gateway/.env.example" "apps/terminal-gateway/.env.local"
 
 CI=1 pnpm install --frozen-lockfile --config.confirmModulesPurge=false
 pnpm db:generate
