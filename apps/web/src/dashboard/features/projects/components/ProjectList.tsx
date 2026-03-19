@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -27,7 +28,7 @@ export const ProjectList = () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.projects('archived') });
       void queryClient.invalidateQueries({ queryKey: queryKeys.projects('all') });
     },
-    onError: (error) => {
+    onError: error => {
       const message = error instanceof Error ? error.message : 'Failed to archive project.';
       toast.error(message);
     },
@@ -40,7 +41,7 @@ export const ProjectList = () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.projects('archived') });
       void queryClient.invalidateQueries({ queryKey: queryKeys.projects('all') });
     },
-    onError: (error) => {
+    onError: error => {
       const message = error instanceof Error ? error.message : 'Failed to restore project.';
       toast.error(message);
     },
@@ -97,8 +98,10 @@ export const ProjectList = () => {
           </Button>
         </div>
         <div className="relative z-0">
-          <Button size="sm" to="/dashboard/new">
-            <Plus size={16} /> NEW PROJECT
+          <Button size="sm" asChild>
+            <Link href="/dashboard/new">
+              <Plus size={16} /> NEW PROJECT
+            </Link>
           </Button>
         </div>
       </Card>
@@ -115,8 +118,8 @@ export const ProjectList = () => {
             <ProjectCard
               key={project.id}
               project={project}
-              onArchive={(projectId) => archiveMutation.mutate(projectId)}
-              onRestore={(projectId) => restoreMutation.mutate(projectId)}
+              onArchive={projectId => archiveMutation.mutate(projectId)}
+              onRestore={projectId => restoreMutation.mutate(projectId)}
               actionPending={archiveMutation.isPending || restoreMutation.isPending}
             />
           ))}

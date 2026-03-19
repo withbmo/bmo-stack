@@ -11,11 +11,21 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
+    "./ui": {
+      "types": "./dist/ui.d.ts",
+      "import": "./dist/ui.mjs",
+      "require": "./dist/ui.js"
+    },
+    "./blocks": {
+      "types": "./dist/blocks.d.ts",
+      "import": "./dist/blocks.mjs",
+      "require": "./dist/blocks.js"
+    },
     "./styles": "./src/styles/index.css"
   },
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --external react --external react-dom",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --external react --external react-dom --watch",
+    "build": "tsup src/index.ts src/ui.ts src/blocks.ts --format cjs,esm --dts --external react --external react-dom",
+    "dev": "tsup src/index.ts src/ui.ts src/blocks.ts --format cjs,esm --dts --external react --external react-dom --watch",
     "lint": "eslint src/",
     "type-check": "tsc --noEmit",
     "test": "vitest run",

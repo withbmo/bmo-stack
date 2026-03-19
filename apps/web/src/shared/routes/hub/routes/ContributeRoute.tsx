@@ -1,6 +1,7 @@
 'use client';
 
-import { BackgroundLayers, Input } from '@pytholit/ui';
+import { BackgroundLayers } from '@pytholit/ui/blocks';
+import { Input } from '@pytholit/ui/ui';
 import {
   ArrowRight,
   Brain,
@@ -14,7 +15,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import { DashboardPageHeader,PageLayout } from '@/shared/components/layout';
+import { DashboardPageHeader, PageLayout } from '@/shared/components/layout';
 
 export const ContributeRoute = () => {
   const router = useRouter();

@@ -1,7 +1,8 @@
 'use client';
 
-import { Button } from '@pytholit/ui';
-import { ArrowUpRight, CheckCircle2,Play } from 'lucide-react';
+import { Button } from '@pytholit/ui/ui';
+import { ArrowUpRight, CheckCircle2, Play } from 'lucide-react';
+import Link from 'next/link';
 
 import { HERO_PYTHON_CODE } from '@/site/data/home';
 
@@ -38,13 +39,17 @@ export const CTASection = () => {
 
           {/* CTA Button */}
           <div className="flex flex-col sm:flex-row gap-4 items-start">
-            <Button variant="primary" size="md" to="/auth/signup">
-              <Play fill="white" size={20} />
-              START RUNTIME
+            <Button variant="primary" size="md" asChild>
+              <Link href="/auth/signup">
+                <Play fill="white" size={20} />
+                START RUNTIME
+              </Link>
             </Button>
-            <Button variant="secondary" size="lg" to="/docs">
-              <ArrowUpRight size={18} />
-              VIEW DOCS
+            <Button variant="secondary" size="lg" asChild>
+              <Link href="/docs">
+                <ArrowUpRight size={18} />
+                VIEW DOCS
+              </Link>
             </Button>
           </div>
         </div>

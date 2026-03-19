@@ -1,7 +1,7 @@
 'use client';
 
-import { SectionHeader } from '@pytholit/ui';
-import { ArrowUpRight,MessageSquare, Rocket, Zap } from 'lucide-react';
+import { SectionHeader } from '@pytholit/ui/blocks';
+import { ArrowUpRight, MessageSquare, Rocket, Zap } from 'lucide-react';
 
 import { WORKFLOW_STEPS } from '@/site/data/home';
 

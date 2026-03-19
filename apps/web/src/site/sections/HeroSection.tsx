@@ -1,7 +1,10 @@
 'use client';
 
-import { BackgroundLayers, Button, GlitchText, MotionSlideIn, MotionStagger } from '@pytholit/ui';
+import { MotionSlideIn, MotionStagger } from '@pytholit/ui';
+import { BackgroundLayers, GlitchText } from '@pytholit/ui/blocks';
+import { Button } from '@pytholit/ui/ui';
 import { Box, Globe, ShieldCheck, Terminal, Zap } from 'lucide-react';
+import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import { useHeroAnimation } from '@/shared/hooks/useHeroAnimation';
@@ -61,16 +64,19 @@ const HeroContent = () => (
     {/* Headline */}
     <MotionSlideIn as="div">
       <h2 className="text-6xl md:text-8xl font-sans font-bold leading-[0.9] tracking-tighter">
-      Build Python <br />
-      <GlitchText
-        text="RUNTIMES"
-        className="text-transparent bg-clip-text bg-gradient-to-r from-white via-nexus-light to-nexus-purple"
-      />
+        Build Python <br />
+        <GlitchText
+          text="RUNTIMES"
+          className="text-transparent bg-clip-text bg-gradient-to-r from-white via-nexus-light to-nexus-purple"
+        />
       </h2>
     </MotionSlideIn>
 
     {/* Description */}
-    <MotionSlideIn as="p" className="font-mono text-nexus-light/70 text-lg md:text-xl max-w-xl border-l-2 border-nexus-purple pl-6 py-3 bg-black/30 backdrop-blur-sm">
+    <MotionSlideIn
+      as="p"
+      className="font-mono text-nexus-light/70 text-lg md:text-xl max-w-xl border-l-2 border-nexus-purple pl-6 py-3 bg-black/30 backdrop-blur-sm"
+    >
       A brutalist runtime for teams that ship fast. Prompt the runtime, edit code, and deploy
       globally without leaving the browser.
     </MotionSlideIn>
@@ -87,13 +93,17 @@ const HeroContent = () => (
 
     {/* CTA Buttons */}
     <MotionSlideIn as="div" className="flex flex-col sm:flex-row gap-4 pt-2 items-start">
-      <Button variant="primary" size="md" to="/auth/signup">
-        <Terminal size={20} />
-        START FREE
+      <Button variant="primary" size="md" asChild>
+        <Link href="/auth/signup">
+          <Terminal size={20} />
+          START FREE
+        </Link>
       </Button>
-      <Button variant="secondary" size="lg" to="/docs" className="z-20">
-        <Box size={20} />
-        READ DOCS
+      <Button variant="secondary" size="lg" className="z-20" asChild>
+        <Link href="/docs">
+          <Box size={20} />
+          READ DOCS
+        </Link>
       </Button>
     </MotionSlideIn>
   </MotionStagger>

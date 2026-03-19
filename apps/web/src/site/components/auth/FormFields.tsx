@@ -1,5 +1,5 @@
-import { Input } from '@pytholit/ui';
-import { AtSign,Key, Mail, User } from 'lucide-react';
+import { Input } from '@pytholit/ui/ui';
+import { AtSign, Key, Mail, User } from 'lucide-react';
 
 export interface EmailFieldProps {
   value: string;

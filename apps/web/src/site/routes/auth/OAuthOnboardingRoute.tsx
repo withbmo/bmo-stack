@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Input } from '@pytholit/ui';
+import { Button, Input } from '@pytholit/ui/ui';
 import { AUTH_CONSTANTS } from '@pytholit/validation';
 import { Loader2, Save } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -37,7 +37,12 @@ export function OAuthOnboardingRoute() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState<FormState>({ username: '', firstName: '', lastName: '', bio: '' });
+  const [form, setForm] = useState<FormState>({
+    username: '',
+    firstName: '',
+    lastName: '',
+    bio: '',
+  });
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
 
   const nextTarget = useMemo(() => normalizeNext(searchParams.get('next')), [searchParams]);
@@ -50,7 +55,9 @@ export function OAuthOnboardingRoute() {
         if (cancelled) return;
 
         if (!me) {
-          router.replace(`/auth/login?next=${encodeURIComponent(`/auth/oauth-onboarding?next=${nextTarget}`)}`);
+          router.replace(
+            `/auth/login?next=${encodeURIComponent(`/auth/oauth-onboarding?next=${nextTarget}`)}`
+          );
           return;
         }
 
@@ -137,11 +144,15 @@ export function OAuthOnboardingRoute() {
       <AuthHeader mode="register" title="Complete profile" subtitle="Required to continue" />
       <AuthCard>
         {loading ? (
-          <div className="font-mono text-xs text-nexus-light/70 uppercase tracking-wider">Loading profile…</div>
+          <div className="font-mono text-xs text-nexus-light/70 uppercase tracking-wider">
+            Loading profile…
+          </div>
         ) : (
           <form className="space-y-4" onSubmit={onSubmit}>
             <div className="space-y-2">
-              <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider">Username</label>
+              <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider">
+                Username
+              </label>
               <Input
                 value={form.username}
                 onChange={event => onChange('username', event.target.value)}
@@ -149,35 +160,47 @@ export function OAuthOnboardingRoute() {
                 autoComplete="username"
                 placeholder="your-handle"
               />
-              {errors.username ? <p className="font-mono text-xs text-red-500">{errors.username}</p> : null}
+              {errors.username ? (
+                <p className="font-mono text-xs text-red-500">{errors.username}</p>
+              ) : null}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider">First name</label>
+                <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider">
+                  First name
+                </label>
                 <Input
                   value={form.firstName}
                   onChange={event => onChange('firstName', event.target.value)}
                   error={Boolean(errors.firstName)}
                   autoComplete="given-name"
                 />
-                {errors.firstName ? <p className="font-mono text-xs text-red-500">{errors.firstName}</p> : null}
+                {errors.firstName ? (
+                  <p className="font-mono text-xs text-red-500">{errors.firstName}</p>
+                ) : null}
               </div>
 
               <div className="space-y-2">
-                <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider">Last name</label>
+                <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider">
+                  Last name
+                </label>
                 <Input
                   value={form.lastName}
                   onChange={event => onChange('lastName', event.target.value)}
                   error={Boolean(errors.lastName)}
                   autoComplete="family-name"
                 />
-                {errors.lastName ? <p className="font-mono text-xs text-red-500">{errors.lastName}</p> : null}
+                {errors.lastName ? (
+                  <p className="font-mono text-xs text-red-500">{errors.lastName}</p>
+                ) : null}
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider">Bio (optional)</label>
+              <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider">
+                Bio (optional)
+              </label>
               <Input
                 multiline
                 rows={4}

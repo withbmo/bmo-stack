@@ -1,1 +1,1 @@
-export { DeploymentStatusBadge } from '@pytholit/ui';
+export { DeploymentStatusBadge } from '@pytholit/ui/ui';

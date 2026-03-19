@@ -1,19 +1,16 @@
 'use client';
 
-import { Button, MotionFade, MotionSlideIn } from '@pytholit/ui';
+import { MotionFade, MotionSlideIn } from '@pytholit/ui';
+import { Button } from '@pytholit/ui/ui';
 import { ChevronRight, Terminal } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { type ReactNode,useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { useAuth } from '@/shared/auth';
 import { NAV_ITEMS } from '@/site/data/navigation';
 
-const AUTH_PATHS = [
-  '/auth/login',
-  '/auth/signup',
-  '/auth/callback',
-];
+const AUTH_PATHS = ['/auth/login', '/auth/signup', '/auth/callback'];
 
 function SiteNavbar() {
   const pathname = usePathname();
@@ -42,15 +39,12 @@ function SiteNavbar() {
           delay={0.06}
           className="fixed left-8 top-10 -translate-y-1/2 z-[60]"
         >
-        <Link
-          href="/"
-          className="flex items-center gap-3 group p-4"
-        >
-          <div className="w-8 h-8 bg-nexus-purple flex items-center justify-center border border-white group-hover:bg-nexus-neon transition-colors shrink-0">
-            <Terminal size={18} className="text-white" />
-          </div>
-          <span className="font-mono font-bold text-xl tracking-tighter truncate">pytholit</span>
-        </Link>
+          <Link href="/" className="flex items-center gap-3 group p-4">
+            <div className="w-8 h-8 bg-nexus-purple flex items-center justify-center border border-white group-hover:bg-nexus-neon transition-colors shrink-0">
+              <Terminal size={18} className="text-white" />
+            </div>
+            <span className="font-mono font-bold text-xl tracking-tighter truncate">pytholit</span>
+          </Link>
         </MotionSlideIn>
 
         <div className="w-[140px] shrink-0" aria-hidden />
@@ -80,8 +74,10 @@ function SiteNavbar() {
 
         {!isAuthPage && (
           <div className="hidden md:block">
-            <Button variant="primary" size="md" to={isAuthenticated ? '/dashboard' : '/auth/login'}>
-              {isAuthenticated ? 'GO TO DASHBOARD' : 'START BUILDING'} <ChevronRight size={16} />
+            <Button variant="primary" size="md" asChild>
+              <Link href={isAuthenticated ? '/dashboard' : '/auth/login'}>
+                {isAuthenticated ? 'GO TO DASHBOARD' : 'START BUILDING'} <ChevronRight size={16} />
+              </Link>
             </Button>
           </div>
         )}

@@ -1,6 +1,6 @@
 # @pytholit/ui — Design System Documentation
 
-> **Version**: 1.0.0 · **React**: ^19 · **Tailwind**: v4 · **Framework-agnostic**
+> **Version**: 1.0.0 · **React**: ^19 · **Tailwind**: v4 · **Internal React component library**
 
 ---
 
@@ -52,9 +52,9 @@ import '@pytholit/ui/styles';
 ### Usage
 
 ```tsx
-import { Button, Input, Modal, Badge } from '@pytholit/ui';
-import { MotionFade } from '@pytholit/ui';
-import { cn } from '@pytholit/ui';
+import { MotionFade, cn } from '@pytholit/ui';
+import { BackgroundLayers, SectionHeader } from '@pytholit/ui/blocks';
+import { Badge, Button, Input, Modal } from '@pytholit/ui/ui';
 ```
 
 ---
@@ -65,34 +65,34 @@ All tokens live in `src/styles/theme.css` inside a `@theme` block (Tailwind v4) 
 
 ### Color Tokens
 
-| Token | Value | When to use |
-|---|---|---|
-| `--color-bg-app` | `#1e1e1e` | Root page background |
-| `--color-bg-panel` | `#252526` | Card/panel backgrounds |
-| `--color-bg-surface` | `#2d2d2d` | Input/form surface |
-| `--color-bg-overlay` | `rgba(0,0,0,0.8)` | Modal/drawer backdrops |
-| `--color-border-default` | `#4a4a4a` | Standard borders |
-| `--color-border-dim` | `#363636` | Subtle/dim borders |
-| `--color-border-highlight` | `#7c3aed` | Focused/active borders |
-| `--color-text-primary` | `#d4d4d4` | Body text |
-| `--color-text-secondary` | `#9da5b4` | Muted/label text |
-| `--color-brand-primary` | `#6d28d9` | Primary actions, buttons |
-| `--color-brand-accent` | `#4ec9b0` | Success highlights |
-| `--color-brand-neon` | `#a855f7` | Hover/active states for primary |
-| `--color-state-success` | `#4ec9b0` | Success states |
-| `--color-state-warning` | `#facc15` | Warning states |
-| `--color-state-error` | `#ef4444` | Error states |
-| `--color-state-info` | `#60a5fa` | Informational |
+| Token                      | Value             | When to use                     |
+| -------------------------- | ----------------- | ------------------------------- |
+| `--color-bg-app`           | `#1e1e1e`         | Root page background            |
+| `--color-bg-panel`         | `#252526`         | Card/panel backgrounds          |
+| `--color-bg-surface`       | `#2d2d2d`         | Input/form surface              |
+| `--color-bg-overlay`       | `rgba(0,0,0,0.8)` | Modal/drawer backdrops          |
+| `--color-border-default`   | `#4a4a4a`         | Standard borders                |
+| `--color-border-dim`       | `#363636`         | Subtle/dim borders              |
+| `--color-border-highlight` | `#7c3aed`         | Focused/active borders          |
+| `--color-text-primary`     | `#d4d4d4`         | Body text                       |
+| `--color-text-secondary`   | `#9da5b4`         | Muted/label text                |
+| `--color-brand-primary`    | `#6d28d9`         | Primary actions, buttons        |
+| `--color-brand-accent`     | `#4ec9b0`         | Success highlights              |
+| `--color-brand-neon`       | `#a855f7`         | Hover/active states for primary |
+| `--color-state-success`    | `#4ec9b0`         | Success states                  |
+| `--color-state-warning`    | `#facc15`         | Warning states                  |
+| `--color-state-error`      | `#ef4444`         | Error states                    |
+| `--color-state-info`       | `#60a5fa`         | Informational                   |
 
 ### Raw Palette (avoid in components)
 
-| Token | Value |
-|---|---|
-| `--color-nexus-black` | `#1e1e1e` |
-| `--color-nexus-dark` | `#252526` |
-| `--color-nexus-gray` | `#3c3c3c` |
-| `--color-nexus-muted` | `#9da5b4` |
-| `--color-nexus-neon` | `#a855f7` |
+| Token                  | Value     |
+| ---------------------- | --------- |
+| `--color-nexus-black`  | `#1e1e1e` |
+| `--color-nexus-dark`   | `#252526` |
+| `--color-nexus-gray`   | `#3c3c3c` |
+| `--color-nexus-muted`  | `#9da5b4` |
+| `--color-nexus-neon`   | `#a855f7` |
 | `--color-nexus-purple` | `#6d28d9` |
 | `--color-nexus-accent` | `#4ec9b0` |
 
@@ -100,8 +100,8 @@ All tokens live in `src/styles/theme.css` inside a `@theme` block (Tailwind v4) 
 
 ### Typography
 
-| Token | Value |
-|---|---|
+| Token         | Value                         |
+| ------------- | ----------------------------- |
 | `--font-mono` | `'JetBrains Mono', monospace` |
 | `--font-sans` | `'Space Grotesk', sans-serif` |
 
@@ -112,8 +112,8 @@ All tokens live in `src/styles/theme.css` inside a `@theme` block (Tailwind v4) 
 
 ### Spacing / Radius
 
-| Token | Value |
-|---|---|
+| Token         | Value |
+| ------------- | ----- |
 | `--radius-sm` | `2px` |
 | `--radius-md` | `4px` |
 | `--radius-lg` | `8px` |
@@ -134,14 +134,14 @@ Built with **class-variance-authority (CVA)** + **`@radix-ui/react-slot`**.
 
 #### Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `variant` | `'primary' \| 'secondary' \| 'ghost' \| 'danger'` | `'primary'` | Visual style |
-| `size` | `'sm' \| 'md' \| 'lg' \| 'xl'` | `'md'` | Padding/font size |
-| `isLoading` | `boolean` | `false` | Shows spinner, disables button |
-| `fullWidth` | `boolean` | `false` | Stretches to container width |
-| `asChild` | `boolean` | `false` | Renders children element with Button styles |
-| `disabled` | `boolean` | — | Native disabled attribute |
+| Prop        | Type                                              | Default     | Description                                 |
+| ----------- | ------------------------------------------------- | ----------- | ------------------------------------------- |
+| `variant`   | `'primary' \| 'secondary' \| 'ghost' \| 'danger'` | `'primary'` | Visual style                                |
+| `size`      | `'sm' \| 'md' \| 'lg' \| 'xl'`                    | `'md'`      | Padding/font size                           |
+| `isLoading` | `boolean`                                         | `false`     | Shows spinner, disables button              |
+| `fullWidth` | `boolean`                                         | `false`     | Stretches to container width                |
+| `asChild`   | `boolean`                                         | `false`     | Renders children element with Button styles |
+| `disabled`  | `boolean`                                         | —           | Native disabled attribute                   |
 
 All native `<button>` HTML attributes are forwarded. `type` defaults to `"button"` to prevent accidental form submission.
 
@@ -191,27 +191,27 @@ All native `<button>` HTML attributes are forwarded. `type` defaults to `"button
 
 #### Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `variant` | `'default' \| 'panel' \| 'ide' \| 'terminal'` | `'default'` | Surface style |
-| `intent` | `'default' \| 'brand' \| 'danger'` | `'default'` | Focus ring color |
-| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Padding/font size |
-| `multiline` | `boolean` | `false` | Renders a `<textarea>` |
-| `rows` | `number` | `3` | Textarea rows (when `multiline`) |
-| `label` | `ReactNode` | — | Label rendered above the field |
-| `hint` | `ReactNode` | — | Helper text shown below the field |
-| `error` | `boolean` | — | Red border + `aria-invalid` |
-| `errorMessage` | `ReactNode` | — | Error text (replaces `hint`) |
+| Prop           | Type                                          | Default     | Description                       |
+| -------------- | --------------------------------------------- | ----------- | --------------------------------- |
+| `variant`      | `'default' \| 'panel' \| 'ide' \| 'terminal'` | `'default'` | Surface style                     |
+| `intent`       | `'default' \| 'brand' \| 'danger'`            | `'default'` | Focus ring color                  |
+| `size`         | `'sm' \| 'md' \| 'lg'`                        | `'md'`      | Padding/font size                 |
+| `multiline`    | `boolean`                                     | `false`     | Renders a `<textarea>`            |
+| `rows`         | `number`                                      | `3`         | Textarea rows (when `multiline`)  |
+| `label`        | `ReactNode`                                   | —           | Label rendered above the field    |
+| `hint`         | `ReactNode`                                   | —           | Helper text shown below the field |
+| `error`        | `boolean`                                     | —           | Red border + `aria-invalid`       |
+| `errorMessage` | `ReactNode`                                   | —           | Error text (replaces `hint`)      |
 
 All native `<input>` attributes are forwarded. Supply `id` to get correct `htmlFor` on the label and `aria-describedby` linking.
 
 #### Variants
 
-| Variant | Description |
-|---|---|
-| `default` | `bg-bg-surface` — standard form fields |
-| `panel` | `bg-bg-panel` — inputs inside dark panels |
-| `ide` | `bg-bg-app` — darker, IDE-like inputs |
+| Variant    | Description                                       |
+| ---------- | ------------------------------------------------- |
+| `default`  | `bg-bg-surface` — standard form fields            |
+| `panel`    | `bg-bg-panel` — inputs inside dark panels         |
+| `ide`      | `bg-bg-app` — darker, IDE-like inputs             |
 | `terminal` | No border, transparent — inline terminal commands |
 
 #### Examples
@@ -263,21 +263,21 @@ Built on **`@radix-ui/react-dialog`**. Radix handles focus-trapping, ESC key, sc
 
 #### Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `isOpen` | `boolean` | — | Controls visibility |
-| `onClose` | `() => void` | — | Called when modal should close |
-| `title` | `string` | — | Title displayed in the header |
-| `variant` | `'default' \| 'wide' \| 'fullscreen'` | `'default'` | Width preset |
-| `isLoading` | `boolean` | `false` | Disables close button and ESC |
-| `className` | `string` | — | Additional classes for the panel |
+| Prop        | Type                                  | Default     | Description                      |
+| ----------- | ------------------------------------- | ----------- | -------------------------------- |
+| `isOpen`    | `boolean`                             | —           | Controls visibility              |
+| `onClose`   | `() => void`                          | —           | Called when modal should close   |
+| `title`     | `string`                              | —           | Title displayed in the header    |
+| `variant`   | `'default' \| 'wide' \| 'fullscreen'` | `'default'` | Width preset                     |
+| `isLoading` | `boolean`                             | `false`     | Disables close button and ESC    |
+| `className` | `string`                              | —           | Additional classes for the panel |
 
 #### Variants
 
-| Variant | Max Width |
-|---|---|
-| `default` | `max-w-md` |
-| `wide` | `max-w-2xl` |
+| Variant      | Max Width               |
+| ------------ | ----------------------- |
+| `default`    | `max-w-md`              |
+| `wide`       | `max-w-2xl`             |
 | `fullscreen` | `max-w-6xl`, `h-[90vh]` |
 
 #### Examples
@@ -320,10 +320,10 @@ const [open, setOpen] = useState(false);
 
 #### Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `variant` | `'default' \| 'glass' \| 'interactive'` | `'default'` | Visual style |
-| `padding` | `'none' \| 'sm' \| 'md' \| 'lg'` | `'md'` | Internal padding |
+| Prop      | Type                                    | Default     | Description      |
+| --------- | --------------------------------------- | ----------- | ---------------- |
+| `variant` | `'default' \| 'glass' \| 'interactive'` | `'default'` | Visual style     |
+| `padding` | `'none' \| 'sm' \| 'md' \| 'lg'`        | `'md'`      | Internal padding |
 
 #### Examples
 
@@ -349,22 +349,22 @@ Monospace, uppercase, tiny labels. Includes pre-built status variants for the Py
 
 #### Variants
 
-| Variant | Colors |
-|---|---|
+| Variant   | Colors                |
+| --------- | --------------------- |
 | `success` | `brand-accent` (teal) |
-| `warning` | `yellow-400` |
-| `error` | `red-500` |
-| `muted` | `text-secondary` |
-| `purple` | `brand-primary` |
+| `warning` | `yellow-400`          |
+| `error`   | `red-500`             |
+| `muted`   | `text-secondary`      |
+| `purple`  | `brand-primary`       |
 
 #### Exports
 
-| Component | Description |
-|---|---|
-| `<Badge>` | Generic badge with `variant` and optional `icon` |
-| `<StatusBadge status={ProjectStatus}>` | Project running / stopped / building / error |
-| `<DeploymentStatusBadge status={DeploymentStatus}>` | live / stopped / deploying / failed |
-| `<DeployJobStatusBadge status={DeployJobStatus}>` | queued / running / succeeded / failed / canceled |
+| Component                                           | Description                                      |
+| --------------------------------------------------- | ------------------------------------------------ |
+| `<Badge>`                                           | Generic badge with `variant` and optional `icon` |
+| `<StatusBadge status={ProjectStatus}>`              | Project running / stopped / building / error     |
+| `<DeploymentStatusBadge status={DeploymentStatus}>` | live / stopped / deploying / failed              |
+| `<DeployJobStatusBadge status={DeployJobStatus}>`   | queued / running / succeeded / failed / canceled |
 
 #### Examples
 
@@ -404,23 +404,31 @@ Context-driven skeleton system — wraps a subtree and replaces `<DynamicValue>`
 
 #### Exports
 
-| Export | Description |
-|---|---|
-| `<DynamicSkeletonProvider loading>` | Context provider |
-| `<DynamicSlot>` | The skeleton shape shown while loading |
-| `<DynamicValue>` | The real content shown when loaded |
-| `useDynamicSkeletonLoading()` | Returns current `loading` state from context |
+| Export                              | Description                                  |
+| ----------------------------------- | -------------------------------------------- |
+| `<DynamicSkeletonProvider loading>` | Context provider                             |
+| `<DynamicSlot>`                     | The skeleton shape shown while loading       |
+| `<DynamicValue>`                    | The real content shown when loaded           |
+| `useDynamicSkeletonLoading()`       | Returns current `loading` state from context |
 
 #### Example
 
 ```tsx
 <DynamicSkeletonProvider loading={isFetching}>
   <div>
-    <DynamicSlot><Skeleton className="h-5 w-32" /></DynamicSlot>
-    <DynamicValue><h2>{project.name}</h2></DynamicValue>
+    <DynamicSlot>
+      <Skeleton className="h-5 w-32" />
+    </DynamicSlot>
+    <DynamicValue>
+      <h2>{project.name}</h2>
+    </DynamicValue>
 
-    <DynamicSlot><Skeleton className="h-4 w-64 mt-2" /></DynamicSlot>
-    <DynamicValue><p>{project.description}</p></DynamicValue>
+    <DynamicSlot>
+      <Skeleton className="h-4 w-64 mt-2" />
+    </DynamicSlot>
+    <DynamicValue>
+      <p>{project.description}</p>
+    </DynamicValue>
   </div>
 </DynamicSkeletonProvider>
 ```
@@ -441,12 +449,12 @@ Tab/filter bar used across dashboard pages.
 
 #### Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `tabs` | `DashboardTab[]` | — | Tab definitions (`value`, `label`, optional `icon`) |
-| `active` | `string` | — | Currently active tab value |
-| `onChange` | `(value: string) => void` | — | Called on tab click |
-| `size` | `'small' \| 'large'` | `'small'` | Size preset |
+| Prop       | Type                      | Default   | Description                                         |
+| ---------- | ------------------------- | --------- | --------------------------------------------------- |
+| `tabs`     | `DashboardTab[]`          | —         | Tab definitions (`value`, `label`, optional `icon`) |
+| `active`   | `string`                  | —         | Currently active tab value                          |
+| `onChange` | `(value: string) => void` | —         | Called on tab click                                 |
+| `size`     | `'small' \| 'large'`      | `'small'` | Size preset                                         |
 
 #### Example
 
@@ -495,7 +503,11 @@ Marketing/landing page section header with optional badge, icon, title (`<h1>`),
 <SectionHeader
   badge="OPEN SOURCE"
   icon={GitBranch}
-  title={<>Build <span className="text-brand-primary">faster</span></>}
+  title={
+    <>
+      Build <span className="text-brand-primary">faster</span>
+    </>
+  }
   subtitle="Deploy Python apps with zero configuration."
 />
 ```
@@ -548,16 +560,7 @@ React class-based error boundary. Renders a fallback UI with error message and a
 
 `src/components/blocks/cards/BaseInteractiveCard.tsx`
 
-Flexible card layout with top bar (badges left, actions right) and main content area. Used as the building block for all other specialized cards.
-
-```tsx
-<BaseInteractiveCard
-  topBarLeft={<Badge variant="success">Live</Badge>}
-  topBarRight={<Button variant="ghost" size="sm">Edit</Button>}
->
-  <p>Card content</p>
-</BaseInteractiveCard>
-```
+Internal composition helper used by specialized card blocks. It is intentionally not part of the public package surface.
 
 #### FeatureCard
 
@@ -581,12 +584,12 @@ Project template display. Props from `Template` (name, description, tags, use bu
 
 Visual/decorative components — generally placed in backgrounds or hero sections.
 
-| Component | Description |
-|---|---|
-| `<BackgroundLayers>` | Stacked z-index background panels |
-| `<CyberRings>` | Animated concentric ring decoration |
-| `<LivingGrid>` | Animated grid pattern background |
-| `<GlitchText>` | Text with CSS glitch animation |
+| Component            | Description                         |
+| -------------------- | ----------------------------------- |
+| `<BackgroundLayers>` | Stacked z-index background panels   |
+| `<CyberRings>`       | Animated concentric ring decoration |
+| `<LivingGrid>`       | Animated grid pattern background    |
+| `<GlitchText>`       | Text with CSS glitch animation      |
 
 ---
 
@@ -670,9 +673,7 @@ Fade-in backdrop overlay for modals/drawers.
 Re-export of Framer Motion's `<AnimatePresence>`. Wrap conditionally-rendered animated elements.
 
 ```tsx
-<Presence>
-  {isOpen && <MotionScaleIn key="panel">...</MotionScaleIn>}
-</Presence>
+<Presence>{isOpen && <MotionScaleIn key="panel">...</MotionScaleIn>}</Presence>
 ```
 
 ### Animation Tokens
@@ -680,17 +681,17 @@ Re-export of Framer Motion's `<AnimatePresence>`. Wrap conditionally-rendered an
 ```ts
 import { MOTION_DURATION, MOTION_EASE, MOTION_DISTANCE } from '@pytholit/ui';
 
-MOTION_DURATION.fast   // 0.18s
-MOTION_DURATION.base   // 0.28s
-MOTION_DURATION.slow   // 0.42s
+MOTION_DURATION.fast; // 0.18s
+MOTION_DURATION.base; // 0.28s
+MOTION_DURATION.slow; // 0.42s
 
-MOTION_EASE.standard   // [0.16, 1, 0.3, 1]  — springy
-MOTION_EASE.smooth     // [0.22, 1, 0.36, 1]  — very smooth
-MOTION_EASE.crisp      // [0.2, 0.8, 0.2, 1]  — snappy
+MOTION_EASE.standard; // [0.16, 1, 0.3, 1]  — springy
+MOTION_EASE.smooth; // [0.22, 1, 0.36, 1]  — very smooth
+MOTION_EASE.crisp; // [0.2, 0.8, 0.2, 1]  — snappy
 
-MOTION_DISTANCE.sm     // 8px
-MOTION_DISTANCE.md     // 16px
-MOTION_DISTANCE.lg     // 24px
+MOTION_DISTANCE.sm; // 8px
+MOTION_DISTANCE.md; // 16px
+MOTION_DISTANCE.lg; // 24px
 ```
 
 ### Variant Functions
@@ -718,12 +719,12 @@ Merges Tailwind classes intelligently (via `clsx` + `tailwind-merge`). Always us
 ```ts
 import { cn } from '@pytholit/ui';
 
-cn('px-4 py-2', isActive && 'bg-brand-primary', className)
+cn('px-4 py-2', isActive && 'bg-brand-primary', className);
 // → 'px-4 py-2 bg-brand-primary my-custom-class'
 
 // Overrides work correctly:
-cn('p-4 p-2') // → 'p-2'
-cn('text-red-500', 'text-blue-500') // → 'text-blue-500'
+cn('p-4 p-2'); // → 'p-2'
+cn('text-red-500', 'text-blue-500'); // → 'text-blue-500'
 ```
 
 ---
@@ -734,31 +735,31 @@ Available globally after importing `@pytholit/ui/styles`.
 
 ### Shadows
 
-| Class | Effect |
-|---|---|
-| `.nexus-shadow` | Static 8px offset shadow in `brand-primary` |
-| `.nexus-shadow-hover` | Offset shadow that appears on hover |
+| Class                                             | Effect                                                             |
+| ------------------------------------------------- | ------------------------------------------------------------------ |
+| `.nexus-shadow`                                   | Static 8px offset shadow in `brand-primary`                        |
+| `.nexus-shadow-hover`                             | Offset shadow that appears on hover                                |
 | `.nexus-shadow-btn-wrapper` + `.nexus-shadow-btn` | Animated button shadow effect used by `<Button variant="primary">` |
 
 ### Borders
 
-| Class | Effect |
-|---|---|
-| `.brutal-border` | 1px border in `border-default` |
+| Class                  | Effect                         |
+| ---------------------- | ------------------------------ |
+| `.brutal-border`       | 1px border in `border-default` |
 | `.brutal-border-thick` | 2px border in `border-default` |
 
 ### Scrollbars
 
-| Class | Effect |
-|---|---|
-| `.custom-scrollbar` | 6px styled vertical scrollbar |
+| Class                 | Effect                                |
+| --------------------- | ------------------------------------- |
+| `.custom-scrollbar`   | 6px styled vertical scrollbar         |
 | `.editor-tabs-scroll` | 5px horizontal scrollbar for tab bars |
-| `.hide-scrollbar` | Hides scrollbar while keeping scroll |
+| `.hide-scrollbar`     | Hides scrollbar while keeping scroll  |
 
 ### Glass
 
-| Class | Effect |
-|---|---|
+| Class          | Effect                                             |
+| -------------- | -------------------------------------------------- |
 | `.glass-panel` | Semi-transparent `bg-panel` + `backdrop-blur-12px` |
 
 ---
@@ -777,14 +778,13 @@ import { cn } from '../../utils/cn';
 const myVariants = cva('base-classes', {
   variants: {
     variant: { primary: '...', secondary: '...' },
-    size:    { sm: '...', md: '...', lg: '...' },
+    size: { sm: '...', md: '...', lg: '...' },
   },
   defaultVariants: { variant: 'primary', size: 'md' },
 });
 
 export interface MyComponentProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof myVariants> {}
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof myVariants> {}
 
 export const MyComponent = ({ className, variant, size, ...props }: MyComponentProps) => (
   <div className={cn(myVariants({ variant, size }), className)} {...props} />
@@ -806,17 +806,18 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 ### Adding a Block Component
 
 Same as above but in `src/components/blocks/` (or a subdirectory). Block components:
+
 - May import from `src/components/ui/`
 - May use `@pytholit/contracts` types
 - Export from `src/components/blocks/index.ts`
 
 ### Token Rule
 
-| You are writing... | Use... |
-|---|---|
-| A component class | Semantic token: `bg-bg-panel`, `text-text-secondary` |
-| A CSS utility class | May use raw: `var(--color-nexus-gray)` |
-| `theme.css` itself | Raw hex values |
+| You are writing...  | Use...                                               |
+| ------------------- | ---------------------------------------------------- |
+| A component class   | Semantic token: `bg-bg-panel`, `text-text-secondary` |
+| A CSS utility class | May use raw: `var(--color-nexus-gray)`               |
+| `theme.css` itself  | Raw hex values                                       |
 
 **Never** use: `text-white`, `bg-[#0d0d0d]`, `text-gray-400` in components.
 
@@ -844,6 +845,7 @@ pnpm changeset
 ```
 
 On merge to `main`, run:
+
 ```bash
 pnpm changeset:version  # bumps versions + writes CHANGELOG.md
 pnpm changeset:publish  # publishes to npm

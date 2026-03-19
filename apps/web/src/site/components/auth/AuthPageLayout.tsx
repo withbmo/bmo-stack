@@ -1,4 +1,5 @@
-import { BackgroundLayers, cn, MotionScaleIn } from '@pytholit/ui';
+import { cn, MotionScaleIn } from '@pytholit/ui';
+import { BackgroundLayers } from '@pytholit/ui/blocks';
 import type { CSSProperties, ReactNode } from 'react';
 
 interface AuthPageLayoutProps {

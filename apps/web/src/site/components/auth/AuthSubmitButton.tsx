@@ -1,11 +1,17 @@
-import { Button } from '@pytholit/ui';
+import { Button } from '@pytholit/ui/ui';
 import type { ButtonHTMLAttributes } from 'react';
 
 interface AuthSubmitButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: 'sm' | 'md';
 }
 
-export const AuthSubmitButton = ({ size = 'md', children, disabled, type, ...props }: AuthSubmitButtonProps) => (
+export const AuthSubmitButton = ({
+  size = 'md',
+  children,
+  disabled,
+  type,
+  ...props
+}: AuthSubmitButtonProps) => (
   <Button
     variant="primary"
     size={size}

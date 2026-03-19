@@ -1,6 +1,6 @@
 'use client';
 
-import { BackgroundLayers } from '@pytholit/ui';
+import { BackgroundLayers } from '@pytholit/ui/blocks';
 import { BookOpen, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -21,10 +21,7 @@ export function DocsRoute({ initialSlug }: DocsRouteProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const activeSlug = useMemo(
-    () => initialSlug ?? (manifest[0]?.slug ?? ''),
-    [initialSlug, manifest]
-  );
+  const activeSlug = useMemo(() => initialSlug ?? manifest[0]?.slug ?? '', [initialSlug, manifest]);
 
   useEffect(() => {
     let cancelled = false;
@@ -103,7 +100,7 @@ export function DocsRoute({ initialSlug }: DocsRouteProps) {
             </div>
 
             <nav className="space-y-0.5">
-              {manifest.map((doc) => (
+              {manifest.map(doc => (
                 <Link
                   key={doc.slug}
                   href={`/docs/${doc.slug}`}
@@ -132,9 +129,7 @@ export function DocsRoute({ initialSlug }: DocsRouteProps) {
             )}
 
             {loading && !content && !error && (
-              <div className="font-mono text-nexus-muted animate-pulse">
-                Loading...
-              </div>
+              <div className="font-mono text-nexus-muted animate-pulse">Loading...</div>
             )}
 
             {content && !error && (
@@ -157,9 +152,7 @@ export function DocsRoute({ initialSlug }: DocsRouteProps) {
                         {children}
                       </h3>
                     ),
-                    p: ({ children }) => (
-                      <p className="mb-4 text-nexus-light/90">{children}</p>
-                    ),
+                    p: ({ children }) => <p className="mb-4 text-nexus-light/90">{children}</p>,
                     ul: ({ children }) => (
                       <ul className="list-none mb-4 space-y-2 pl-0">{children}</ul>
                     ),
@@ -220,9 +213,7 @@ export function DocsRoute({ initialSlug }: DocsRouteProps) {
                       </div>
                     ),
                     thead: ({ children }) => (
-                      <thead className="bg-nexus-dark border-b border-nexus-gray">
-                        {children}
-                      </thead>
+                      <thead className="bg-nexus-dark border-b border-nexus-gray">{children}</thead>
                     ),
                     th: ({ children }) => (
                       <th className="px-4 py-2 text-nexus-purple font-bold text-xs uppercase tracking-wider">

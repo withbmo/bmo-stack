@@ -1,17 +1,12 @@
 'use client';
 
-import {
-  FilterTabButton,
-  GlitchText,
-  Input,
-  LoadingState,
-  ResourceCard,
-} from '@pytholit/ui';
-import { ArrowUpRight,Brain, FileText, Search } from 'lucide-react';
+import { FilterTabButton, GlitchText, LoadingState, ResourceCard } from '@pytholit/ui/blocks';
+import { Input } from '@pytholit/ui/ui';
+import { ArrowUpRight, Brain, FileText, Search } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import { DashboardPageHeader,PageLayout } from '@/shared/components/layout';
+import { DashboardPageHeader, PageLayout } from '@/shared/components/layout';
 
 import { useHubResources } from '../hooks/useHubResources';
 

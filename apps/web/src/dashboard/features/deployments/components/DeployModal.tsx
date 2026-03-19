@@ -1,5 +1,5 @@
-import { Modal } from '@pytholit/ui';
-import { RefreshCw,Rocket } from 'lucide-react';
+import { Modal } from '@pytholit/ui/ui';
+import { RefreshCw, Rocket } from 'lucide-react';
 
 import type { Project } from '@/shared/types';
 

@@ -1,8 +1,9 @@
 /**
- * @pytholit/ui - Design System and Shared UI Components
+ * @pytholit/ui
  *
- * This package contains all shared UI components used across
- * the Pytholit applications.
+ * Backward-compatible flat entrypoint for the full package.
+ * Prefer subpath imports (`@pytholit/ui/ui` and `@pytholit/ui/blocks`)
+ * when you want to preserve the architectural distinction in app code.
  */
 
 // Utilities

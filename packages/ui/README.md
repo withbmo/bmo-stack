@@ -4,16 +4,16 @@
 
 ## Stack
 
-| Tool | Purpose |
-|---|---|
-| React 19 | Component framework |
-| Tailwind CSS | Utility-first styling |
+| Tool                             | Purpose                      |
+| -------------------------------- | ---------------------------- |
+| React 19                         | Component framework          |
+| Tailwind CSS                     | Utility-first styling        |
 | `class-variance-authority` (CVA) | Type-safe component variants |
-| `@radix-ui/react-*` | Accessible UI primitives |
-| `motion` (Framer Motion) | Animation primitives |
-| `tsup` | Build (ESM + CJS + `.d.ts`) |
-| Storybook | Visual component explorer |
-| Vitest + RTL | Unit / interaction tests |
+| `@radix-ui/react-*`              | Accessible UI primitives     |
+| `motion` (Framer Motion)         | Animation primitives         |
+| `tsup`                           | Build (ESM + CJS + `.d.ts`)  |
+| Storybook                        | Visual component explorer    |
+| Vitest + RTL                     | Unit / interaction tests     |
 
 ---
 
@@ -34,9 +34,53 @@ packages/ui/src/
 └── utils/            # cn() and other helpers
 ```
 
-**Rule of thumb:**
-- A component belongs in `ui/` if it is a generic building-block with no product-specific logic.
-- A component belongs in `blocks/` if it composes other components or contains Pytholit-specific data shapes.
+## Architecture
+
+### Why a component should exist at all
+
+Add a component only when at least one of these is true:
+
+- It creates a stable contract the app can rely on.
+- It centralizes accessibility, behavior, or styling that would otherwise drift.
+- It expresses a repeated concept in the product language.
+
+Do **not** add a component just to remove a few lines of JSX duplication. A wrapper with no durable API, no behavior, and no semantic meaning adds indirection faster than it adds value.
+
+### `ui/` vs `blocks/`
+
+`ui/` is for primitives:
+
+- Generic building blocks like `Button`, `Input`, `Modal`, `Card`, `Badge`, `Skeleton`
+- Reusable outside a specific screen or feature
+- Should avoid product nouns like "template", "deployment", "dashboard", "hub"
+- Should be composable enough that apps can build their own higher-level structures from them
+
+`blocks/` is for compositions:
+
+- Opinionated combinations of primitives with a recognizable product role
+- Often closer to page sections, repeated feature layouts, branded effects, or workflow-specific cards
+- Allowed to know about product vocabulary and shared app-facing data shapes
+- More likely to change with product direction than primitives
+
+### When something should stay out of the package
+
+Keep a component in the app layer instead of `packages/ui` when:
+
+- Only one route or feature uses it
+- Its props are tightly coupled to one page's server data shape
+- Its reuse is speculative rather than proven
+- The package would need to import feature-specific business logic to support it
+
+### Public API guidance
+
+Prefer subpath imports when writing new app code:
+
+```ts
+import { Button, Input, Modal } from '@pytholit/ui/ui';
+import { DashboardTabs, SectionHeader, TemplateCard } from '@pytholit/ui/blocks';
+```
+
+The root `@pytholit/ui` entrypoint still exists for backward compatibility, but it intentionally flattens the distinction and is less helpful as an architectural signal.
 
 ---
 
@@ -58,7 +102,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../utils/cn';
 
 const myComponentVariants = cva(
-  'base-classes-here',          // always applied
+  'base-classes-here', // always applied
   {
     variants: {
       variant: {
@@ -78,8 +122,7 @@ const myComponentVariants = cva(
 );
 
 export interface MyComponentProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof myComponentVariants> {}
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof myComponentVariants> {}
 
 export const MyComponent = ({ className, variant, size, ...props }: MyComponentProps) => (
   <div className={cn(myComponentVariants({ variant, size }), className)} {...props} />
@@ -95,7 +138,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 
 // Radix handles: focus trapping, ESC key, scroll-lock, ARIA roles, portal
 export const MyDialog = ({ open, onClose, children }) => (
-  <Dialog.Root open={open} onOpenChange={(o) => !o && onClose()}>
+  <Dialog.Root open={open} onOpenChange={o => !o && onClose()}>
     <Dialog.Portal>
       <Dialog.Overlay className="fixed inset-0 bg-black/70" />
       <Dialog.Content className="fixed inset-0 flex items-center justify-center">
@@ -148,6 +191,7 @@ import '@pytholit/ui/styles';
 ```
 
 The stylesheet is structured as:
+
 1. **`theme.css`** — Design tokens (`--color-brand-primary`, etc.)
 2. **`base.css`** — Global resets
 3. **`animations.css`** — Keyframe definitions

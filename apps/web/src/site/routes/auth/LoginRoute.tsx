@@ -2,7 +2,7 @@
 
 import type { TurnstileInstance } from '@marsidev/react-turnstile';
 import { Turnstile } from '@marsidev/react-turnstile';
-import { Button } from '@pytholit/ui';
+import { Button } from '@pytholit/ui/ui';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -45,15 +45,8 @@ export function LoginRoute() {
   const nextParam = searchParams.get('next');
   const { refreshSession, isAuthenticated } = useAuth();
 
-  const {
-    email,
-    setEmail,
-    password,
-    setPassword,
-    isLoading,
-    setIsLoading,
-    clearError,
-  } = useAuthForm({ mode: 'login' });
+  const { email, setEmail, password, setPassword, isLoading, setIsLoading, clearError } =
+    useAuthForm({ mode: 'login' });
 
   const [turnstileToken, setTurnstileToken] = useState('');
   const { providers: oauthProviders, isLoading: isPanelLoading } = useOAuthProviders();
@@ -79,28 +72,22 @@ export function LoginRoute() {
     setTurnstileToken('');
   }, []);
 
-  const handleAuthSuccess = useCallback(
-    async () => {
-      await refreshSession();
-      router.replace(redirectTarget);
-    },
-    [redirectTarget, router, refreshSession]
-  );
+  const handleAuthSuccess = useCallback(async () => {
+    await refreshSession();
+    router.replace(redirectTarget);
+  }, [redirectTarget, router, refreshSession]);
 
-  const handleSubmitError = useCallback(
-    async (err: unknown) => {
-      const apiErr = err as ApiError;
-      const message = getApiErrorMessage(
-        err,
-        apiErr.status === 400 || apiErr.status === 422
-          ? 'Request failed. Please try again.'
-          : 'Request failed'
-      );
+  const handleSubmitError = useCallback(async (err: unknown) => {
+    const apiErr = err as ApiError;
+    const message = getApiErrorMessage(
+      err,
+      apiErr.status === 400 || apiErr.status === 422
+        ? 'Request failed. Please try again.'
+        : 'Request failed'
+    );
 
-      toast.error(message);
-    },
-    []
-  );
+    toast.error(message);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,7 +143,7 @@ export function LoginRoute() {
                     ref={turnstileRef}
                     siteKey={TURNSTILE_SITE_KEY}
                     options={{ theme: 'dark' }}
-                    onSuccess={(token) => setTurnstileToken(token)}
+                    onSuccess={token => setTurnstileToken(token)}
                     onExpire={() => setTurnstileToken('')}
                   />
                 </div>

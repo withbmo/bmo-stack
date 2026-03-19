@@ -1,5 +1,5 @@
 import { DEPLOY_JOB_STATUS } from '@pytholit/contracts';
-import type { DashboardTab } from '@pytholit/ui';
+import type { DashboardTab } from '@pytholit/ui/blocks';
 
 export type DeployJobStatusFilter =
   | 'all'

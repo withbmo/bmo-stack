@@ -1,4 +1,5 @@
-import { Button, EmptyState, LoadingState } from '@pytholit/ui';
+import { EmptyState, LoadingState } from '@pytholit/ui/blocks';
+import { Button } from '@pytholit/ui/ui';
 
 export interface AsyncStateProps {
   isLoading: boolean;
