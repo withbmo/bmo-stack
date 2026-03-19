@@ -18,7 +18,6 @@
     "db:migrate": "pnpm --filter @pytholit/db db:migrate",
     "db:studio": "pnpm --filter @pytholit/db prisma studio",
     "export:apps": "node scripts/export-apps-to-txt.mjs",
-    "demo:build-images": "./scripts/build-and-push-demo-images.sh",
     "templates:generate": "pnpm --filter @pytholit/project-spec exec tsx ../../scripts/templates/generate-templates.ts",
     "templates:validate": "pnpm --filter @pytholit/project-spec exec tsx ../../scripts/templates/validate-templates.ts"
   },

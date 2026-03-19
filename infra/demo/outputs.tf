@@ -108,7 +108,7 @@ output "next_steps" {
     "1) If manage_root_dns=true, update the domain-level nameservers in GoDaddy using nameservers_for_godaddy_root_domain output (one-time)",
     "2) Otherwise (delegated subdomain), create required delegation record in GoDaddy from delegation_record_for_godaddy output (one-time)",
     "3) If ALB/DNS is enabled and Route53 validation is disabled, create required DNS records in GoDaddy from external_dns_records_required output",
-    "2) Build and push images using scripts/build-and-push-demo-images.sh",
-    "3) Re-apply with final image tags"
+    "4) Build and publish images using your preferred release workflow",
+    "5) Re-apply with final image tags"
   ]
 }
