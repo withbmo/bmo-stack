@@ -23,9 +23,4 @@ export const queryKeys = {
 
   // User
   currentUser: () => ['current-user'] as const,
-
-  // Billing
-  subscription: () => ['subscription'] as const,
-  plans: () => ['plans'] as const,
-  invoices: () => ['invoices'] as const,
 } as const;
