@@ -161,10 +161,13 @@ export { MyComponent } from './MyComponent';
 ### 5. Write a Story
 
 Create `MyComponent.stories.tsx` next to the component. Storybook will auto-discover it.
+Use `UI/...` titles for primitives and `Blocks/...` titles for composition-level stories.
 
 ---
 
 ## Running Locally
+
+Storybook requires the repo-supported Node version range. In this workspace that means `20.19+`, `22.12+`, or newer.
 
 ```bash
 # Build the package (watch mode)
@@ -176,8 +179,14 @@ pnpm type-check
 # Lint
 pnpm lint
 
+# Tests
+pnpm test
+
 # Storybook (visual explorer)
 pnpm storybook
+
+# Static Storybook build
+pnpm storybook:build
 ```
 
 ---

@@ -31,6 +31,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
+    "storybook": "storybook dev -p 6006",
+    "storybook:build": "storybook build",
     "clean": "rm -rf dist"
   },
   "dependencies": {

@@ -122,7 +122,7 @@ All tokens live in `src/styles/theme.css` inside a `@theme` block (Tailwind v4) 
 
 ## UI Primitives
 
-> Stored in `src/components/ui/`. Generic, framework-agnostic building blocks.
+> Stored in `src/components/ui/`. Generic, reusable React building blocks with minimal product coupling.
 
 ---
 
@@ -171,9 +171,9 @@ All native `<button>` HTML attributes are forwarded. `type` defaults to `"button
   <a href="/docs" target="_blank">Open docs ↗</a>
 </Button>
 
-// asChild with React Router Link
+// asChild with Next.js Link
 <Button asChild>
-  <Link to="/dashboard">Go to dashboard</Link>
+  <Link href="/dashboard">Go to dashboard</Link>
 </Button>
 ```
 
@@ -832,6 +832,7 @@ pnpm test         # Vitest (one-shot)
 pnpm test:watch   # Vitest interactive
 pnpm test:ui      # Vitest browser UI
 pnpm storybook    # Component explorer (requires Node 20.19+)
+pnpm storybook:build  # Static Storybook build
 ```
 
 ### Creating a Changeset (for releases)
