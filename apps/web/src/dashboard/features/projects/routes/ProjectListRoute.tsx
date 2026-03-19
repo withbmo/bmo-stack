@@ -1,51 +1,10 @@
 import { Terminal } from 'lucide-react';
-import { useEffect, useState } from 'react';
 
 import { Card, DashboardPageHeader, PageLayout } from '@/dashboard/components';
 import { ACTIVITY_LOGS } from '@/shared/data/activity';
 import type { ActivityLog } from '@/shared/types';
 
 import { ProjectList } from '../components/ProjectList';
-
-const ResourceTicker = ({
-  label,
-  value,
-  unit,
-  colorClass,
-}: {
-  label: string;
-  value: number;
-  unit: string;
-  colorClass: string;
-}) => {
-  const [displayValue, setDisplayValue] = useState(value);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const fluctuation = Math.floor(Math.random() * 5) - 2;
-      setDisplayValue(v => Math.max(0, v + fluctuation));
-    }, 2000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <Card padding="sm" className="min-w-[140px] bg-bg-surface">
-      <span className="text-[10px] text-nexus-light/70 font-mono uppercase mb-1 tracking-wider">
-        {label}
-      </span>
-      <div className={`text-2xl font-mono font-bold ${colorClass}`}>
-        {displayValue}
-        {unit}
-      </div>
-      <div className="w-full h-1 bg-nexus-gray/30 mt-2">
-        <div
-          className={`h-full ${colorClass.replace('text-', 'bg-')} transition-all duration-500`}
-          style={{ width: `${Math.min(displayValue, 100)}%` }}
-        ></div>
-      </div>
-    </Card>
-  );
-};
 
 export const ProjectListRoute = () => {
   return (
@@ -59,18 +18,6 @@ export const ProjectListRoute = () => {
           </>
         }
         subtitle="Create and manage your projects"
-        actions={
-          <div className="flex gap-4">
-            <ResourceTicker label="CPU_LOAD" value={42} unit="%" colorClass="text-nexus-accent" />
-            <ResourceTicker
-              label="MEM_ALLOC"
-              value={1.2}
-              unit="GB"
-              colorClass="text-nexus-purple"
-            />
-            <ResourceTicker label="NET_IO" value={340} unit="ms" colorClass="text-blue-400" />
-          </div>
-        }
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
