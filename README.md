@@ -105,6 +105,6 @@ Useful commands:
 
 ## License
 
-Licensed under [PolyForm Noncommercial 1.0.0](./LICENSE.md).
+This repository is source-available under [PolyForm Noncommercial 1.0.0](./LICENSE.md).
 
-Commercial use is not permitted.
+Commercial use is not permitted under the current license terms.
