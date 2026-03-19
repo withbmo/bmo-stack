@@ -1,0 +1,71 @@
+{
+  "name": "pytholit-monorepo",
+  "dockerComposeFile": [
+    "docker-compose.yml",
+    "../docker-compose.dev.yml"
+  ],
+  "service": "workspace",
+  "runServices": [
+    "workspace",
+    "postgres",
+    "redis",
+    "minio",
+    "minio-init"
+  ],
+  "workspaceFolder": "/workspaces/pytholit-v2",
+  "shutdownAction": "stopCompose",
+  "remoteUser": "vscode",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "editor.formatOnSave": true,
+        "files.trimTrailingWhitespace": true,
+        "typescript.tsdk": "node_modules/typescript/lib"
+      },
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "prisma.prisma",
+        "bradlc.vscode-tailwindcss",
+        "ms-azuretools.vscode-docker",
+        "ms-vscode.vscode-typescript-next"
+      ]
+    }
+  },
+  "forwardPorts": [
+    3000,
+    3001,
+    3403,
+    5432,
+    6379,
+    9000,
+    9001
+  ],
+  "portsAttributes": {
+    "3000": {
+      "label": "web"
+    },
+    "3001": {
+      "label": "api"
+    },
+    "3403": {
+      "label": "terminal-gateway"
+    },
+    "5432": {
+      "label": "postgres"
+    },
+    "6379": {
+      "label": "redis"
+    },
+    "9000": {
+      "label": "minio"
+    },
+    "9001": {
+      "label": "minio-console"
+    }
+  }
+}

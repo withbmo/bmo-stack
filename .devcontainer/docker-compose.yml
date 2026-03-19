@@ -1,0 +1,18 @@
+services:
+  workspace:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    command: sleep infinity
+    depends_on:
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
+      minio-init:
+        condition: service_completed_successfully
+    volumes:
+      - ..:/workspaces/pytholit-v2:cached
+    working_dir: /workspaces/pytholit-v2
