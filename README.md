@@ -1,6 +1,6 @@
 # Pytholit v2 - Monorepo
 
-Modern monorepo architecture for Pytholit using Next.js + Nest.js.
+Platform monorepo for Pytholit with application services, reusable packages, TOML-based project spec tooling, and full starter templates.
 
 ## Architecture
 
@@ -69,19 +69,19 @@ pnpm templates:validate
 
 ## Key Features
 
-- **Zero Duplication**: Shared types and validation across frontend and backend
-- **Type Safety**: End-to-end TypeScript with Prisma and tRPC
-- **Fast Builds**: Turborepo with intelligent caching
-- **Modern Stack**: Next.js 15 + Nest.js 10 + Prisma
+- **Shared Platform Foundation**: Reusable contracts, validation, and database tooling across apps
+- **Spec-First Project Modeling**: TOML-based project specs with parsing, validation, and planning
+- **Starter Template Catalog**: Full templates with `pytholit.toml` for common stacks
+- **Fast Builds**: Turborepo with workspace-aware task orchestration
 
 ## Technology Stack
 
-- **Frontend**: Next.js 15, React 19, TailwindCSS
-- **Backend**: Nest.js 10, Prisma, PostgreSQL
+- **Frontend**: Next.js 15, React 19, Tailwind CSS
+- **Backend**: NestJS 10, Prisma, PostgreSQL
+- **Project Spec**: TOML, Zod, TypeScript
 - **Monorepo**: Turborepo, pnpm workspaces
 - **Validation**: Zod, class-validator
 - **State**: TanStack Query
-- **Type Safety**: TypeScript 5.7
 
 ## Documentation
 
