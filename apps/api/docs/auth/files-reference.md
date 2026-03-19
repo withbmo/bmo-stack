@@ -77,7 +77,7 @@ Operational notes:
 - resolves the Better Auth secret from `JWT_SECRET`, with a development fallback to `JWT_SECRET_DEFAULT`
 - encrypts OAuth tokens before persistence
 - derives default callback URLs from `API_URL`
-- Turnstile: test secret in non-production; `TURNSTILE_SECRET_KEY` required in production
+- Turnstile: plugin enabled only in production; `TURNSTILE_SECRET_KEY` required in production
 
 ### `auth-providers.config.ts`
 

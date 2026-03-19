@@ -25,9 +25,6 @@ const DEFAULT_LOCAL_DB = {
   sslMode: 'disable',
 } as const;
 
-/** Cloudflare Turnstile test secret — always passes, safe for non-production use. */
-const TURNSTILE_DEV_SECRET = '1x0000000000000000000000000000000AA';
-
 function resolveDatabaseUrl(configService: ConfigService): string {
   const host = configService.get<string>('DB_HOST')?.trim();
   const user = configService.get<string>('DB_USERNAME')?.trim();
@@ -85,15 +82,15 @@ export async function createBetterAuth(configService: ConfigService): Promise<un
   const authSecret = jwtSecret || (isProd ? (() => {
     throw new Error('JWT_SECRET must be set in production');
   })() : JWT_SECRET_DEFAULT);
-  const turnstileSecretKey = isDev
-    ? TURNSTILE_DEV_SECRET
-    : (() => {
+  const turnstileSecretKey = isProd
+    ? (() => {
         const key = configService.get<string>('TURNSTILE_SECRET_KEY') ?? '';
         if (!key) {
           throw new Error('TURNSTILE_SECRET_KEY is required in production.');
         }
         return key;
-      })();
+      })()
+    : '';
 
 
   return betterAuth({
@@ -325,11 +322,15 @@ export async function createBetterAuth(configService: ConfigService): Promise<un
     plugins: [
       emailHarmony(),
       passwordValidatorPlugin(),
-      captcha({
-        provider: 'cloudflare-turnstile',
-        secretKey: turnstileSecretKey,
-        endpoints: ['/sign-up/email', '/sign-in/email', '/email-otp/send-verification-otp'],
-      }),
+      ...(isProd
+        ? [
+            captcha({
+              provider: 'cloudflare-turnstile',
+              secretKey: turnstileSecretKey,
+              endpoints: ['/sign-up/email', '/sign-in/email', '/email-otp/send-verification-otp'],
+            }),
+          ]
+        : []),
       providerGatePlugin(configService),
       username({
         minUsernameLength: 3,

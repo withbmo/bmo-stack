@@ -68,7 +68,7 @@ This document focuses on the operational meaning of those settings rather than r
 
 - used by Better Auth's built-in **cloudflare-turnstile** captcha plugin on sign-up, sign-in, and send-verification-otp
 - **required in production**: the app throws at startup if unset when `NODE_ENV === 'production'`
-- in non-production, the plugin uses Cloudflare's test secret (always passes) so the key is optional
+- in non-production, the captcha plugin is not registered, so the key is optional
 
 ### OAuth provider configuration
 
@@ -259,7 +259,7 @@ Beyond Better Auth's built-in rate limiting, the module adds:
 
 - verification resend cooldown based on active verification records (Nest hook)
 - Redis-backed login lockouts after repeated failed email sign-ins (Nest hook using rate-limiter-flexible)
-- captcha enforcement via Better Auth's built-in **cloudflare-turnstile** plugin on `/sign-up/email`, `/sign-in/email`, and `/email-otp/send-verification-otp`
+- production-only captcha enforcement via Better Auth's built-in **cloudflare-turnstile** plugin on `/sign-up/email`, `/sign-in/email`, and `/email-otp/send-verification-otp`
 
 ## Token encryption at rest
 
