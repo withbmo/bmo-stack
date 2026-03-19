@@ -22,13 +22,23 @@ export const passwordValidatorPlugin = (): any => {
             );
           },
           handler: async (ctx: any) => {
-            const { createAuthMiddleware } = await import('better-auth/api');
+            const { APIError, createAuthMiddleware } = await import('better-auth/api');
             return createAuthMiddleware(async (innerCtx: any) => {
-              if (innerCtx.path.includes('/sign-up/email')) {
-                validatePasswordField(innerCtx.body, 'password');
-              } else if (innerCtx.path.includes('/reset-password')) {
-                validatePasswordField(innerCtx.body, 'newPassword');
+              try {
+                if (innerCtx.path.includes('/sign-up/email')) {
+                  validatePasswordField(innerCtx.body, 'password');
+                } else if (innerCtx.path.includes('/reset-password')) {
+                  validatePasswordField(innerCtx.body, 'newPassword');
+                }
+              } catch (error) {
+                const detail =
+                  error instanceof Error ? error.message : 'Password does not meet strength requirements.';
+                throw new APIError('BAD_REQUEST', {
+                  code: 'AUTH_WEAK_PASSWORD',
+                  detail,
+                });
               }
+
               return { context: innerCtx };
             })(ctx);
           },
