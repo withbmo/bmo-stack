@@ -1,9 +1,10 @@
+'use client';
+
 import type { Template } from '@pytholit/ui';
 import { Box,LayoutTemplate, Search, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 
 import { FilterTabButton,Input, TemplateCard } from '@/dashboard/components';
-import { MOCK_TEMPLATES } from '@/dashboard/features/projects/data/mock-projects';
 import { DashboardPageHeader,PageLayout } from '@/shared/components/layout';
 
 function toUICemplate(t: {
@@ -22,11 +23,15 @@ function toUICemplate(t: {
   return { ...t, stars, isOfficial: t.isOfficial ?? false };
 }
 
-export const TemplatesRoute = () => {
+interface TemplatesRouteProps {
+  templates: Template[];
+}
+
+export const TemplatesRoute = ({ templates }: TemplatesRouteProps) => {
   const [filter, setFilter] = useState<'all' | 'official' | 'community'>('all');
   const [search, setSearch] = useState('');
 
-  const filteredTemplates = MOCK_TEMPLATES.filter(t => {
+  const filteredTemplates = templates.filter(t => {
     const matchesSearch =
       t.title.toLowerCase().includes(search.toLowerCase()) ||
       t.description.toLowerCase().includes(search.toLowerCase()) ||
