@@ -1,0 +1,47 @@
+name: Feature request
+description: Propose a new feature or meaningful improvement.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing an idea.
+
+        Please focus on the problem, the desired outcome, and any important constraints.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: What problem are you trying to solve?
+      placeholder: Describe the need or friction clearly.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should the platform or template do?
+      placeholder: Describe the preferred behavior or interface.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What other approaches did you consider?
+  - type: textarea
+    id: scope
+    attributes:
+      label: Affected area
+      description: Which area would this change touch?
+      placeholder: project spec, templates, apps/api, docs, devcontainer, etc.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Include examples, references, or constraints that matter.
+

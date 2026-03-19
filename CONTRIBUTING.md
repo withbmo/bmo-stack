@@ -35,7 +35,6 @@ pnpm dev
 pnpm build
 pnpm lint
 pnpm type-check
-pnpm test
 pnpm templates:validate
 ```
 

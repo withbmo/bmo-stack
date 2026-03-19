@@ -1,0 +1,57 @@
+name: Bug report
+description: Report a reproducible bug or regression.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug.
+
+        Please include enough detail for someone else to reproduce the issue without guesswork.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What is broken, and what did you expect instead?
+      placeholder: A short description of the bug and the expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: List the smallest set of steps needed to reproduce the issue.
+      placeholder: |
+        1. Go to ...
+        2. Run ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Affected area
+      description: Which area is affected?
+      placeholder: apps/api, templates/next-web, packages/project-spec, devcontainer, etc.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Share the runtime details that matter for reproducing the issue.
+      placeholder: OS, Node/Python version, package manager, browser, devcontainer/local, etc.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Paste relevant logs, stack traces, screenshots, or recordings.
+      render: shell
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Anything else that would help narrow this down?
+
