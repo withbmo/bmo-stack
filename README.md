@@ -89,6 +89,8 @@ pnpm test
 - [Development Guide](./docs/development.md)
 - [Deployment](./docs/deployment.md)
 - [API Database Docs](./apps/api/docs/database/README.md)
+- [Contributing](./CONTRIBUTING.md)
+- [Security](./SECURITY.md)
 
 ## Templates
 
@@ -103,4 +105,6 @@ Useful commands:
 
 ## License
 
-MIT
+Licensed under [PolyForm Noncommercial 1.0.0](./LICENSE.md).
+
+Commercial use is not permitted.
