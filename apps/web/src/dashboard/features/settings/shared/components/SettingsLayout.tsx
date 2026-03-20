@@ -1,6 +1,6 @@
 'use client';
 
-import { PageTransition } from '@pytholit/ui';
+import { PageTransition } from '@pytholit/ui/ui';
 import { Settings } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';

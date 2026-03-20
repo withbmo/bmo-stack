@@ -1,6 +1,6 @@
 'use client';
 
-import { MotionFade, MotionSlideIn } from '@pytholit/ui';
+import { MotionFade, MotionSlideIn } from '@pytholit/ui/ui';
 import { Button } from '@pytholit/ui/ui';
 import { ChevronRight, Terminal } from 'lucide-react';
 import Link from 'next/link';
@@ -27,20 +27,20 @@ function SiteNavbar() {
   return (
     <MotionFade
       as="nav"
-      className={`fixed top-0 left-0 w-full z-50 h-20 flex items-center transition-all duration-300 border-b px-6 py-5 md:px-8 ${
+      className={`fixed left-0 top-0 z-50 flex h-20 w-full items-center border-b px-6 py-5 transition-all duration-300 md:px-8 ${
         scrolled
-          ? 'bg-nexus-black/90 border-nexus-purple/30 backdrop-blur-md'
+          ? 'border-brand-primary/30 bg-bg-app/90 backdrop-blur-md'
           : 'bg-transparent border-transparent'
       }`}
     >
-      <div className="max-w-7xl mx-auto flex justify-between items-center w-full">
+      <div className="mx-auto flex w-full max-w-7xl items-center justify-between">
         <MotionSlideIn
           as="div"
           delay={0.06}
-          className="fixed left-8 top-10 -translate-y-1/2 z-[60]"
+          className="fixed left-8 top-10 z-[60] -translate-y-1/2"
         >
           <Link href="/" className="flex items-center gap-3 group p-4">
-            <div className="w-8 h-8 bg-nexus-purple flex items-center justify-center border border-white group-hover:bg-nexus-neon transition-colors shrink-0">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center border border-text-primary bg-brand-primary transition-colors group-hover:bg-brand-neon">
               <Terminal size={18} className="text-white" />
             </div>
             <span className="font-mono font-bold text-xl tracking-tighter truncate">pytholit</span>
@@ -58,12 +58,12 @@ function SiteNavbar() {
                 key={item.label}
                 href={item.href}
                 className={`font-mono text-sm transition-colors tracking-widest relative group cursor-pointer ${
-                  isActive ? 'text-nexus-purple' : 'text-nexus-light hover:text-nexus-purple'
+                  isActive ? 'text-brand-primary' : 'text-text-secondary hover:text-brand-primary'
                 }`}
               >
                 {item.label}
                 <span
-                  className={`absolute -bottom-1 left-0 h-[2px] bg-nexus-purple transition-all ${
+                  className={`absolute -bottom-1 left-0 h-[2px] bg-brand-primary transition-all ${
                     isActive ? 'w-full' : 'w-0 group-hover:w-full'
                   }`}
                 />
@@ -88,80 +88,80 @@ function SiteNavbar() {
 
 function SiteFooter() {
   return (
-    <footer className="border-t border-nexus-gray bg-nexus-black px-6 py-10 text-xs font-mono text-nexus-muted">
+    <footer className="border-t border-border-default bg-bg-app px-6 py-10 font-mono text-xs text-text-muted">
       <div className="mx-auto flex max-w-7xl flex-col gap-10 md:flex-row md:items-start md:justify-between">
         <div className="space-y-2">
-          <div className="text-[10px] tracking-[0.25em] text-nexus-purple">PYTHOLIT</div>
+          <div className="text-[10px] tracking-[0.25em] text-brand-primary">PYTHOLIT</div>
           <div>© 2026 pytholit · ALL SYSTEMS OPERATIONAL</div>
-          <div className="text-[11px] text-nexus-light/60">
+          <div className="text-[11px] text-text-secondary/60">
             Build, ship, and observe runtime-native workloads without the boilerplate.
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
           <div className="space-y-3">
-            <div className="text-[10px] font-semibold tracking-[0.2em] text-nexus-light/80">
+            <div className="text-[10px] font-semibold tracking-[0.2em] text-text-secondary/80">
               PRODUCT
             </div>
             <div className="flex flex-col gap-1.5">
-              <a href="#platform" className="hover:text-nexus-purple">
+              <a href="#platform" className="hover:text-brand-primary">
                 Platform
               </a>
-              <a href="#workflow" className="hover:text-nexus-purple">
+              <a href="#workflow" className="hover:text-brand-primary">
                 Workflow
               </a>
-              <a href="#pricing" className="hover:text-nexus-purple">
+              <a href="#pricing" className="hover:text-brand-primary">
                 Pricing
               </a>
             </div>
           </div>
 
           <div className="space-y-3">
-            <div className="text-[10px] font-semibold tracking-[0.2em] text-nexus-light/80">
+            <div className="text-[10px] font-semibold tracking-[0.2em] text-text-secondary/80">
               COMPANY
             </div>
             <div className="flex flex-col gap-1.5">
-              <a href="/about" className="hover:text-nexus-purple">
+              <a href="/about" className="hover:text-brand-primary">
                 About
               </a>
-              <a href="/careers" className="hover:text-nexus-purple">
+              <a href="/careers" className="hover:text-brand-primary">
                 Careers
               </a>
-              <a href="/contact" className="hover:text-nexus-purple">
+              <a href="/contact" className="hover:text-brand-primary">
                 Contact us
               </a>
             </div>
           </div>
 
           <div className="space-y-3">
-            <div className="text-[10px] font-semibold tracking-[0.2em] text-nexus-light/80">
+            <div className="text-[10px] font-semibold tracking-[0.2em] text-text-secondary/80">
               RESOURCES
             </div>
             <div className="flex flex-col gap-1.5">
-              <Link href="/docs" className="hover:text-nexus-purple">
+              <Link href="/docs" className="hover:text-brand-primary">
                 Docs
               </Link>
-              <a href="/blog" className="hover:text-nexus-purple">
+              <a href="/blog" className="hover:text-brand-primary">
                 Blog
               </a>
-              <a href="/changelog" className="hover:text-nexus-purple">
+              <a href="/changelog" className="hover:text-brand-primary">
                 Changelog
               </a>
             </div>
           </div>
 
           <div className="space-y-3">
-            <div className="text-[10px] font-semibold tracking-[0.2em] text-nexus-light/80">
+            <div className="text-[10px] font-semibold tracking-[0.2em] text-text-secondary/80">
               SOCIAL
             </div>
             <div className="flex flex-col gap-1.5">
-              <a href="#" className="hover:text-nexus-purple">
+              <a href="#" className="hover:text-brand-primary">
                 GitHub
               </a>
-              <a href="#" className="hover:text-nexus-purple">
+              <a href="#" className="hover:text-brand-primary">
                 Discord
               </a>
-              <a href="#" className="hover:text-nexus-purple">
+              <a href="#" className="hover:text-brand-primary">
                 Twitter
               </a>
             </div>
@@ -188,7 +188,7 @@ export function SiteChrome({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-bg-app text-white selection:bg-nexus-purple selection:text-white font-sans flex flex-col relative overflow-hidden">
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-bg-app font-sans text-white selection:bg-brand-primary selection:text-white">
       <SiteNavbar />
       <main className="flex-grow relative z-20">{children}</main>
       {showFooter && <SiteFooter />}

@@ -2,6 +2,12 @@
 
 import { Claude, Gemini, Mistral, OpenAI } from '@lobehub/icons';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@pytholit/ui/ui';
+import {
   AtSign,
   Check,
   ChevronDown,
@@ -60,26 +66,26 @@ function ToolCallStep({ step }: { step: ToolStep }) {
     step.type === 'run'  ? `Run \`${step.command}\`` :
                            `Search "${step.query}"`;
   const icon =
-    step.type === 'read' ? <FileCode2 size={10} className="text-nexus-accent" /> :
-    step.type === 'edit' ? <PenLine size={10} className="text-nexus-neon" /> :
+    step.type === 'read' ? <FileCode2 size={10} className="text-brand-accent" /> :
+    step.type === 'edit' ? <PenLine size={10} className="text-brand-neon" /> :
     step.type === 'run'  ? <Terminal size={10} className="text-yellow-400" /> :
                            <Globe size={10} className="text-blue-400" />;
   const hasDiff = step.type === 'edit' && (step as { diff?: string }).diff;
 
   return (
-    <div className="border border-nexus-gray/30 bg-nexus-black/40 text-[10px] font-mono">
+    <div className="border border-border-default/30 bg-bg-app/40 font-mono text-[10px]">
       <button
         type="button"
         onClick={() => hasDiff && setExpanded(v => !v)}
-        className={`w-full flex items-center gap-2 px-2.5 py-1.5 text-nexus-muted ${hasDiff ? 'hover:text-nexus-light cursor-pointer' : 'cursor-default'}`}
+        className={`flex w-full items-center gap-2 px-2.5 py-1.5 text-text-muted ${hasDiff ? 'cursor-pointer hover:text-text-secondary' : 'cursor-default'}`}
       >
         {icon}
         <span className="flex-1 text-left truncate">{label}</span>
-        <Check size={9} className="text-nexus-neon shrink-0" />
+        <Check size={9} className="shrink-0 text-brand-neon" />
         {hasDiff && <ChevronDown size={9} className={`opacity-50 transition-transform ${expanded ? 'rotate-180' : ''}`} />}
       </button>
       {expanded && hasDiff && (
-        <pre className="px-3 pb-2.5 text-[10px] text-nexus-light/70 overflow-x-auto leading-4 border-t border-nexus-gray/20 pt-1.5 whitespace-pre-wrap">
+        <pre className="overflow-x-auto whitespace-pre-wrap border-t border-border-default/20 px-3 pb-2.5 pt-1.5 text-[10px] leading-4 text-text-secondary/70">
           {(step as { diff?: string }).diff}
         </pre>
       )}
@@ -95,7 +101,7 @@ function CopyButton({ text }: { text: string }) {
     <button
       type="button"
       onClick={() => { navigator.clipboard.writeText(text).catch(() => {}); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
-      className="p-1 text-nexus-muted hover:text-white transition-colors"
+      className="p-1 text-text-muted transition-colors hover:text-white"
       title="Copy"
     >
       {copied ? <Check size={10} /> : <Clipboard size={10} />}
@@ -107,12 +113,12 @@ function CopyButton({ text }: { text: string }) {
 
 function CodeBlock({ code, language, filename }: { code: string; language: string; filename?: string }) {
   return (
-    <div className="border border-nexus-gray/50 bg-nexus-black overflow-hidden text-[11px] font-mono mt-2">
-      <div className="flex items-center justify-between px-2.5 py-1 bg-nexus-gray/10 border-b border-nexus-gray/30">
-        <div className="flex items-center gap-1.5 text-nexus-muted"><FileCode2 size={10} /><span>{filename ?? language}</span></div>
+    <div className="mt-2 overflow-hidden border border-border-default/50 bg-bg-app font-mono text-[11px]">
+      <div className="flex items-center justify-between border-b border-border-default/30 bg-border-default/10 px-2.5 py-1">
+        <div className="flex items-center gap-1.5 text-text-muted"><FileCode2 size={10} /><span>{filename ?? language}</span></div>
         <CopyButton text={code} />
       </div>
-      <pre className="p-3 overflow-x-auto text-nexus-light/90 leading-5 whitespace-pre-wrap break-words">{code}</pre>
+      <pre className="overflow-x-auto break-words whitespace-pre-wrap p-3 leading-5 text-text-secondary/90">{code}</pre>
     </div>
   );
 }
@@ -125,11 +131,11 @@ function ThinkingIndicator({ llmId }: { llmId: string }) {
       <div className="w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">
         <LLMIcon id={llmId} size={16} />
       </div>
-      <div className="flex items-center gap-2 px-3 py-2 border border-nexus-gray/40 bg-nexus-black/30 text-nexus-muted text-[11px] font-mono">
+      <div className="flex items-center gap-2 border border-border-default/40 bg-bg-app/30 px-3 py-2 font-mono text-[11px] text-text-muted">
         <span className="flex gap-1">
-          <span className="w-1 h-1 rounded-full bg-nexus-purple animate-bounce [animation-delay:0ms]" />
-          <span className="w-1 h-1 rounded-full bg-nexus-purple animate-bounce [animation-delay:150ms]" />
-          <span className="w-1 h-1 rounded-full bg-nexus-purple animate-bounce [animation-delay:300ms]" />
+          <span className="h-1 w-1 rounded-full bg-brand-primary animate-bounce [animation-delay:0ms]" />
+          <span className="h-1 w-1 rounded-full bg-brand-primary animate-bounce [animation-delay:150ms]" />
+          <span className="h-1 w-1 rounded-full bg-brand-primary animate-bounce [animation-delay:300ms]" />
         </span>
         <span>thinking</span>
       </div>
@@ -157,7 +163,7 @@ function MessageBubble({ msg, llmId }: { msg: ChatMessage; llmId: string }) {
     <div className={`flex gap-2.5 items-start ${isUser ? 'flex-row-reverse' : ''}`}>
       <div className="shrink-0 mt-0.5">
         {isUser ? (
-          <div className="w-6 h-6 flex items-center justify-center border border-nexus-gray/50 bg-nexus-gray/10 text-nexus-muted">
+          <div className="flex h-6 w-6 items-center justify-center border border-border-default/50 bg-border-default/10 text-text-muted">
             <User size={11} />
           </div>
         ) : (
@@ -170,7 +176,7 @@ function MessageBubble({ msg, llmId }: { msg: ChatMessage; llmId: string }) {
         {msg.contextFiles && msg.contextFiles.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {msg.contextFiles.map(f => (
-              <span key={f} className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-mono bg-nexus-purple/10 border border-nexus-purple/20 text-nexus-purple/70">
+              <span key={f} className="inline-flex items-center gap-1 border border-brand-primary/20 bg-brand-primary/10 px-1.5 py-0.5 font-mono text-[10px] text-brand-primary/70">
                 <FileCode2 size={9} />{f}
               </span>
             ))}
@@ -178,8 +184,8 @@ function MessageBubble({ msg, llmId }: { msg: ChatMessage; llmId: string }) {
         )}
         <div className={`px-3 py-2.5 text-[11px] leading-relaxed border font-mono max-w-full
           ${isUser
-            ? 'bg-nexus-purple/10 border-nexus-purple/25 text-white'
-            : 'bg-nexus-black/30 border-nexus-gray/40 text-nexus-light/85'
+            ? 'bg-brand-primary/10 border-brand-primary/25 text-white'
+            : 'bg-bg-app/30 border-border-default/40 text-text-secondary/85'
           }`}>
           {renderText(msg.text)}
         </div>
@@ -194,7 +200,7 @@ function MessageBubble({ msg, llmId }: { msg: ChatMessage; llmId: string }) {
           <CodeBlock key={i} {...block} />
         ))}
         {msg.timestamp && (
-          <span className="text-[9px] font-mono text-nexus-muted/35 px-0.5">
+          <span className="px-0.5 font-mono text-[9px] text-text-muted/35">
             {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
         )}
@@ -318,21 +324,21 @@ export const AgentPanel = ({
     'Describe a task… (@ to mention files)';
 
   return (
-    <div className="shrink-0 flex flex-col bg-nexus-dark border-r border-nexus-gray/50 overflow-hidden" style={{ width }}>
+    <div className="shrink-0 flex flex-col overflow-hidden border-r border-border-default/50 bg-bg-panel" style={{ width }}>
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="h-10 shrink-0 px-3 border-b border-nexus-gray flex items-center justify-between">
+      <div className="flex h-10 shrink-0 items-center justify-between border-b border-border-default px-3">
         <div className="flex items-center gap-2">
-          <Sparkles size={12} className="text-nexus-purple" />
-          <span className="text-[11px] font-mono font-bold text-nexus-accent tracking-widest">AI ARCHITECT</span>
+          <Sparkles size={12} className="text-brand-primary" />
+          <span className="font-mono text-[11px] font-bold tracking-widest text-brand-accent">AI ARCHITECT</span>
         </div>
-        <button type="button" onClick={clearChat} className="p-1.5 text-nexus-muted hover:text-white transition-colors" title="Clear chat">
+        <button type="button" onClick={clearChat} className="p-1.5 text-text-muted transition-colors hover:text-white" title="Clear chat">
           <RotateCcw size={11} />
         </button>
       </div>
 
       {/* ── Messages ───────────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+      <div className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
         {chatMessages.map(msg => (
           <MessageBubble key={msg.id} msg={msg} llmId={selectedLLM} />
         ))}
@@ -342,13 +348,13 @@ export const AgentPanel = ({
 
       {/* ── Suggested prompts ──────────────────────────────────────────────── */}
       {chatMessages.length === 1 && !isThinking && (
-        <div className="px-3 pb-3 space-y-1.5">
+        <div className="space-y-1.5 px-3 pb-3">
           {SUGGESTED[chatMode].map(p => (
             <button
               key={p}
               type="button"
               onClick={() => { setMentionMarkup(p); setChatInput(p); }}
-              className="w-full text-left text-[10px] font-mono text-nexus-muted/60 hover:text-nexus-light px-2.5 py-1.5 border border-nexus-gray/25 hover:border-nexus-purple/35 hover:bg-nexus-purple/5 transition-all truncate"
+              className="w-full truncate border border-border-default/25 px-2.5 py-1.5 text-left font-mono text-[10px] text-text-muted/60 transition-all hover:border-brand-primary/35 hover:bg-brand-primary/5 hover:text-text-secondary"
             >
               {p}
             </button>
@@ -357,9 +363,9 @@ export const AgentPanel = ({
       )}
 
       {/* ── Input box ──────────────────────────────────────────────────────── */}
-      <form ref={chatFormRef} onSubmit={doSubmit} className="shrink-0 border-t border-nexus-gray">
+      <form ref={chatFormRef} onSubmit={doSubmit} className="shrink-0 border-t border-border-default">
 
-        <div className="relative mx-3 mt-2.5 mb-0 border border-nexus-gray/50 bg-nexus-black focus-within:border-nexus-purple/50 transition-colors">
+        <div className="relative mx-3 mb-0 mt-2.5 border border-border-default/50 bg-bg-app focus-within:border-brand-primary/50 transition-colors">
 
           {/* react-mentions-ts MentionsInput */}
           <MentionsInput
@@ -374,30 +380,30 @@ export const AgentPanel = ({
               // outer wrapper — override library's bg-card/border-border
               control: 'relative w-full bg-transparent border-0',
               // the actual textarea
-              input: 'w-full bg-transparent text-white text-[11px] font-mono px-2.5 py-2.5 pr-9 focus:outline-none resize-none leading-5 placeholder:text-nexus-muted/40',
+              input: 'w-full resize-none bg-transparent px-2.5 py-2.5 pr-9 font-mono text-[11px] leading-5 text-white placeholder:text-text-muted/40 focus:outline-none',
               // highlighter mirror — same padding as textarea so chips align perfectly
               highlighter: 'px-2.5 py-2.5 pr-9 text-[11px] font-mono leading-5',
               // suggestions dropdown
-              suggestions: 'absolute z-50 left-0 right-0 bg-nexus-dark border border-nexus-purple/40 shadow-2xl overflow-hidden',
+              suggestions: 'absolute left-0 right-0 z-50 overflow-hidden border border-brand-primary/40 bg-bg-panel shadow-2xl',
               suggestionsList: 'py-0',
-              suggestionItem: 'px-3 py-2 text-nexus-muted cursor-pointer transition-colors',
-              suggestionItemFocused: 'bg-nexus-purple/15 text-nexus-purple',
+              suggestionItem: 'cursor-pointer px-3 py-2 text-text-muted transition-colors',
+              suggestionItemFocused: 'bg-brand-primary/15 text-brand-primary',
             }}
           >
             <Mention
               trigger="@"
               data={mentionData}
               appendSpaceOnAdd
-              className="!bg-nexus-purple/25 border border-nexus-purple/40 rounded-sm px-0.5"
+              className="!rounded-sm border border-brand-primary/40 !bg-brand-primary/25 px-0.5"
               renderSuggestion={(entry, _query, _highlighted, _index, focused) => {
                 const file = filesMap[String(entry.id)];
                 const path = file ? buildPath(String(entry.id), filesMap) : String(entry.display);
                 return (
-                  <div className={`flex items-center gap-2.5 ${focused ? 'text-nexus-purple' : ''}`}>
-                    <FileCode2 size={12} className={`shrink-0 ${focused ? 'text-nexus-purple' : 'text-nexus-accent/50'}`} />
+                  <div className={`flex items-center gap-2.5 ${focused ? 'text-brand-primary' : ''}`}>
+                    <FileCode2 size={12} className={`shrink-0 ${focused ? 'text-brand-primary' : 'text-brand-accent/50'}`} />
                     <div className="min-w-0">
                       <div className="text-[11px] font-mono font-medium truncate">{String(entry.display)}</div>
-                      <div className="text-[9px] font-mono text-nexus-muted/50 truncate mt-0.5">{path}</div>
+                      <div className="mt-0.5 truncate font-mono text-[9px] text-text-muted/50">{path}</div>
                     </div>
                   </div>
                 );
@@ -409,7 +415,7 @@ export const AgentPanel = ({
           <button
             type="submit"
             disabled={!chatInput.trim() || isThinking}
-            className="absolute right-2 bottom-2 text-nexus-muted hover:text-nexus-purple disabled:opacity-25 disabled:cursor-not-allowed transition-colors z-10"
+            className="absolute bottom-2 right-2 z-10 text-text-muted transition-colors hover:text-brand-primary disabled:cursor-not-allowed disabled:opacity-25"
           >
             <Send size={13} />
           </button>
@@ -420,64 +426,68 @@ export const AgentPanel = ({
 
           {/* Mode dropdown */}
           <div className="relative">
-            <button
-              type="button"
-              onClick={() => { setLlmDropdownOpen(false); setModeDropdownOpen(o => !o); }}
-              className={`flex items-center gap-1 px-2 py-1 text-[10px] font-mono border transition-colors
-                ${modeDropdownOpen ? 'border-nexus-purple/50 text-white bg-nexus-purple/10' : 'border-nexus-gray/40 text-nexus-muted hover:text-white hover:border-nexus-gray/70'}`}
-            >
-              <ModeIcon size={10} />
-              <span>{currentMode.label}</span>
-              <ChevronDown size={9} className="opacity-50" />
-            </button>
-            {modeDropdownOpen && (
-              <div className="absolute left-0 bottom-full mb-1 z-30 w-52 bg-nexus-dark border border-nexus-gray/70 shadow-2xl">
+            <DropdownMenu open={modeDropdownOpen} onOpenChange={(open: boolean) => {
+              setModeDropdownOpen(open);
+              if (open) setLlmDropdownOpen(false);
+            }}>
+              <DropdownMenuTrigger
+                className={`flex items-center gap-1 px-2 py-1 text-[10px] font-mono border transition-colors
+                  ${modeDropdownOpen ? 'border-brand-primary/50 text-white bg-brand-primary/10' : 'border-border-default/40 text-text-muted hover:text-white hover:border-border-default/70'}`}
+              >
+                <ModeIcon size={10} />
+                <span>{currentMode.label}</span>
+                <ChevronDown size={9} className="opacity-50" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-52 border-border-default/70 bg-bg-panel">
                 {(Object.entries(ModeConfig) as [AgentMode, typeof ModeConfig[AgentMode]][]).map(([mode, cfg]) => {
                   const Icon = cfg.icon;
                   return (
-                    <button key={mode} type="button" onClick={() => { setChatMode(mode); setModeDropdownOpen(false); }}
-                      className={`w-full flex items-start gap-2.5 px-3 py-2.5 text-left transition-colors
-                        ${chatMode === mode ? 'bg-nexus-purple/15 text-nexus-purple' : 'text-nexus-muted hover:bg-nexus-gray/15 hover:text-white'}`}
+                    <DropdownMenuItem
+                      key={mode}
+                      onClick={() => setChatMode(mode)}
+                      className={`${chatMode === mode ? 'bg-brand-primary/15 text-brand-primary' : 'text-text-muted hover:bg-border-default/15 hover:text-white'}`}
                     >
                       <Icon size={12} className="mt-0.5 shrink-0" />
                       <div>
                         <div className="text-[11px] font-mono font-bold">{cfg.label}</div>
-                        <div className="text-[10px] font-mono text-nexus-muted/60 mt-0.5">{cfg.description}</div>
+                        <div className="mt-0.5 font-mono text-[10px] text-text-muted/60">{cfg.description}</div>
                       </div>
                       {chatMode === mode && <Check size={10} className="ml-auto mt-1 shrink-0" />}
-                    </button>
+                    </DropdownMenuItem>
                   );
                 })}
-              </div>
-            )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* LLM dropdown */}
           <div className="relative">
-            <button
-              type="button"
-              onClick={() => { setModeDropdownOpen(false); setLlmDropdownOpen(o => !o); }}
-              className={`flex items-center gap-1.5 px-2 py-1 text-[10px] font-mono border transition-colors
-                ${llmDropdownOpen ? 'border-nexus-purple/50 text-white bg-nexus-purple/10' : 'border-nexus-gray/40 text-nexus-muted hover:text-white hover:border-nexus-gray/70'}`}
-            >
-              <LLMIcon id={selectedLLM} size={13} />
-              <span>{currentLLM?.label ?? 'LLM'}</span>
-              <ChevronDown size={9} className="opacity-50" />
-            </button>
-            {llmDropdownOpen && (
-              <div className="absolute left-0 bottom-full mb-1 z-30 min-w-[160px] bg-nexus-dark border border-nexus-gray/70 shadow-2xl">
+            <DropdownMenu open={llmDropdownOpen} onOpenChange={(open: boolean) => {
+              setLlmDropdownOpen(open);
+              if (open) setModeDropdownOpen(false);
+            }}>
+              <DropdownMenuTrigger
+                className={`flex items-center gap-1.5 px-2 py-1 text-[10px] font-mono border transition-colors
+                  ${llmDropdownOpen ? 'border-brand-primary/50 text-white bg-brand-primary/10' : 'border-border-default/40 text-text-muted hover:text-white hover:border-border-default/70'}`}
+              >
+                <LLMIcon id={selectedLLM} size={13} />
+                <span>{currentLLM?.label ?? 'LLM'}</span>
+                <ChevronDown size={9} className="opacity-50" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="min-w-[160px] border-border-default/70 bg-bg-panel">
                 {LLM_OPTIONS.map(opt => (
-                  <button key={opt.id} type="button" onClick={() => { setSelectedLLM(opt.id); setLlmDropdownOpen(false); }}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 text-left text-[11px] font-mono transition-colors
-                      ${selectedLLM === opt.id ? 'bg-nexus-purple/15 text-nexus-purple' : 'text-nexus-muted hover:bg-nexus-gray/15 hover:text-white'}`}
+                  <DropdownMenuItem
+                    key={opt.id}
+                    onClick={() => setSelectedLLM(opt.id)}
+                    className={`${selectedLLM === opt.id ? 'bg-brand-primary/15 text-brand-primary' : 'text-text-muted hover:bg-border-default/15 hover:text-white'}`}
                   >
                     <LLMIcon id={opt.id} size={14} />
                     <span className="flex-1">{opt.label}</span>
-                    {selectedLLM === opt.id && <Check size={10} className="text-nexus-purple" />}
-                  </button>
+                    {selectedLLM === opt.id && <Check size={10} className="text-brand-primary" />}
+                  </DropdownMenuItem>
                 ))}
-              </div>
-            )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* @ button */}
@@ -485,16 +495,16 @@ export const AgentPanel = ({
             type="button"
             onClick={insertAtTrigger}
             title="Mention a file (@)"
-            className="flex items-center gap-1 px-2 py-1 text-[10px] font-mono border border-nexus-gray/40 text-nexus-muted hover:text-nexus-purple hover:border-nexus-purple/40 transition-colors"
+            className="flex items-center gap-1 border border-border-default/40 px-2 py-1 font-mono text-[10px] text-text-muted transition-colors hover:border-brand-primary/40 hover:text-brand-primary"
           >
             <AtSign size={10} />
           </button>
 
           <div className="flex-1" />
 
-          <span className="text-[9px] font-mono text-nexus-muted/30">
+          <span className="font-mono text-[9px] text-text-muted/30">
             {isThinking ? (
-              <span className="flex items-center gap-1 text-nexus-purple/50">
+              <span className="flex items-center gap-1 text-brand-primary/50">
                 <Loader2 size={9} className="animate-spin" />processing
               </span>
             ) : '↵ send'}

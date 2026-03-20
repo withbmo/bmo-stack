@@ -84,11 +84,11 @@ const ResizeHandle = ({
       role="separator"
       aria-orientation="vertical"
       onMouseDown={handleMouseDown}
-      className={`shrink-0 w-0.5 flex items-center justify-center group cursor-col-resize transition-colors ${
-        isDragging ? 'bg-nexus-purple/40' : 'bg-nexus-gray/80 hover:bg-nexus-purple/30'
+      className={`group flex w-0.5 shrink-0 cursor-col-resize items-center justify-center transition-colors ${
+        isDragging ? 'bg-brand-primary/40' : 'bg-border-default/80 hover:bg-brand-primary/30'
       } ${className}`}
     >
-      <div className="w-px h-full min-h-[40px] bg-nexus-gray group-hover:bg-nexus-purple shrink-0" />
+      <div className="h-full min-h-[40px] w-px shrink-0 bg-border-default group-hover:bg-brand-primary" />
     </div>
   );
 };
@@ -111,16 +111,16 @@ const SidebarIcon = ({
   <button
     type="button"
     onClick={onClick}
-    className={`relative group w-full h-14 flex items-center justify-center transition-all duration-200
+    className={`group relative flex h-14 w-full items-center justify-center transition-all duration-200
       ${
         isActive
-          ? 'text-white bg-nexus-dark border-l-2 border-nexus-purple'
-          : 'text-nexus-muted hover:text-white hover:bg-white/5 border-l-2 border-transparent'
+          ? 'border-l-2 border-brand-primary bg-bg-panel text-text-primary'
+          : 'border-l-2 border-transparent text-text-muted hover:bg-white/5 hover:text-text-primary'
       }
     `}
   >
-    <Icon size={20} strokeWidth={1.5} className={isActive ? 'text-nexus-purple' : ''} />
-    <div className="absolute left-full ml-1 px-3 py-1.5 bg-nexus-dark border border-nexus-gray text-[10px] font-mono font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-[4px_4px_0px_0px_rgba(30,30,30,1)]">
+    <Icon size={20} strokeWidth={1.5} className={isActive ? 'text-brand-primary' : ''} />
+    <div className="pointer-events-none absolute left-full z-50 ml-1 whitespace-nowrap border border-border-default bg-bg-panel px-3 py-1.5 font-mono text-[10px] font-bold text-text-primary opacity-0 shadow-[4px_4px_0px_0px_rgba(30,30,30,1)] transition-opacity group-hover:opacity-100">
       {label}
     </div>
   </button>
@@ -187,33 +187,33 @@ export const IDERoute = () => {
   }, [searchParams, replaceFileTree, hydrated, user]);
 
   return (
-    <div className="h-screen w-full bg-nexus-black text-white flex flex-col overflow-hidden font-sans">
+    <div className="flex h-screen w-full flex-col overflow-hidden bg-bg-app font-sans text-text-primary">
       {/* IDE Header */}
-      <div className="h-12 border-b border-nexus-gray flex items-center justify-between px-4 bg-nexus-dark">
+      <div className="flex h-12 items-center justify-between border-b border-border-default bg-bg-panel px-4">
         <div className="flex items-center gap-4">
           <button
             type="button"
             onClick={() => router.push('/dashboard')}
-            className="text-nexus-muted hover:text-white transition-colors"
+            className="text-text-muted transition-colors hover:text-text-primary"
           >
             <X size={16} />
           </button>
           <span className="font-mono text-sm font-bold">{projectId || 'untitled'}</span>
-          <span className="text-[10px] bg-nexus-gray/20 px-2 py-0.5 rounded text-nexus-muted font-mono">
+          <span className="rounded bg-border-default/20 px-2 py-0.5 font-mono text-[10px] text-text-muted">
             Running
           </span>
         </div>
         <div className="flex items-center gap-3">
           <button
             type="button"
-            className="flex items-center gap-2 px-3 py-1.5 bg-nexus-purple text-white text-xs font-mono font-bold hover:bg-nexus-neon transition-colors"
+            className="flex items-center gap-2 bg-brand-primary px-3 py-1.5 font-mono text-xs font-bold text-white transition-colors hover:bg-brand-neon"
           >
             <Play size={12} fill="currentColor" /> RUN
           </button>
-          <button type="button" className="p-2 text-nexus-muted hover:text-white transition-colors">
+          <button type="button" className="p-2 text-text-muted transition-colors hover:text-text-primary">
             <Save size={16} />
           </button>
-          <div className="w-8 h-8 rounded-full bg-nexus-purple/20 border border-nexus-purple flex items-center justify-center text-xs font-bold text-nexus-purple">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full border border-brand-primary bg-brand-primary/20 text-xs font-bold text-brand-primary">
             U1
           </div>
         </div>
@@ -222,7 +222,7 @@ export const IDERoute = () => {
       {/* Main Layout */}
       <div className="flex-1 flex overflow-hidden">
         {/* Navigation Sidebar */}
-        <div className="w-14 border-r border-nexus-gray bg-nexus-black flex flex-col items-center py-2 z-10">
+        <div className="z-10 flex w-14 flex-col items-center border-r border-border-default bg-bg-app py-2">
           <SidebarIcon
             icon={Code2}
             label="Code Editor"
@@ -297,7 +297,7 @@ export const IDERoute = () => {
               />
 
               <div
-                className="flex-1 flex flex-col min-w-0 bg-nexus-black"
+                className="flex min-w-0 flex-1 flex-col bg-bg-app"
                 style={{ minWidth: EDITOR_MIN }}
               >
                 <EditorArea />
@@ -309,7 +309,7 @@ export const IDERoute = () => {
           {/* API Playground View */}
           {activeView === 'api' && (
             <div className="flex-1 min-w-0 w-full flex flex-col overflow-hidden api-playground-swagger">
-              <div className="h-full overflow-auto bg-nexus-dark border border-nexus-gray">
+              <div className="h-full overflow-auto border border-border-default bg-bg-panel">
                 <SwaggerUI url={OPENAPI_SPEC_URL} />
               </div>
             </div>
@@ -324,14 +324,14 @@ export const IDERoute = () => {
 
           {/* Database View Placeholder */}
           {activeView === 'database' && (
-            <div className="flex-1 flex items-center justify-center flex-col text-nexus-muted bg-nexus-dark">
-              <div className="w-24 h-24 border border-nexus-gray flex items-center justify-center mb-6 bg-nexus-black animate-in zoom-in duration-300">
+            <div className="flex flex-1 flex-col items-center justify-center bg-bg-panel text-text-muted">
+              <div className="mb-6 flex h-24 w-24 items-center justify-center border border-border-default bg-bg-app animate-in zoom-in duration-300">
                 <Database size={48} className="text-blue-400" />
               </div>
-              <h3 className="font-sans font-bold text-2xl text-white mb-2 tracking-widest">
+              <h3 className="mb-2 font-sans text-2xl font-bold tracking-widest text-text-primary">
                 MODULE_NOT_LOADED
               </h3>
-              <p className="font-mono text-xs text-nexus-light/50 max-w-xs text-center leading-relaxed">
+              <p className="max-w-xs text-center font-mono text-xs leading-relaxed text-text-secondary/50">
                 This capability is currently in development.
               </p>
             </div>
@@ -339,20 +339,20 @@ export const IDERoute = () => {
 
           {/* Config View: Env Vars + Danger Zone */}
           {activeView === 'config' && (
-            <div className="flex-1 min-w-0 w-full flex flex-col overflow-auto bg-nexus-dark p-8">
+            <div className="flex min-w-0 w-full flex-1 flex-col overflow-auto bg-bg-panel p-8">
               <div className="max-w-2xl space-y-10">
                 <div>
-                  <h2 className="font-sans font-bold text-xl text-white mb-2 flex items-center gap-2">
-                    <Zap size={18} className="text-nexus-purple" /> ENVIRONMENT_VARS
+                  <h2 className="mb-2 flex items-center gap-2 font-sans text-xl font-bold text-text-primary">
+                    <Zap size={18} className="text-brand-primary" /> ENVIRONMENT_VARS
                   </h2>
-                  <p className="font-mono text-xs text-nexus-muted mb-4">
+                  <p className="mb-4 font-mono text-xs text-text-muted">
                     Key-value pairs injected at runtime. Keep secrets out of code.
                   </p>
                   <div className="space-y-3">
                     {projectConfig.envVars.map(ev => (
                       <div
                         key={ev.id}
-                        className="flex gap-2 items-center border border-nexus-gray bg-nexus-black p-3"
+                        className="flex items-center gap-2 border border-border-default bg-bg-app p-3"
                       >
                         <Input
                           value={ev.key}
@@ -394,7 +394,7 @@ export const IDERoute = () => {
                               envVars: c.envVars.filter(v => v.id !== ev.id),
                             }));
                           }}
-                          className="p-2 border border-nexus-gray text-nexus-muted hover:text-red-500 hover:border-red-500 transition-colors"
+                          className="border border-border-default p-2 text-text-muted transition-colors hover:border-red-500 hover:text-red-500"
                           title="Remove"
                         >
                           <Trash2 size={14} />
@@ -416,7 +416,7 @@ export const IDERoute = () => {
                           ],
                         }));
                       }}
-                      className="w-full py-3 border-2 border-dashed border-nexus-gray text-nexus-muted font-mono text-xs font-bold hover:border-nexus-purple hover:text-nexus-purple transition-colors flex items-center justify-center gap-2"
+                      className="flex w-full items-center justify-center gap-2 border-2 border-dashed border-border-default py-3 font-mono text-xs font-bold text-text-muted transition-colors hover:border-brand-primary hover:text-brand-primary"
                     >
                       <Plus size={14} /> ADD_VAR
                     </button>
@@ -427,14 +427,14 @@ export const IDERoute = () => {
                   <h2 className="font-sans font-bold text-xl text-red-500 mb-2 flex items-center gap-2">
                     <AlertTriangle size={18} /> DANGER_ZONE
                   </h2>
-                  <p className="font-mono text-xs text-nexus-muted mb-6">
+                  <p className="mb-6 font-mono text-xs text-text-muted">
                     Irreversible actions. Proceed with caution.
                   </p>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between border border-nexus-gray bg-nexus-black p-4">
+                    <div className="flex items-center justify-between border border-border-default bg-bg-app p-4">
                       <div>
-                        <div className="font-sans font-bold text-white mb-1">DELETE_PROJECT</div>
-                        <div className="font-mono text-xs text-nexus-muted">
+                        <div className="mb-1 font-sans font-bold text-text-primary">DELETE_PROJECT</div>
+                        <div className="font-mono text-xs text-text-muted">
                           Remove this project and all deployments. Cannot be undone.
                         </div>
                       </div>
@@ -445,18 +445,18 @@ export const IDERoute = () => {
                         DELETE
                       </button>
                     </div>
-                    <div className="flex items-center justify-between border border-nexus-gray bg-nexus-black p-4">
+                    <div className="flex items-center justify-between border border-border-default bg-bg-app p-4">
                       <div>
-                        <div className="font-sans font-bold text-white mb-1">
+                        <div className="mb-1 font-sans font-bold text-text-primary">
                           TRANSFER_OWNERSHIP
                         </div>
-                        <div className="font-mono text-xs text-nexus-muted">
+                        <div className="font-mono text-xs text-text-muted">
                           Transfer this project to another user or team.
                         </div>
                       </div>
                       <button
                         type="button"
-                        className="px-4 py-2 border border-nexus-gray text-nexus-muted font-mono text-xs font-bold hover:text-white hover:border-white transition-colors"
+                        className="border border-border-default px-4 py-2 font-mono text-xs font-bold text-text-muted transition-colors hover:border-text-primary hover:text-text-primary"
                       >
                         TRANSFER
                       </button>

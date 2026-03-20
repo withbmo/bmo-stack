@@ -4,7 +4,7 @@ import { ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@pytholit/ui/ui';
 
 import { usePasswordStrength } from '@/shared/auth/hooks/usePasswordStrength';
 import { type ApiError, getApiErrorMessage, resetPassword } from '@/shared/lib/auth';
@@ -114,22 +114,22 @@ export function ResetPasswordRoute() {
         <AuthHeader mode="login" />
         <AuthCard>
           <div className="space-y-4">
-            <h2 className="font-mono text-sm uppercase tracking-wider text-nexus-light">
+            <h2 className="font-mono text-sm uppercase tracking-wider text-text-secondary">
               Invalid Reset Link
             </h2>
-            <p className="font-mono text-xs text-nexus-muted">
+            <p className="font-mono text-xs text-text-muted">
               The password reset link is invalid or has expired. Please request a new one.
             </p>
-            <div className="pt-4 flex gap-3">
+            <div className="flex gap-3 pt-4">
               <Link
                 href="/auth/forgot-password"
-                className="flex-1 text-center font-mono text-xs text-nexus-muted hover:text-nexus-purple underline decoration-dotted underline-offset-4 transition-colors uppercase tracking-wider"
+                className="flex-1 text-center font-mono text-xs uppercase tracking-wider text-text-muted underline decoration-dotted underline-offset-4 transition-colors hover:text-brand-primary"
               >
                 Request new reset link
               </Link>
               <Link
                 href="/auth/login"
-                className="flex-1 text-center font-mono text-xs text-nexus-muted hover:text-nexus-purple underline decoration-dotted underline-offset-4 transition-colors uppercase tracking-wider"
+                className="flex-1 text-center font-mono text-xs uppercase tracking-wider text-text-muted underline decoration-dotted underline-offset-4 transition-colors hover:text-brand-primary"
               >
                 Back to login
               </Link>
@@ -146,7 +146,7 @@ export function ResetPasswordRoute() {
 
       <AuthCard>
         <div className="mb-6 text-center">
-          <h2 className="font-mono text-sm uppercase tracking-wider text-nexus-light">
+          <h2 className="font-mono text-sm uppercase tracking-wider text-text-secondary">
             Reset password
           </h2>
         </div>
@@ -155,9 +155,9 @@ export function ResetPasswordRoute() {
           {/* New Password */}
           <PasswordField
             value={password}
-            onChange={(value) => {
+            onChange={value => {
               setPassword(value);
-              setFieldErrors((current) => {
+              setFieldErrors(current => {
                 if (!current.password) return current;
                 const next = { ...current };
                 delete next.password;
@@ -168,17 +168,14 @@ export function ResetPasswordRoute() {
             error={!!fieldErrors.password}
             required
           />
-          <PasswordStrengthGuidance
-            strength={passwordStrength}
-            error={fieldErrors.password}
-          />
+          <PasswordStrengthGuidance strength={passwordStrength} error={fieldErrors.password} />
 
           {/* Confirm Password */}
           <PasswordField
             value={confirmPassword}
-            onChange={(val) => {
+            onChange={val => {
               setConfirmPassword(val);
-              setFieldErrors((current) => {
+              setFieldErrors(current => {
                 if (!current.confirmPassword) return current;
                 const next = { ...current };
                 delete next.confirmPassword;
@@ -212,7 +209,7 @@ export function ResetPasswordRoute() {
         <div className="mt-6 text-center space-y-2">
           <Link
             href="/auth/login"
-            className="block font-mono text-xs text-nexus-muted hover:text-nexus-purple underline decoration-dotted underline-offset-4 transition-colors uppercase tracking-wider"
+            className="block font-mono text-xs uppercase tracking-wider text-text-muted underline decoration-dotted underline-offset-4 transition-colors hover:text-brand-primary"
           >
             Back to login
           </Link>

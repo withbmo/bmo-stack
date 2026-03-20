@@ -3,7 +3,7 @@ import { Brain, FileText, GitBranch, ShieldCheck, Star } from 'lucide-react';
 import type { HubResource } from '../../../types';
 import { BaseInteractiveCard } from './BaseInteractiveCard';
 
-interface ResourceCardProps {
+export interface ResourceCardProps {
   resource: HubResource;
 }
 

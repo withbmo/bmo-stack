@@ -5,7 +5,7 @@ import { AUTH_CONSTANTS } from '@pytholit/validation';
 import { Loader2, Save } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@pytholit/ui/ui';
 
 import { useAuth } from '@/shared/auth';
 import { getApiErrorMessage } from '@/shared/lib';
@@ -144,13 +144,13 @@ export function OAuthOnboardingRoute() {
       <AuthHeader mode="register" title="Complete profile" subtitle="Required to continue" />
       <AuthCard>
         {loading ? (
-          <div className="font-mono text-xs text-nexus-light/70 uppercase tracking-wider">
+          <div className="font-mono text-xs uppercase tracking-wider text-text-secondary/70">
             Loading profile…
           </div>
         ) : (
           <form className="space-y-4" onSubmit={onSubmit}>
             <div className="space-y-2">
-              <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider">
+              <label className="font-mono text-xs uppercase tracking-wider text-brand-primary">
                 Username
               </label>
               <Input
@@ -167,7 +167,7 @@ export function OAuthOnboardingRoute() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider">
+                <label className="font-mono text-xs uppercase tracking-wider text-brand-primary">
                   First name
                 </label>
                 <Input
@@ -182,7 +182,7 @@ export function OAuthOnboardingRoute() {
               </div>
 
               <div className="space-y-2">
-                <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider">
+                <label className="font-mono text-xs uppercase tracking-wider text-brand-primary">
                   Last name
                 </label>
                 <Input
@@ -198,7 +198,7 @@ export function OAuthOnboardingRoute() {
             </div>
 
             <div className="space-y-2">
-              <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider">
+              <label className="font-mono text-xs uppercase tracking-wider text-brand-primary">
                 Bio (optional)
               </label>
               <Input

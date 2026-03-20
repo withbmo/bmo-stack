@@ -23,9 +23,9 @@ export const PricingCard = ({ plan, onAction, actionDisabled }: PricingCardProps
 
   return (
     <div
-      className={`relative min-w-0 bg-bg-panel/90 backdrop-blur border-2 p-8 transition-all duration-300 hover:-translate-y-2 group
+        className={`relative min-w-0 bg-bg-panel/90 backdrop-blur border-2 p-8 transition-all duration-300 hover:-translate-y-2 group
         ${recommended
-          ? 'border-brand-primary nexus-shadow'
+          ? 'border-brand-primary offset-shadow'
           : 'border-border-dim hover:border-border-default'
         }
       `}

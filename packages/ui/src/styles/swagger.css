@@ -4,8 +4,8 @@
    ========================================================================== */
 
 .api-playground-swagger .swagger-ui {
-  background: #0f0f0f !important;
-  color: var(--color-nexus-light) !important;
+  background: var(--color-bg-canvas) !important;
+  color: var(--color-text-primary) !important;
   font-family: var(--font-mono) !important;
   padding-left: 20px !important;
   padding-right: 20px !important;
@@ -40,14 +40,14 @@
 
 /* Info block (title, description) */
 .api-playground-swagger .swagger-ui .info {
-  background: var(--color-nexus-dark) !important;
-  border: 1px solid var(--color-nexus-gray) !important;
+  background: var(--color-bg-panel) !important;
+  border: 1px solid var(--color-border-default) !important;
   padding: 24px !important;
   margin-bottom: 24px !important;
 }
 
 .api-playground-swagger .swagger-ui .info .title {
-  color: var(--color-nexus-light) !important;
+  color: var(--color-text-primary) !important;
   font-size: 24px !important;
   font-weight: 700 !important;
   margin-bottom: 8px !important;
@@ -55,7 +55,7 @@
 
 .api-playground-swagger .swagger-ui .info p,
 .api-playground-swagger .swagger-ui .info .description {
-  color: var(--color-nexus-muted) !important;
+  color: var(--color-text-muted) !important;
   font-size: 12px !important;
   line-height: 1.5 !important;
 }
@@ -63,9 +63,9 @@
 /* Filter / search */
 .api-playground-swagger .swagger-ui .filter-container,
 .api-playground-swagger .swagger-ui .filter .operation-filter-input {
-  background: var(--color-nexus-dark) !important;
-  border: 1px solid var(--color-nexus-gray) !important;
-  color: var(--color-nexus-light) !important;
+  background: var(--color-bg-panel) !important;
+  border: 1px solid var(--color-border-default) !important;
+  color: var(--color-text-primary) !important;
   padding: 10px 14px !important;
   font-size: 12px !important;
 }
@@ -74,7 +74,7 @@
 .api-playground-swagger .swagger-ui .opblock-tag {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid var(--color-nexus-gray) !important;
+  border-bottom: 1px solid var(--color-border-default) !important;
   padding: 16px 0 8px !important;
   font-size: 14px !important;
   font-weight: 700 !important;
@@ -90,8 +90,8 @@
 /* Style only Swagger's built-in arrow (svg) so it's visible and matches theme */
 .api-playground-swagger .swagger-ui .opblock-tag svg {
   display: inline-block !important;
-  fill: var(--color-nexus-muted) !important;
-  color: var(--color-nexus-muted) !important;
+  fill: var(--color-text-muted) !important;
+  color: var(--color-text-muted) !important;
   vertical-align: middle !important;
   flex-shrink: 0 !important;
 }
@@ -108,7 +108,7 @@
 
 /* Operation block (GET/POST row + body) */
 .api-playground-swagger .swagger-ui .opblock {
-  border: 1px solid var(--color-nexus-gray) !important;
+  border: 1px solid var(--color-border-default) !important;
   margin-bottom: 8px !important;
   overflow: hidden !important;
 }
@@ -120,7 +120,7 @@
   border-left: 3px solid var(--color-brand-accent) !important;
 }
 .api-playground-swagger .swagger-ui .opblock.opblock-put {
-  border-left: 3px solid var(--color-nexus-neon) !important;
+  border-left: 3px solid var(--color-brand-neon) !important;
 }
 .api-playground-swagger .swagger-ui .opblock.opblock-delete {
   border-left: 3px solid #ef4444 !important;
@@ -133,7 +133,7 @@
 
 .api-playground-swagger .swagger-ui .opblock-body,
 .api-playground-swagger .swagger-ui .opblock-summary {
-  background: #0f0f0f !important;
+  background: var(--color-bg-canvas) !important;
   border: none !important;
   padding: 0 !important;
 }
@@ -149,8 +149,8 @@
   text-align: left !important;
   font-size: 12px !important;
   font-weight: 700 !important;
-  color: var(--color-nexus-light) !important;
-  background: #0f0f0f !important;
+  color: var(--color-text-primary) !important;
+  background: var(--color-bg-canvas) !important;
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
@@ -161,13 +161,13 @@
 }
 
 .api-playground-swagger .swagger-ui .opblock-summary-control:hover {
-  background: var(--color-nexus-dark) !important;
+  background: var(--color-bg-panel) !important;
 }
 
 .api-playground-swagger .swagger-ui .opblock-summary-control:focus {
   outline: none !important;
   box-shadow: none !important;
-  background: var(--color-nexus-dark) !important;
+  background: var(--color-bg-panel) !important;
 }
 
 .api-playground-swagger .swagger-ui .opblock-summary-control::-moz-focus-inner {
@@ -176,8 +176,8 @@
 
 .api-playground-swagger .swagger-ui .opblock.is-open .opblock-summary-control,
 .api-playground-swagger .swagger-ui .opblock.opblock-is-open .opblock-summary-control {
-  border-bottom: 1px solid var(--color-nexus-gray) !important;
-  background: var(--color-nexus-dark) !important;
+  border-bottom: 1px solid var(--color-border-default) !important;
+  background: var(--color-bg-panel) !important;
 }
 
 /* HTTP method badge */
@@ -200,7 +200,7 @@
 }
 
 .api-playground-swagger .swagger-ui .opblock.opblock-put .opblock-summary-method {
-  background: var(--color-nexus-neon) !important;
+  background: var(--color-brand-neon) !important;
   color: #fff !important;
 }
 
@@ -212,27 +212,27 @@
 /* Opblock description / path */
 .api-playground-swagger .swagger-ui .opblock-summary-path,
 .api-playground-swagger .swagger-ui .opblock-summary-description {
-  color: var(--color-nexus-light) !important;
+  color: var(--color-text-primary) !important;
 }
 
 .api-playground-swagger .swagger-ui .opblock-description-wrapper p,
 .api-playground-swagger .swagger-ui .opblock-external-docs-wrapper p,
 .api-playground-swagger .swagger-ui .opblock-title {
-  color: var(--color-nexus-muted) !important;
+  color: var(--color-text-muted) !important;
   font-size: 12px !important;
 }
 
 /* Section (Parameters, Response, etc.) */
 .api-playground-swagger .swagger-ui .opblock-section {
-  background: #0f0f0f !important;
-  border: 1px solid var(--color-nexus-gray) !important;
+  background: var(--color-bg-canvas) !important;
+  border: 1px solid var(--color-border-default) !important;
   border-top: none !important;
 }
 
 .api-playground-swagger .swagger-ui .opblock-section-header {
-  background: var(--color-nexus-dark) !important;
+  background: var(--color-bg-panel) !important;
   border: none !important;
-  border-bottom: 1px solid var(--color-nexus-gray) !important;
+  border-bottom: 1px solid var(--color-border-default) !important;
   padding: 12px 16px !important;
   display: flex !important;
   align-items: center !important;
@@ -241,7 +241,7 @@
   font-weight: 700 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.05em !important;
-  color: var(--color-nexus-light) !important;
+  color: var(--color-text-primary) !important;
 }
 
 .api-playground-swagger .swagger-ui .opblock-section-header .btn-group {
@@ -254,8 +254,8 @@
 .api-playground-swagger .swagger-ui .opblock-section-header .btn.cancel,
 .api-playground-swagger .swagger-ui .opblock-section-header button {
   background: transparent !important;
-  border: 1px solid var(--color-nexus-gray) !important;
-  color: var(--color-nexus-muted) !important;
+  border: 1px solid var(--color-border-default) !important;
+  color: var(--color-text-muted) !important;
   padding: 6px 12px !important;
   font-size: 10px !important;
   font-weight: 700 !important;
@@ -268,23 +268,23 @@
 .api-playground-swagger .swagger-ui .opblock-section-header .btn.cancel:hover,
 .api-playground-swagger .swagger-ui .opblock-section-header button:hover {
   border-color: var(--color-brand-primary) !important;
-  color: var(--color-nexus-light) !important;
+  color: var(--color-text-primary) !important;
 }
 
 .api-playground-swagger .swagger-ui .opblock-section .table-container {
-  background: #0f0f0f !important;
+  background: var(--color-bg-canvas) !important;
   border: none !important;
 }
 
 /* Tables (parameters, responses) */
 .api-playground-swagger .swagger-ui .table-container table {
-  border: 1px solid var(--color-nexus-gray) !important;
+  border: 1px solid var(--color-border-default) !important;
 }
 
 .api-playground-swagger .swagger-ui .table-container thead th {
-  background: var(--color-nexus-dark) !important;
-  border: 1px solid var(--color-nexus-gray) !important;
-  color: var(--color-nexus-muted) !important;
+  background: var(--color-bg-panel) !important;
+  border: 1px solid var(--color-border-default) !important;
+  color: var(--color-text-muted) !important;
   padding: 10px 14px !important;
   font-size: 11px !important;
   font-weight: 700 !important;
@@ -292,9 +292,9 @@
 }
 
 .api-playground-swagger .swagger-ui .table-container tbody td {
-  background: #0f0f0f !important;
-  border: 1px solid var(--color-nexus-gray) !important;
-  color: var(--color-nexus-light) !important;
+  background: var(--color-bg-canvas) !important;
+  border: 1px solid var(--color-border-default) !important;
+  color: var(--color-text-primary) !important;
   padding: 10px 14px !important;
   font-size: 12px !important;
 }
@@ -302,12 +302,12 @@
 .api-playground-swagger .swagger-ui .parameter__name,
 .api-playground-swagger .swagger-ui .parameter__type,
 .api-playground-swagger .swagger-ui .parameter__in {
-  color: var(--color-nexus-muted) !important;
+  color: var(--color-text-muted) !important;
 }
 
 .api-playground-swagger .swagger-ui .response-col_status,
 .api-playground-swagger .swagger-ui .response-col_links {
-  color: var(--color-nexus-light) !important;
+  color: var(--color-text-primary) !important;
 }
 
 /* Buttons – Try it out, Execute, Cancel */
@@ -330,8 +330,8 @@
 
 .api-playground-swagger .swagger-ui .btn.execute:hover,
 .api-playground-swagger .swagger-ui .btn.try-out__btn:hover {
-  background: var(--color-nexus-neon) !important;
-  border-color: var(--color-nexus-neon) !important;
+  background: var(--color-brand-neon) !important;
+  border-color: var(--color-brand-neon) !important;
 }
 
 /* Inputs */
@@ -339,16 +339,16 @@
 .api-playground-swagger .swagger-ui input[type='password'],
 .api-playground-swagger .swagger-ui textarea,
 .api-playground-swagger .swagger-ui select {
-  background: var(--color-nexus-dark) !important;
-  border: 1px solid var(--color-nexus-gray) !important;
-  color: var(--color-nexus-light) !important;
+  background: var(--color-bg-panel) !important;
+  border: 1px solid var(--color-border-default) !important;
+  color: var(--color-text-primary) !important;
   padding: 8px 12px !important;
   font-size: 12px !important;
 }
 
 .api-playground-swagger .swagger-ui input::placeholder,
 .api-playground-swagger .swagger-ui textarea::placeholder {
-  color: var(--color-nexus-muted) !important;
+  color: var(--color-text-muted) !important;
 }
 
 /* Links */
@@ -357,7 +357,7 @@
 }
 
 .api-playground-swagger .swagger-ui a:hover {
-  color: var(--color-nexus-neon) !important;
+  color: var(--color-brand-neon) !important;
 }
 
 /* Models / schemas */
@@ -365,34 +365,34 @@
 .api-playground-swagger .swagger-ui .model-box-control,
 .api-playground-swagger .swagger-ui section.models,
 .api-playground-swagger .swagger-ui .model {
-  background: #0f0f0f !important;
-  border: 1px solid var(--color-nexus-gray) !important;
-  color: var(--color-nexus-light) !important;
+  background: var(--color-bg-canvas) !important;
+  border: 1px solid var(--color-border-default) !important;
+  color: var(--color-text-primary) !important;
 }
 
 .api-playground-swagger .swagger-ui .model-title,
 .api-playground-swagger .swagger-ui .prop-type {
-  color: var(--color-nexus-muted) !important;
+  color: var(--color-text-muted) !important;
 }
 
 /* Response body / code blocks */
 .api-playground-swagger .swagger-ui .responses-inner,
 .api-playground-swagger .swagger-ui .highlight-code {
-  background: var(--color-nexus-dark) !important;
-  border: 1px solid var(--color-nexus-gray) !important;
+  background: var(--color-bg-panel) !important;
+  border: 1px solid var(--color-border-default) !important;
   padding: 14px !important;
 }
 
 .api-playground-swagger .swagger-ui .highlight-code pre,
 .api-playground-swagger .swagger-ui .microlight {
-  color: var(--color-nexus-light) !important;
+  color: var(--color-text-primary) !important;
   font-size: 12px !important;
 }
 
 /* Scheme container (Servers) – same width as info: inset by 20px each side */
 .api-playground-swagger .swagger-ui .scheme-container {
-  background: var(--color-nexus-dark) !important;
-  border: 1px solid var(--color-nexus-gray) !important;
+  background: var(--color-bg-panel) !important;
+  border: 1px solid var(--color-border-default) !important;
   padding: 16px 24px !important;
   margin-bottom: 24px !important;
   margin-left: 20px !important;

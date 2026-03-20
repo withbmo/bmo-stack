@@ -37,11 +37,11 @@ const FileTreeItem = ({ id, level, onContextMenu }: FileTreeItemProps) => {
   return (
     <div>
       <div
-        className={`flex items-center gap-1.5 py-1.5 px-2 cursor-pointer transition-all border-l-2 select-none group
+        className={`group flex cursor-pointer select-none items-center gap-1.5 border-l-2 px-2 py-1.5 transition-all
                     ${
                       activeFileId === node.id
-                        ? 'bg-nexus-purple/10 border-nexus-purple text-white'
-                        : 'border-transparent text-nexus-muted hover:text-white hover:bg-white/5'
+                        ? 'border-brand-primary bg-brand-primary/10 text-white'
+                        : 'border-transparent text-text-muted hover:bg-white/5 hover:text-white'
                     }
                 `}
         style={{ paddingLeft: `${level * 12 + 8}px` }}
@@ -97,7 +97,7 @@ const ContextMenu = ({ state, onClose, onAction }: ContextMenuProps) => {
 
   return (
     <div
-      className="fixed z-50 bg-nexus-dark border border-nexus-gray shadow-[0_0_20px_rgba(0,0,0,0.8)] w-48 py-1 animate-in fade-in duration-100 flex flex-col"
+      className="fixed z-50 flex w-48 flex-col border border-border-default bg-bg-panel py-1 shadow-[0_0_20px_rgba(0,0,0,0.8)] animate-in fade-in duration-100"
       style={{ top: state.y, left: state.x }}
       onClick={e => e.stopPropagation()}
     >
@@ -109,7 +109,7 @@ const ContextMenu = ({ state, onClose, onAction }: ContextMenuProps) => {
               onClose();
               onAction('new_file');
             }}
-            className="text-left px-4 py-2 hover:bg-nexus-purple/20 hover:text-white text-nexus-muted font-mono text-xs flex items-center gap-2"
+            className="flex items-center gap-2 px-4 py-2 font-mono text-xs text-text-muted hover:bg-brand-primary/20 hover:text-white"
           >
             <FilePlus size={14} /> New File
           </button>
@@ -119,11 +119,11 @@ const ContextMenu = ({ state, onClose, onAction }: ContextMenuProps) => {
               onClose();
               onAction('new_folder');
             }}
-            className="text-left px-4 py-2 hover:bg-nexus-purple/20 hover:text-white text-nexus-muted font-mono text-xs flex items-center gap-2"
+            className="flex items-center gap-2 px-4 py-2 font-mono text-xs text-text-muted hover:bg-brand-primary/20 hover:text-white"
           >
             <FolderPlus size={14} /> New Folder
           </button>
-          <div className="h-[1px] bg-nexus-gray/30 my-1 mx-2" />
+          <div className="mx-2 my-1 h-[1px] bg-border-default/30" />
         </>
       )}
       <button
@@ -132,7 +132,7 @@ const ContextMenu = ({ state, onClose, onAction }: ContextMenuProps) => {
           onClose();
           onAction('rename');
         }}
-        className="text-left px-4 py-2 hover:bg-nexus-purple/20 hover:text-white text-nexus-muted font-mono text-xs flex items-center gap-2"
+        className="flex items-center gap-2 px-4 py-2 font-mono text-xs text-text-muted hover:bg-brand-primary/20 hover:text-white"
       >
         <Edit2 size={14} /> Rename
       </button>
@@ -142,7 +142,7 @@ const ContextMenu = ({ state, onClose, onAction }: ContextMenuProps) => {
           onClose();
           onAction('delete');
         }}
-        className="text-left px-4 py-2 hover:bg-red-500/20 hover:text-red-400 text-nexus-muted font-mono text-xs flex items-center gap-2"
+        className="flex items-center gap-2 px-4 py-2 font-mono text-xs text-text-muted hover:bg-red-500/20 hover:text-red-400"
       >
         <Trash2 size={14} /> Delete
       </button>
@@ -186,8 +186,8 @@ export const FileTree = () => {
   };
 
   return (
-    <div className="shrink-0 flex flex-col bg-nexus-black relative w-[280px] min-w-[220px] max-w-[360px]">
-      <div className="h-10 shrink-0 px-3 border-b border-nexus-gray flex items-center justify-between text-xs font-mono font-bold text-nexus-muted">
+    <div className="relative flex w-[280px] min-w-[220px] max-w-[360px] shrink-0 flex-col bg-bg-app">
+      <div className="flex h-10 shrink-0 items-center justify-between border-b border-border-default px-3 font-mono text-xs font-bold text-text-muted">
         <span>FILES</span>
         <MoreVertical size={12} className="cursor-pointer hover:text-white" />
       </div>

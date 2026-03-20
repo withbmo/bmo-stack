@@ -1,11 +1,11 @@
 'use client';
 
-import type { Template } from '@pytholit/ui';
-import { Box,LayoutTemplate, Search, ShieldCheck } from 'lucide-react';
+import type { Template } from '@pytholit/ui/ui';
+import { Box, LayoutTemplate, Search, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 
-import { FilterTabButton,Input, TemplateCard } from '@/dashboard/components';
-import { DashboardPageHeader,PageLayout } from '@/shared/components/layout';
+import { FilterTabButton, Input, TemplateCard } from '@/dashboard/components';
+import { DashboardPageHeader, PageLayout } from '@/shared/components/layout';
 
 function toUICemplate(t: {
   id: string;
@@ -49,20 +49,20 @@ export const TemplatesRoute = ({ templates }: TemplatesRouteProps) => {
         badge={{ icon: LayoutTemplate, label: 'TEMPLATES' }}
         title={
           <>
-            TEMPLATE <span className="text-nexus-muted">STORE</span>
+            TEMPLATE <span className="text-text-muted">STORE</span>
           </>
         }
         subtitle="Jumpstart your next breakthrough with pre-architected foundations. Verified by the Pytholit Core Team and the Community."
       />
 
       {/* Controls - in page flow, scrolls with content (same as HubPage) */}
-      <div className="bg-nexus-black/95 backdrop-blur-xl border border-nexus-gray py-4 px-6 mb-8">
+      <div className="mb-8 border border-border-default bg-bg-canvas/95 px-6 py-4 backdrop-blur-xl">
         <div className="flex flex-col md:flex-row gap-6 justify-between md:items-center">
           {/* Search */}
           <div className="relative flex-grow max-w-2xl group">
-            <div className="absolute left-0 top-0 bottom-0 w-16 flex items-center justify-center border-r border-nexus-gray bg-nexus-gray/5 group-focus-within:bg-nexus-purple/10 group-focus-within:border-nexus-purple transition-all duration-300 z-10">
+            <div className="absolute bottom-0 left-0 top-0 z-10 flex w-16 items-center justify-center border-r border-border-default bg-border-default/5 transition-all duration-300 group-focus-within:border-brand-primary group-focus-within:bg-brand-primary/10">
               <Search
-                className="text-nexus-muted group-focus-within:text-nexus-purple transition-colors duration-300"
+                className="text-text-muted transition-colors duration-300 group-focus-within:text-brand-primary"
                 size={20}
               />
             </div>
@@ -72,7 +72,7 @@ export const TemplatesRoute = ({ templates }: TemplatesRouteProps) => {
               placeholder="SEARCH_TEMPLATES..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="bg-bg-surface py-4 pl-24 pr-4 focus:ring-nexus-purple/50 duration-300 placeholder-nexus-gray/40 uppercase tracking-widest"
+              className="bg-bg-surface py-4 pl-24 pr-4 uppercase tracking-widest placeholder-text-muted/40 duration-300"
             />
           </div>
 
@@ -102,7 +102,11 @@ export const TemplatesRoute = ({ templates }: TemplatesRouteProps) => {
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredTemplates.map(template => (
-          <TemplateCard key={template.id} template={toUICemplate(template)} />
+          <TemplateCard
+            key={template.id}
+            template={toUICemplate(template)}
+            actionHref="/dashboard/new"
+          />
         ))}
       </div>
     </PageLayout>

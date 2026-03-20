@@ -15,7 +15,7 @@ export const EmailField = ({
   placeholder = 'dev@nexus.py',
 }: EmailFieldProps) => (
   <div className="space-y-2">
-    <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider flex items-center gap-2">
+    <label className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-brand-primary">
       <Mail size={12} /> Email
     </label>
     <Input
@@ -43,7 +43,7 @@ export const UsernameField = ({
   placeholder = 'johndoe',
 }: UsernameFieldProps) => (
   <div className="space-y-2">
-    <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider flex items-center gap-2">
+    <label className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-brand-primary">
       <AtSign size={12} /> Username
     </label>
     <Input
@@ -73,7 +73,7 @@ export const FirstNameField = ({
   placeholder = 'John',
 }: FirstNameFieldProps) => (
   <div className="space-y-2">
-    <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider flex items-center gap-2">
+    <label className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-brand-primary">
       <User size={12} /> First name
     </label>
     <Input
@@ -103,7 +103,7 @@ export const LastNameField = ({
   placeholder = 'Doe',
 }: LastNameFieldProps) => (
   <div className="space-y-2">
-    <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider flex items-center gap-2">
+    <label className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-brand-primary">
       <User size={12} /> Last name
     </label>
     <Input
@@ -136,7 +136,7 @@ export const PasswordField = ({
   placeholder = '••••••••••••',
 }: PasswordFieldProps) => (
   <div className="space-y-2">
-    <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider flex items-center gap-2">
+    <label className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-brand-primary">
       <Key size={12} /> {label}
     </label>
     <Input

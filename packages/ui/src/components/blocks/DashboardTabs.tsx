@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 
 import { cn } from '../../utils/cn';
+import { Tabs, TabsList, TabsTrigger } from '../ui/Tabs';
 
 export interface DashboardTab {
   /** Unique value for the tab */
@@ -49,31 +50,32 @@ export const DashboardTabs = ({
   };
 
   return (
-    <div className={cn('flex flex-wrap gap-2', className)}>
-      {tabs.map(tab => {
-        const isActive = active === tab.value;
-        const Icon = tab.icon;
+    <Tabs value={active} onValueChange={onChange} className={className}>
+      <TabsList className="gap-2 border-none bg-transparent p-0">
+        {tabs.map(tab => {
+          const Icon = tab.icon;
 
-        return (
-          <button
-            key={tab.value}
-            onClick={() => onChange(tab.value)}
-            className={cn(
-              'font-mono uppercase tracking-wider border transition-colors',
-              sizeClasses[size],
-              size === 'small' ? '' : 'font-bold',
-              isActive
-                ? 'border-brand-primary text-brand-primary bg-brand-primary/10'
-                : 'border-border-dim text-text-secondary hover:text-white',
-              Icon ? 'flex items-center gap-2' : ''
-            )}
-          >
-            {Icon && <Icon size={size === 'small' ? 12 : 14} />}
-            {tab.label}
-          </button>
-        );
-      })}
-    </div>
+          return (
+            <TabsTrigger
+              key={tab.value}
+              value={tab.value}
+              className={cn(
+                'font-mono uppercase tracking-wider border transition-colors',
+                sizeClasses[size],
+                size === 'small' ? '' : 'font-bold',
+                Icon ? 'flex items-center gap-2' : '',
+                active === tab.value
+                  ? 'border-brand-primary bg-brand-primary/10 text-brand-primary'
+                  : 'border-border-dim text-text-secondary hover:text-white'
+              )}
+            >
+              {Icon && <Icon size={size === 'small' ? 12 : 14} />}
+              {tab.label}
+            </TabsTrigger>
+          );
+        })}
+      </TabsList>
+    </Tabs>
   );
 };
 

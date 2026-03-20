@@ -7,8 +7,8 @@ import Link from 'next/link';
 import { HERO_PYTHON_CODE } from '@/site/data/home';
 
 const CTAItem = ({ text }: { text: string }) => (
-  <div className="flex items-start gap-3 text-nexus-light/80 font-mono text-sm">
-    <CheckCircle2 size={16} className="text-nexus-accent mt-0.5" />
+  <div className="flex items-start gap-3 font-mono text-sm text-text-secondary/80">
+    <CheckCircle2 size={16} className="mt-0.5 text-brand-accent" />
     <span>{text}</span>
   </div>
 );
@@ -18,21 +18,21 @@ const CTAItem = ({ text }: { text: string }) => (
  */
 export const CTASection = () => {
   return (
-    <section className="py-32 px-6 bg-nexus-dark relative overflow-hidden border-t border-nexus-gray">
+    <section className="relative overflow-hidden border-t border-border-default bg-bg-panel px-6 py-32">
       {/* Top Gradient Line */}
-      <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-nexus-purple to-transparent" />
+      <div className="absolute left-0 top-0 h-[1px] w-full bg-gradient-to-r from-transparent via-brand-primary to-transparent" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(109,40,217,0.2),_transparent_55%)]" />
 
-      <div className="relative z-10 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-12 items-center">
+      <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
           {/* Headline */}
           <h2 className="text-5xl md:text-7xl font-bold mb-6">
             READY TO <br />
-            <span className="text-nexus-purple">ASCEND?</span>
+            <span className="text-brand-primary">ASCEND?</span>
           </h2>
 
           {/* Subtext */}
-          <p className="font-mono text-nexus-light/60 mb-8 max-w-xl">
+          <p className="mb-8 max-w-xl font-mono text-text-secondary/60">
             Join 4.2M+ developers building the future on Pytholit. No credit card required for dev
             environments.
           </p>
@@ -54,21 +54,21 @@ export const CTASection = () => {
           </div>
         </div>
 
-        <div className="border border-nexus-gray bg-nexus-black/80 backdrop-blur p-8 space-y-5">
-          <div className="text-xs font-mono uppercase tracking-widest text-nexus-muted">
+        <div className="space-y-5 border border-border-default bg-bg-app/80 p-8 backdrop-blur">
+          <div className="font-mono text-xs uppercase tracking-widest text-text-muted">
             What you get
           </div>
           <CTAItem text="One runtime for dev, staging, and prod." />
           <CTAItem text="Global deploys with instant rollbacks." />
           <CTAItem text="Built-in observability and access controls." />
-          <div className="border border-nexus-gray/60 bg-black/40 px-4 py-3 text-[11px] font-mono text-nexus-light/70">
+          <div className="border border-border-default/60 bg-bg-overlay/60 px-4 py-3 font-mono text-[11px] text-text-secondary/70">
             Deploy in minutes. Scale in seconds.
           </div>
         </div>
       </div>
 
       {/* Background Code Pattern */}
-      <div className="absolute top-0 left-0 w-full h-full opacity-[0.03] font-mono text-xs overflow-hidden pointer-events-none p-4 select-none">
+      <div className="pointer-events-none absolute left-0 top-0 h-full w-full select-none overflow-hidden p-4 font-mono text-xs opacity-[0.03]">
         {Array(50).fill(HERO_PYTHON_CODE).join('\n')}
       </div>
     </section>

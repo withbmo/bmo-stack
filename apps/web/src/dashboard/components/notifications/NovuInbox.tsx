@@ -1,7 +1,7 @@
 import { NovuProvider, useCounts, useNotifications } from '@novu/react';
-import { MotionPopover, Presence } from '@pytholit/ui';
+import { MotionPopover, Presence } from '@pytholit/ui/ui';
 import { Bell, X } from 'lucide-react';
-import { type RefObject,useEffect, useRef, useState } from 'react';
+import { type RefObject, useEffect, useRef, useState } from 'react';
 
 import { env } from '@/env';
 import { useAuth } from '@/shared/auth';
@@ -75,34 +75,34 @@ export const NovuInbox = () => {
     const severity = notification?.severity || 'none';
     const severityColor =
       severity === 'high'
-        ? 'text-red-400'
+        ? 'text-state-error'
         : severity === 'medium'
-          ? 'text-yellow-400'
+          ? 'text-state-warning'
           : severity === 'low'
-            ? 'text-nexus-accent'
-            : 'text-nexus-purple';
+            ? 'text-brand-accent'
+            : 'text-brand-primary';
     const unread = !notification?.isRead;
 
     return (
-      <div className="p-4 border-b border-nexus-gray/30 hover:bg-nexus-purple/5 transition-colors group cursor-pointer">
+      <div className="group cursor-pointer border-b border-border-default/40 p-4 transition-colors hover:bg-brand-primary/5">
         <div className="flex justify-between items-center mb-1">
           <span
             className={`text-[9px] font-mono font-bold uppercase tracking-wider ${severityColor}`}
           >
             [{severity}]
           </span>
-          <span className="text-[9px] text-nexus-muted font-mono">{time}</span>
+          <span className="font-mono text-[9px] text-text-muted">{time}</span>
         </div>
         <div className="flex items-start gap-2">
           <div
-            className={`mt-1 w-1.5 h-1.5 rounded-full ${unread ? 'bg-nexus-purple' : 'bg-nexus-gray/40'}`}
+            className={`mt-1 h-1.5 w-1.5 rounded-full ${unread ? 'bg-brand-primary' : 'bg-border-default/40'}`}
           />
           <div className="flex-1">
-            <h4 className="font-sans font-bold text-sm text-white mb-1 group-hover:text-nexus-purple transition-colors">
+            <h4 className="mb-1 text-sm font-sans font-bold text-white transition-colors group-hover:text-brand-primary">
               {title}
             </h4>
             {body ? (
-              <p className="font-mono text-xs text-nexus-light/60 leading-tight">{body}</p>
+              <p className="font-mono text-xs leading-tight text-text-secondary/80">{body}</p>
             ) : null}
           </div>
         </div>
@@ -123,13 +123,13 @@ export const NovuInbox = () => {
       <div className="relative">
         <CustomBell open={open} onToggle={() => setOpen(prev => !prev)} />
         <Presence>
-        {open ? (
-          <CustomPanel
-            panelRef={panelRef as React.RefObject<HTMLDivElement>}
-            onClose={() => setOpen(false)}
-            renderNotification={renderNotification}
-          />
-        ) : null}
+          {open ? (
+            <CustomPanel
+              panelRef={panelRef as React.RefObject<HTMLDivElement>}
+              onClose={() => setOpen(false)}
+              renderNotification={renderNotification}
+            />
+          ) : null}
         </Presence>
       </div>
     </NovuProvider>
@@ -147,21 +147,21 @@ const CustomBell = ({ open, onToggle }: CustomBellProps) => {
 
   return (
     <button
-      className={`relative w-9 h-9 grid place-items-center rounded-md border bg-nexus-black/80 transition-colors shadow-[0_0_20px_-10px_rgba(139,92,246,0.7)] ${
+      className={`relative grid h-9 w-9 place-items-center rounded-md border bg-bg-canvas/80 transition-colors shadow-[var(--shadow-brand)] ${
         open
-          ? 'border-nexus-purple text-white'
-          : 'border-nexus-gray hover:border-nexus-purple hover:text-white'
+          ? 'border-brand-primary text-white'
+          : 'border-border-default hover:border-brand-primary hover:text-white'
       }`}
       aria-label="Notifications"
       onClick={onToggle}
     >
-      <Bell size={16} className="text-nexus-light" />
+      <Bell size={16} className="text-text-secondary" />
       {unread > 0 && (
-        <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-mono flex items-center justify-center">
+        <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-state-error px-1 font-mono text-[10px] text-white">
           {unread > 99 ? '99+' : unread}
         </span>
       )}
-      <span className="absolute inset-0 rounded-md ring-1 ring-nexus-purple/10 pointer-events-none" />
+      <span className="pointer-events-none absolute inset-0 rounded-md ring-1 ring-brand-primary/10" />
     </button>
   );
 };
@@ -193,18 +193,18 @@ const CustomPanel = ({ panelRef, onClose, renderNotification }: CustomPanelProps
   return (
     <MotionPopover
       ref={panelRef}
-      className="absolute right-0 top-12 w-[380px] bg-[#050505] border border-nexus-gray shadow-[0_0_60px_-16px_rgba(109,40,217,0.6)] z-[100]"
+      className="absolute right-0 top-12 z-[var(--z-overlay)] w-[380px] border border-border-default bg-bg-canvas shadow-[var(--shadow-panel)]"
     >
-      <div className="flex justify-between items-center p-3 border-b border-nexus-gray bg-black/80 backdrop-blur">
+      <div className="flex items-center justify-between border-b border-border-default bg-bg-canvas/80 p-3 backdrop-blur">
         <div className="flex items-center gap-2">
-          <span className="inline-flex w-1.5 h-1.5 rounded-full bg-nexus-purple animate-pulse" />
-          <span className="font-mono text-[10px] font-bold text-white tracking-widest uppercase">
+          <span className="inline-flex h-1.5 w-1.5 rounded-full bg-brand-primary animate-pulse" />
+          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-white">
             NOTIFICATIONS
           </span>
         </div>
         <button
           onClick={onClose}
-          className="text-nexus-muted hover:text-white transition-colors"
+          className="text-text-muted transition-colors hover:text-white"
           aria-label="Close notifications"
         >
           <X size={14} />
@@ -213,24 +213,24 @@ const CustomPanel = ({ panelRef, onClose, renderNotification }: CustomPanelProps
 
       <div className="max-h-[380px] overflow-y-auto">
         {isLoading ? (
-          <div className="p-4 text-xs font-mono text-nexus-muted">LOADING...</div>
+          <div className="p-4 font-mono text-xs text-text-muted">LOADING...</div>
         ) : notifications && notifications.length > 0 ? (
           notifications.map(notification => (
             <div key={notification.id}>{renderNotification(notification)}</div>
           ))
         ) : (
           <div className="p-8 text-center">
-            <div className="mx-auto mb-3 h-10 w-10 rounded-full border border-nexus-gray/40 bg-nexus-black/70 grid place-items-center">
-              <Bell size={16} className="text-nexus-muted" />
+            <div className="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-full border border-border-default/40 bg-bg-app/70">
+              <Bell size={16} className="text-text-muted" />
             </div>
-            <div className="text-[10px] font-mono text-nexus-muted tracking-widest">
+            <div className="font-mono text-[10px] tracking-widest text-text-muted">
               NO NOTIFICATIONS
             </div>
           </div>
         )}
         {hasMore ? (
           <button
-            className="w-full py-2 text-[10px] font-mono text-nexus-muted hover:text-white uppercase tracking-wider transition-colors hover:bg-nexus-gray/10"
+            className="w-full py-2 font-mono text-[10px] uppercase tracking-wider text-text-muted transition-colors hover:bg-border-default/10 hover:text-white"
             onClick={() => fetchMore()}
             disabled={isFetching}
           >
@@ -239,9 +239,9 @@ const CustomPanel = ({ panelRef, onClose, renderNotification }: CustomPanelProps
         ) : null}
       </div>
 
-      <div className="p-2 bg-black/80 text-center border-t border-nexus-gray">
+      <div className="border-t border-border-default bg-bg-canvas/80 p-2 text-center">
         <button
-          className="text-[10px] font-mono text-nexus-muted hover:text-white uppercase tracking-wider transition-colors py-1 w-full hover:bg-nexus-gray/10"
+          className="w-full py-1 font-mono text-[10px] uppercase tracking-wider text-text-muted transition-colors hover:bg-border-default/10 hover:text-white"
           onClick={() => readAll()}
         >
           MARK ALL READ

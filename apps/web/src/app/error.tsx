@@ -28,7 +28,7 @@ export default function ErrorPage({
           </Button>
           <Link
             href="/"
-            className="font-mono text-xs text-nexus-muted hover:text-nexus-purple uppercase tracking-wider"
+            className="font-mono text-xs uppercase tracking-wider text-text-muted hover:text-brand-primary"
           >
             Go home
           </Link>

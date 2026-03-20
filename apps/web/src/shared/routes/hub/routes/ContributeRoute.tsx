@@ -36,21 +36,21 @@ export const ContributeRoute = () => {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-nexus-black flex items-center justify-center p-6 relative">
+      <div className="relative flex min-h-screen items-center justify-center bg-bg-canvas p-6">
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
           <BackgroundLayers />
         </div>
-        <div className="relative z-10 max-w-md w-full bg-bg-surface border border-nexus-accent p-8 text-center animate-in zoom-in-95 duration-300 nexus-shadow shadow-[0_0_50px_-10px_rgba(0,255,148,0.2)]">
-          <div className="w-16 h-16 bg-nexus-accent/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-nexus-accent">
-            <Check size={32} className="text-nexus-accent" />
+        <div className="relative z-10 w-full max-w-md animate-in zoom-in-95 border border-brand-accent bg-bg-surface p-8 text-center shadow-[var(--shadow-panel)] duration-300">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-brand-accent bg-brand-accent/10">
+            <Check size={32} className="text-brand-accent" />
           </div>
           <h2 className="text-2xl font-bold text-white mb-2 font-sans">TRANSMISSION COMPLETE</h2>
-          <p className="font-mono text-xs text-nexus-muted mb-6">
+          <p className="mb-6 font-mono text-xs text-text-muted">
             Your resource has been uploaded to the decentralised knowledge graph. Verification
             pending...
           </p>
-          <div className="h-1 w-full bg-nexus-gray/20 rounded-full overflow-hidden">
-            <div className="h-full bg-nexus-accent animate-[loading_2s_ease-in-out]"></div>
+          <div className="h-1 w-full overflow-hidden rounded-full bg-border-default/20">
+            <div className="h-full bg-brand-accent animate-[loading_2s_ease-in-out]"></div>
           </div>
         </div>
       </div>
@@ -62,20 +62,20 @@ export const ContributeRoute = () => {
       <div className="max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Header */}
         <DashboardPageHeader
-          badge={{ icon: Upload, label: 'CONTRIBUTE' }}
-          title={
-            <>
-              CONTRIBUTE <span className="text-nexus-purple">ARTIFACT</span>
-            </>
-          }
-          subtitle="Share your knowledge with the community"
-          actions={
-            <button
-              onClick={() => router.push('/dashboard/hub')}
-              className="text-xs font-mono text-nexus-muted hover:text-nexus-purple flex items-center gap-2 transition-colors group"
-            >
-              <ArrowRight
-                className="rotate-180 group-hover:-translate-x-1 transition-transform"
+        badge={{ icon: Upload, label: 'CONTRIBUTE' }}
+        title={
+          <>
+            CONTRIBUTE <span className="text-brand-primary">ARTIFACT</span>
+          </>
+        }
+        subtitle="Share your knowledge with the community"
+        actions={
+          <button
+            onClick={() => router.push('/dashboard/hub')}
+            className="group flex items-center gap-2 font-mono text-xs text-text-muted transition-colors hover:text-brand-primary"
+          >
+            <ArrowRight
+              className="rotate-180 group-hover:-translate-x-1 transition-transform"
                 size={12}
               />{' '}
               BACK TO HUB
@@ -93,16 +93,16 @@ export const ContributeRoute = () => {
               className={`p-6 border-2 transition-all flex flex-col items-center gap-3 group relative overflow-hidden
                   ${
                     activeType === 'readme'
-                      ? 'border-nexus-purple bg-nexus-purple/5'
-                      : 'border-nexus-gray bg-bg-surface hover:border-nexus-light'
+                      ? 'border-brand-primary bg-brand-primary/5'
+                      : 'border-border-default bg-bg-surface hover:border-text-secondary'
                   }`}
             >
               <FileText
                 size={24}
                 className={
                   activeType === 'readme'
-                    ? 'text-nexus-purple'
-                    : 'text-nexus-muted group-hover:text-white'
+                    ? 'text-brand-primary'
+                    : 'text-text-muted group-hover:text-white'
                 }
               />
               <div className="text-center relative z-10">
@@ -110,15 +110,15 @@ export const ContributeRoute = () => {
                   className={`font-mono text-sm font-bold mb-1 ${
                     activeType === 'readme'
                       ? 'text-white'
-                      : 'text-nexus-muted group-hover:text-white'
+                      : 'text-text-muted group-hover:text-white'
                   }`}
                 >
                   PROTOCOL (README)
                 </div>
-                <div className="text-[10px] text-nexus-muted">Code patterns & Boilerplates</div>
+                <div className="text-[10px] text-text-muted">Code patterns & Boilerplates</div>
               </div>
               {activeType === 'readme' && (
-                <div className="absolute top-2 right-2 text-nexus-purple">
+                <div className="absolute top-2 right-2 text-brand-primary">
                   <Check size={14} />
                 </div>
               )}
@@ -130,16 +130,16 @@ export const ContributeRoute = () => {
               className={`p-6 border-2 transition-all flex flex-col items-center gap-3 group relative overflow-hidden
                   ${
                     activeType === 'skill'
-                      ? 'border-nexus-purple bg-nexus-purple/5'
-                      : 'border-nexus-gray bg-bg-surface hover:border-nexus-light'
+                      ? 'border-brand-primary bg-brand-primary/5'
+                      : 'border-border-default bg-bg-surface hover:border-text-secondary'
                   }`}
             >
               <Brain
                 size={24}
                 className={
                   activeType === 'skill'
-                    ? 'text-nexus-purple'
-                    : 'text-nexus-muted group-hover:text-white'
+                    ? 'text-brand-primary'
+                    : 'text-text-muted group-hover:text-white'
                 }
               />
               <div className="text-center relative z-10">
@@ -147,15 +147,15 @@ export const ContributeRoute = () => {
                   className={`font-mono text-sm font-bold mb-1 ${
                     activeType === 'skill'
                       ? 'text-white'
-                      : 'text-nexus-muted group-hover:text-white'
+                      : 'text-text-muted group-hover:text-white'
                   }`}
                 >
                   COGNITION (SKILL)
                 </div>
-                <div className="text-[10px] text-nexus-muted">Conceptual Roadmaps</div>
+                <div className="text-[10px] text-text-muted">Conceptual Roadmaps</div>
               </div>
               {activeType === 'skill' && (
-                <div className="absolute top-2 right-2 text-nexus-purple">
+                <div className="absolute top-2 right-2 text-brand-primary">
                   <Check size={14} />
                 </div>
               )}
@@ -163,24 +163,24 @@ export const ContributeRoute = () => {
           </div>
 
           {/* Details */}
-          <div className="bg-bg-panel border border-nexus-gray p-8 space-y-6 relative nexus-shadow">
-            <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-nexus-purple"></div>
-            <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-nexus-purple"></div>
+          <div className="relative space-y-6 border border-border-default bg-bg-panel p-8 shadow-[var(--shadow-panel)]">
+            <div className="absolute left-0 top-0 h-2 w-2 border-l border-t border-brand-primary"></div>
+            <div className="absolute bottom-0 right-0 h-2 w-2 border-b border-r border-brand-primary"></div>
 
             <div className="space-y-2">
-              <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider flex items-center gap-2">
+              <label className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-brand-primary">
                 <Terminal size={12} /> Resource Title
               </label>
               <Input required type="text" placeholder="e.g. Distributed Consensus in Go" />
             </div>
 
             <div className="space-y-2">
-              <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider flex items-center gap-2">
+              <label className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-brand-primary">
                 <LinkIcon size={12} /> Source URL
               </label>
               <div className="flex">
-                <div className="bg-nexus-gray/20 border border-r-0 border-nexus-gray px-4 flex items-center justify-center">
-                  <Github size={16} className="text-nexus-muted" />
+                <div className="flex items-center justify-center border border-r-0 border-border-default bg-border-default/20 px-4">
+                  <Github size={16} className="text-text-muted" />
                 </div>
                 <Input
                   required
@@ -192,7 +192,7 @@ export const ContributeRoute = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider">
+              <label className="font-mono text-xs uppercase tracking-wider text-brand-primary">
                 Description
               </label>
               <Input
@@ -204,7 +204,7 @@ export const ContributeRoute = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider">
+              <label className="font-mono text-xs uppercase tracking-wider text-brand-primary">
                 Tags (Comma Separated)
               </label>
               <Input type="text" placeholder="rust, systems, low-level" />
@@ -216,7 +216,7 @@ export const ContributeRoute = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`bg-nexus-purple text-white font-mono font-bold text-sm px-10 py-4 flex items-center gap-3 transition-all hover:bg-nexus-neon nexus-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none border border-white/20
+              className={`flex items-center gap-3 border border-white/20 bg-brand-primary px-10 py-4 font-mono text-sm font-bold text-white transition-all shadow-[var(--shadow-brand)] hover:translate-x-1 hover:translate-y-1 hover:bg-brand-neon hover:shadow-none
                   ${isSubmitting ? 'opacity-70 cursor-wait' : ''}`}
             >
               {isSubmitting ? (

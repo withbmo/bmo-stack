@@ -1,6 +1,6 @@
 'use client';
 
-import { MotionSlideIn, MotionStagger } from '@pytholit/ui';
+import { MotionSlideIn, MotionStagger } from '@pytholit/ui/ui';
 import { BackgroundLayers, GlitchText } from '@pytholit/ui/blocks';
 import { Button } from '@pytholit/ui/ui';
 import { Box, Globe, ShieldCheck, Terminal, Zap } from 'lucide-react';
@@ -35,12 +35,12 @@ export const HeroSection = () => {
     });
 
   return (
-    <section className="relative min-h-screen pt-32 pb-20 px-6 flex flex-col border-b border-nexus-gray bg-nexus-black">
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+    <section className="relative flex min-h-screen flex-col border-b border-border-default bg-bg-app px-6 pb-20 pt-32">
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         <BackgroundLayers />
       </div>
 
-      <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-20 flex-1">
+      <div className="relative z-20 mx-auto grid w-full max-w-7xl flex-1 grid-cols-1 items-center gap-16 lg:grid-cols-2">
         {/* Left Column - Hero Content */}
         <HeroContent />
 
@@ -67,7 +67,7 @@ const HeroContent = () => (
         Build Python <br />
         <GlitchText
           text="RUNTIMES"
-          className="text-transparent bg-clip-text bg-gradient-to-r from-white via-nexus-light to-nexus-purple"
+          className="bg-gradient-to-r from-text-primary via-text-secondary to-brand-primary bg-clip-text text-transparent"
         />
       </h2>
     </MotionSlideIn>
@@ -75,7 +75,7 @@ const HeroContent = () => (
     {/* Description */}
     <MotionSlideIn
       as="p"
-      className="font-mono text-nexus-light/70 text-lg md:text-xl max-w-xl border-l-2 border-nexus-purple pl-6 py-3 bg-black/30 backdrop-blur-sm"
+      className="max-w-xl border-l-2 border-brand-primary bg-bg-overlay/60 py-3 pl-6 font-mono text-lg text-text-secondary/80 backdrop-blur-sm md:text-xl"
     >
       A brutalist runtime for teams that ship fast. Prompt the runtime, edit code, and deploy
       globally without leaving the browser.
@@ -116,11 +116,11 @@ interface HeroPillProps {
 }
 
 const HeroPill = ({ icon, title, detail }: HeroPillProps) => (
-  <MotionSlideIn className="border border-nexus-gray/70 bg-nexus-dark/70 px-4 py-3 flex flex-col gap-2">
-    <div className="flex items-center gap-2 text-nexus-purple">
+  <MotionSlideIn className="flex flex-col gap-2 border border-border-default/70 bg-bg-panel/70 px-4 py-3">
+    <div className="flex items-center gap-2 text-brand-primary">
       {icon}
       <span className="font-mono text-xs uppercase tracking-widest">{title}</span>
     </div>
-    <div className="text-nexus-light/70 font-mono text-xs">{detail}</div>
+    <div className="font-mono text-xs text-text-secondary/70">{detail}</div>
   </MotionSlideIn>
 );

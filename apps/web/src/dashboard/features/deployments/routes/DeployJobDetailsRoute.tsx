@@ -2,15 +2,15 @@
 
 import { DEPLOY_JOB_STATUS } from '@pytholit/contracts';
 import { Rocket } from 'lucide-react';
-import { useParams,useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
 import { Button, DeployJobStatusBadge, EmptyState } from '@/dashboard/components';
 import { AsyncState } from '@/dashboard/shared/state/AsyncState';
-import { DashboardPageHeader,PageLayout } from '@/shared/components/layout';
+import { DashboardPageHeader, PageLayout } from '@/shared/components/layout';
 import { formatTimestamp } from '@/shared/lib/date';
 
 import { DeployJobStepper } from '../components/DeployJobStepper';
-import { useCancelDeployJob,useDeployJob } from '../hooks/useDeployJobs';
+import { useCancelDeployJob, useDeployJob } from '../hooks/useDeployJobs';
 
 export const DeployJobDetailsRoute = () => {
   const params = useParams();
@@ -61,30 +61,32 @@ export const DeployJobDetailsRoute = () => {
       />
 
       {/* Status badges below header */}
-      <div className="flex flex-wrap items-center gap-3 mb-8">
+      <div className="mb-8 flex flex-wrap items-center gap-3">
         <DeployJobStatusBadge status={job.status} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <div className="bg-bg-panel border border-border-dim p-4">
-          <div className="text-[10px] font-mono text-nexus-muted uppercase tracking-wider">
+      <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="border border-border-dim bg-bg-panel p-4">
+          <div className="font-mono text-[10px] uppercase tracking-wider text-text-muted">
             Created
           </div>
-          <div className="text-sm font-mono text-white mt-2">{formatTimestamp(job.createdAt)}</div>
+          <div className="mt-2 font-mono text-sm text-text-primary">
+            {formatTimestamp(job.createdAt)}
+          </div>
         </div>
-        <div className="bg-bg-panel border border-border-dim p-4">
-          <div className="text-[10px] font-mono text-nexus-muted uppercase tracking-wider">
+        <div className="border border-border-dim bg-bg-panel p-4">
+          <div className="font-mono text-[10px] uppercase tracking-wider text-text-muted">
             Started
           </div>
-          <div className="text-sm font-mono text-white mt-2">
+          <div className="mt-2 font-mono text-sm text-text-primary">
             {formatTimestamp(job.startedAt) === '—' ? 'Pending' : formatTimestamp(job.startedAt)}
           </div>
         </div>
-        <div className="bg-bg-panel border border-border-dim p-4">
-          <div className="text-[10px] font-mono text-nexus-muted uppercase tracking-wider">
+        <div className="border border-border-dim bg-bg-panel p-4">
+          <div className="font-mono text-[10px] uppercase tracking-wider text-text-muted">
             Finished
           </div>
-          <div className="text-sm font-mono text-white mt-2">
+          <div className="mt-2 font-mono text-sm text-text-primary">
             {formatTimestamp(job.finishedAt) === '—'
               ? 'In progress'
               : formatTimestamp(job.finishedAt)}
@@ -94,8 +96,8 @@ export const DeployJobDetailsRoute = () => {
 
       <div className="space-y-4">
         <div>
-          <h2 className="text-xl font-sans font-bold text-white">Steps</h2>
-          <p className="text-xs font-mono text-nexus-muted mt-1">
+          <h2 className="font-sans text-xl font-bold text-text-primary">Steps</h2>
+          <p className="mt-1 font-mono text-xs text-text-muted">
             Job runner updates every 1-2 seconds.
           </p>
         </div>

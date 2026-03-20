@@ -8,27 +8,27 @@ interface DeploymentTableProps {
 }
 
 export const DeploymentTable = ({ deployments, onProjectClick }: DeploymentTableProps) => (
-  <div className="bg-bg-panel border border-nexus-gray overflow-hidden">
+  <div className="overflow-hidden border border-border-default bg-bg-panel">
     <div className="overflow-x-auto">
       <table className="w-full text-left border-collapse">
-        <thead className="bg-black/50 border-b border-nexus-gray">
+        <thead className="border-b border-border-default bg-black/50">
           <tr>
-            <th className="px-4 py-3 text-[10px] font-mono text-nexus-muted uppercase tracking-wider">
+            <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-text-muted">
               PROJECT
             </th>
-            <th className="px-4 py-3 text-[10px] font-mono text-nexus-muted uppercase tracking-wider">
+            <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-text-muted">
               STATUS
             </th>
-            <th className="px-4 py-3 text-[10px] font-mono text-nexus-muted uppercase tracking-wider">
+            <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-text-muted">
               REGION
             </th>
-            <th className="px-4 py-3 text-[10px] font-mono text-nexus-muted uppercase tracking-wider">
+            <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-text-muted">
               DEPLOYED
             </th>
-            <th className="px-4 py-3 text-[10px] font-mono text-nexus-muted uppercase tracking-wider">
+            <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-text-muted">
               URL
             </th>
-            <th className="px-4 py-3 text-[10px] font-mono text-nexus-muted uppercase tracking-wider w-24">
+            <th className="w-24 px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-text-muted">
               ACTIONS
             </th>
           </tr>
@@ -36,7 +36,7 @@ export const DeploymentTable = ({ deployments, onProjectClick }: DeploymentTable
         <tbody>
           {deployments.length === 0 ? (
             <tr>
-              <td colSpan={6} className="px-4 py-12 text-center font-mono text-nexus-muted">
+              <td colSpan={6} className="px-4 py-12 text-center font-mono text-text-muted">
                 No deployments match this filter.
               </td>
             </tr>

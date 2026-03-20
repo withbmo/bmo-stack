@@ -6,7 +6,7 @@ import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@pytholit/ui/ui';
 
 import { env } from '@/env';
 import { useAuth } from '@/shared/auth';
@@ -286,7 +286,7 @@ export function SignupRoute() {
       <div className="mt-6 text-center">
         <Link
           href="/auth/login"
-          className="font-mono text-xs text-nexus-muted hover:text-nexus-purple underline decoration-dotted underline-offset-4 transition-colors uppercase tracking-wider"
+          className="font-mono text-xs uppercase tracking-wider text-text-muted underline decoration-dotted underline-offset-4 transition-colors hover:text-brand-primary"
         >
           HAVE ACCOUNT? [LOGIN]
         </Link>

@@ -1,7 +1,7 @@
-import { FileCode, X } from "lucide-react";
+import { FileCode, X } from 'lucide-react';
 
-import { useIdeStore } from "../stores/ide-store";
-import { getFileIcon } from "../utils/get-file-icon";
+import { useIdeStore } from '../stores/ide-store';
+import { getFileIcon } from '../utils/get-file-icon';
 
 export interface CodeEditorProps {
   content: string;
@@ -16,11 +16,11 @@ export const CodeEditor = ({
   language,
   onChange,
 }: CodeEditorProps) => {
-  const lineCount = content.split("\n").length || 1;
+  const lineCount = content.split('\n').length || 1;
 
   return (
-    <div className="h-full flex font-mono text-sm overflow-hidden bg-nexus-black">
-      <div className="w-12 bg-nexus-dark border-r border-nexus-gray/20 text-nexus-muted/40 text-right pr-3 py-4 select-none">
+    <div className="flex h-full overflow-hidden bg-bg-app font-mono text-sm">
+      <div className="w-12 select-none border-r border-border-default/20 bg-bg-panel py-4 pr-3 text-right text-text-muted/40">
         {Array.from({ length: lineCount }).map((_, i) => (
           <div key={i} className="leading-6">
             {i + 1}
@@ -28,10 +28,10 @@ export const CodeEditor = ({
         ))}
       </div>
       <textarea
-        className="flex-1 bg-transparent text-white p-4 focus:outline-none resize-none leading-6 font-mono selection:bg-nexus-purple/40"
+        className="flex-1 resize-none bg-transparent p-4 font-mono leading-6 text-white selection:bg-brand-primary/40 focus:outline-none"
         value={content}
         spellCheck={false}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={e => onChange(e.target.value)}
         data-file-name={name}
         data-language={language}
       />
@@ -49,13 +49,13 @@ export const EditorArea = () => {
   const updateFileContent = useIdeStore((s) => s.updateFileContent);
 
   const activeContent =
-    activeFileId != null ? fileContents[activeFileId] ?? "" : "";
+    activeFileId != null ? fileContents[activeFileId] ?? '' : '';
   const activeMeta = activeFileId != null ? files[activeFileId] : null;
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 bg-nexus-black">
-      <div className="flex-grow flex flex-col min-h-0">
-        <div className="editor-tabs-scroll h-10 shrink-0 flex items-center border-b border-nexus-gray bg-nexus-dark overflow-x-auto">
+    <div className="flex min-w-0 flex-1 flex-col bg-bg-app">
+      <div className="flex min-h-0 flex-grow flex-col">
+        <div className="editor-tabs-scroll flex h-10 shrink-0 items-center overflow-x-auto border-b border-border-default bg-bg-panel">
           {openFileIds.map((fileId) => {
             const meta = files[fileId];
             if (!meta) return null;
@@ -66,21 +66,21 @@ export const EditorArea = () => {
                 role="tab"
                 aria-selected={isActive}
                 onClick={() => setActiveFile(fileId)}
-                className={`h-full px-4 flex items-center gap-2 border-r border-nexus-gray/50 text-xs font-mono shrink-0 cursor-pointer transition-colors ${
+                className={`flex h-full shrink-0 cursor-pointer items-center gap-2 border-r border-border-default/50 px-4 font-mono text-xs transition-colors ${
                   isActive
-                    ? "bg-nexus-black border-t-2 border-t-nexus-purple text-white"
-                    : "text-nexus-muted hover:text-white hover:bg-nexus-gray/20"
+                    ? 'border-t-2 border-t-brand-primary bg-bg-app text-white'
+                    : 'text-text-muted hover:bg-border-default/20 hover:text-white'
                 }`}
               >
-                {getFileIcon(meta.name, "file")}
+                {getFileIcon(meta.name, 'file')}
                 <span className="truncate max-w-[120px]">{meta.name}</span>
                 <button
                   type="button"
-                  onClick={(e) => {
+                  onClick={e => {
                     e.stopPropagation();
                     closeFile(fileId);
                   }}
-                  className="p-0.5 rounded hover:bg-nexus-gray/50 text-nexus-muted hover:text-white"
+                  className="rounded p-0.5 text-text-muted hover:bg-border-default/50 hover:text-white"
                   aria-label={`Close ${meta.name}`}
                 >
                   <X size={12} />
@@ -89,7 +89,7 @@ export const EditorArea = () => {
             );
           })}
         </div>
-        <div className="flex-1 relative overflow-auto">
+        <div className="relative flex-1 overflow-auto">
           {activeFileId && activeMeta ? (
             <CodeEditor
               content={activeContent}
@@ -98,7 +98,7 @@ export const EditorArea = () => {
               onChange={(val) => updateFileContent(activeFileId, val)}
             />
           ) : (
-            <div className="h-full flex flex-col items-center justify-center text-nexus-muted opacity-50">
+            <div className="flex h-full flex-col items-center justify-center text-text-muted opacity-50">
               <FileCode size={48} className="mb-4" />
               <p className="font-mono text-sm">SELECT_FILE_TO_EDIT</p>
             </div>

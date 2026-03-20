@@ -1,4 +1,4 @@
-import { cn } from '@pytholit/ui';
+import { cn } from '@pytholit/ui/ui';
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -40,18 +40,20 @@ export const DashboardPageHeader = ({
   return (
     <div
       className={cn(
-        'flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 border-b border-nexus-gray pb-6',
+        'mb-8 flex flex-col justify-between gap-6 border-b border-border-default pb-6 md:flex-row md:items-end',
         className
       )}
     >
       <div>
         {badge && (
-          <div className="flex items-center gap-2 text-xs font-mono text-nexus-purple mb-2 tracking-widest uppercase">
+          <div className="mb-2 flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-brand-primary">
             <badge.icon size={12} /> {badge.label}
           </div>
         )}
-        <h1 className={cn('font-sans font-bold text-white', titleSizeClasses[variant])}>{title}</h1>
-        {subtitle && <p className="font-mono text-sm text-nexus-muted mt-2">{subtitle}</p>}
+        <h1 className={cn('font-sans font-bold text-text-primary', titleSizeClasses[variant])}>
+          {title}
+        </h1>
+        {subtitle && <p className="mt-2 font-mono text-sm text-text-muted">{subtitle}</p>}
       </div>
 
       {actions && <div className="flex flex-wrap items-center gap-3">{actions}</div>}

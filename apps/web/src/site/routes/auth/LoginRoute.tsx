@@ -7,7 +7,7 @@ import { ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@pytholit/ui/ui';
 
 import { env } from '@/env';
 import { useAuth } from '@/shared/auth';
@@ -171,13 +171,13 @@ export function LoginRoute() {
       <div className="mt-6 text-center space-y-2">
         <Link
           href="/auth/forgot-password"
-          className="block font-mono text-xs text-nexus-muted hover:text-nexus-purple underline decoration-dotted underline-offset-4 transition-colors uppercase tracking-wider"
+          className="block font-mono text-xs uppercase tracking-wider text-text-muted underline decoration-dotted underline-offset-4 transition-colors hover:text-brand-primary"
         >
           Forgot password?
         </Link>
         <Link
           href="/auth/signup"
-          className="font-mono text-xs text-nexus-muted hover:text-nexus-purple underline decoration-dotted underline-offset-4 transition-colors uppercase tracking-wider"
+          className="font-mono text-xs uppercase tracking-wider text-text-muted underline decoration-dotted underline-offset-4 transition-colors hover:text-brand-primary"
         >
           NO ACCOUNT? [REGISTER]
         </Link>

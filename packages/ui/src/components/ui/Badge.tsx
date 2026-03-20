@@ -10,14 +10,14 @@ export type BadgeVariant = 'success' | 'warning' | 'error' | 'muted' | 'purple';
 
 const variantClasses: Record<BadgeVariant, string> = {
   success: 'text-brand-accent border-brand-accent/30 bg-brand-accent/10',
-  warning: 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10',
-  error: 'text-red-500 border-red-500/30 bg-red-500/10',
+  warning: 'text-state-warning border-state-warning/30 bg-state-warning/10',
+  error: 'text-state-error border-state-error/30 bg-state-error/10',
   muted: 'text-text-secondary border-border-dim bg-border-dim/10',
   purple: 'text-brand-primary border-brand-primary/50 bg-brand-primary/10',
 };
 
 const baseClass =
-  'inline-flex items-center gap-1.5 px-2 py-1 border text-[10px] font-mono font-bold uppercase tracking-wider';
+  'inline-flex items-center gap-1.5 border px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider';
 
 // ─── Base Badge ──────────────────────────────────────────────────────────
 

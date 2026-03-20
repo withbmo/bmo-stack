@@ -34,17 +34,17 @@ export const HubRoute = () => {
       {/* Header – landing vs dashboard */}
       {isLandingHub ? (
         <div className="mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 mb-6 border border-nexus-purple/50 bg-nexus-purple/10 text-nexus-purple font-mono text-xs tracking-widest animate-fade-in">
+          <div className="mb-6 inline-flex items-center gap-2 border border-brand-primary/50 bg-brand-primary/10 px-3 py-1 font-mono text-xs tracking-widest text-brand-primary animate-fade-in">
             <Brain size={12} /> KNOWLEDGE BASE {'//'} DECLASSIFIED
           </div>
           <h1 className="text-5xl md:text-7xl font-sans font-bold mb-6 tracking-tight">
-            HUMAN <span className="text-nexus-muted">{'///'}</span> <br />
+            HUMAN <span className="text-text-muted">{'///'}</span> <br />
             <GlitchText
               text="INTELLIGENCE"
-              className="text-transparent bg-clip-text bg-gradient-to-r from-white to-nexus-light"
+              className="bg-gradient-to-r from-white to-text-secondary bg-clip-text text-transparent"
             />
           </h1>
-          <p className="font-mono text-nexus-light/60 max-w-2xl text-lg border-l-2 border-nexus-purple pl-6">
+          <p className="max-w-2xl border-l-2 border-brand-primary pl-6 font-mono text-lg text-text-secondary/80">
             Verified implementation protocols and skill trees. Because LLMs can&apos;t teach you
             what they haven&apos;t experienced.
           </p>
@@ -58,13 +58,13 @@ export const HubRoute = () => {
       )}
 
       {/* Controls - in page flow, scrolls with content */}
-      <div className="bg-nexus-black/95 backdrop-blur-xl border border-nexus-gray py-4 px-6 mb-8">
+      <div className="mb-8 border border-border-default bg-bg-canvas/95 px-6 py-4 backdrop-blur-xl">
         <div className="flex flex-col md:flex-row gap-6 justify-between md:items-center">
           {/* Search */}
           <div className="relative flex-grow max-w-2xl group">
-            <div className="absolute left-0 top-0 bottom-0 w-16 flex items-center justify-center border-r border-nexus-gray bg-nexus-gray/5 group-focus-within:bg-nexus-purple/10 group-focus-within:border-nexus-purple transition-all duration-300 z-10">
+            <div className="absolute bottom-0 left-0 top-0 z-10 flex w-16 items-center justify-center border-r border-border-default bg-border-default/5 transition-all duration-300 group-focus-within:border-brand-primary group-focus-within:bg-brand-primary/10">
               <Search
-                className="text-nexus-muted group-focus-within:text-nexus-purple transition-colors duration-300"
+                className="text-text-muted transition-colors duration-300 group-focus-within:text-brand-primary"
                 size={20}
               />
             </div>
@@ -74,11 +74,11 @@ export const HubRoute = () => {
               placeholder="SEARCH_DATABASE..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="bg-bg-surface py-4 pl-24 pr-4 focus:ring-nexus-purple/50 duration-300 placeholder-nexus-gray/40 uppercase tracking-widest"
+              className="bg-bg-surface py-4 pl-24 pr-4 uppercase tracking-widest placeholder-text-muted/40 duration-300"
             />
 
-            <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-nexus-gray group-focus-within:border-nexus-purple transition-colors duration-300"></div>
-            <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-nexus-gray group-focus-within:border-nexus-purple transition-colors duration-300"></div>
+            <div className="absolute right-0 top-0 h-2 w-2 border-r border-t border-border-default transition-colors duration-300 group-focus-within:border-brand-primary"></div>
+            <div className="absolute bottom-0 left-0 h-2 w-2 border-b border-l border-border-default transition-colors duration-300 group-focus-within:border-brand-primary"></div>
           </div>
 
           {/* Filters */}
@@ -116,19 +116,19 @@ export const HubRoute = () => {
           {/* Call to Action Card */}
           <div
             onClick={() => router.push('/dashboard/hub/contribute')}
-            className="group relative border-2 border-dashed border-nexus-gray hover:border-nexus-purple flex flex-col items-center justify-center p-8 text-center transition-all cursor-pointer h-full min-h-[300px] bg-black/20 hover:bg-nexus-purple/5"
+            className="group relative flex h-full min-h-[300px] cursor-pointer flex-col items-center justify-center border-2 border-dashed border-border-default bg-bg-canvas/20 p-8 text-center transition-all hover:border-brand-primary hover:bg-brand-primary/5"
           >
-            <div className="w-16 h-16 bg-nexus-gray/10 rounded-full flex items-center justify-center mb-6 group-hover:bg-nexus-purple transition-colors">
+            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-border-default/10 transition-colors group-hover:bg-brand-primary">
               <ArrowUpRight
                 size={32}
-                className="text-nexus-muted group-hover:text-white transition-colors"
+                className="text-text-muted transition-colors group-hover:text-white"
               />
             </div>
             <h3 className="font-sans font-bold text-xl text-white mb-2">CONTRIBUTE</h3>
-            <p className="font-mono text-xs text-nexus-light/50 max-w-xs mb-6 group-hover:text-nexus-light/80">
+            <p className="mb-6 max-w-xs font-mono text-xs text-text-secondary/70 group-hover:text-text-secondary">
               Share your verified knowledge. Help others transcend generic AI implementations.
             </p>
-            <button className="px-6 py-2 bg-nexus-gray/20 border border-nexus-gray text-xs font-mono text-white group-hover:bg-nexus-purple group-hover:border-nexus-purple transition-all">
+            <button className="border border-border-default bg-border-default/20 px-6 py-2 font-mono text-xs text-white transition-all group-hover:border-brand-primary group-hover:bg-brand-primary">
               INIT_UPLOAD
             </button>
           </div>

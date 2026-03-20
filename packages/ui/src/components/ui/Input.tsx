@@ -7,7 +7,7 @@ export type InputIntent = 'default' | 'brand' | 'danger';
 export type InputSize = 'sm' | 'md' | 'lg';
 
 const rootClass =
-  'w-full min-w-0 font-mono transition-all placeholder:text-text-secondary disabled:opacity-70 disabled:cursor-not-allowed';
+  'w-full min-w-0 font-mono transition-all placeholder:text-text-secondary disabled:cursor-not-allowed disabled:opacity-70 focus-visible:outline-none';
 
 const sizeClasses: Record<InputSize, string> = {
   sm: 'px-3 py-2 text-xs',
@@ -24,12 +24,12 @@ const variantClasses: Record<InputVariant, string> = {
 };
 
 const intentFocusClasses: Record<InputIntent, string> = {
-  default: 'focus:border-border-highlight',
-  brand: 'focus:border-brand-primary',
-  danger: 'focus:border-red-500',
+  default: 'focus:border-border-highlight focus-visible:ring-2 focus-visible:ring-border-highlight/30',
+  brand: 'focus:border-brand-primary focus-visible:ring-2 focus-visible:ring-brand-primary/30',
+  danger: 'focus:border-state-error focus-visible:ring-2 focus-visible:ring-state-error/30',
 };
 
-const errorClass = 'border-red-500 focus:border-red-500';
+const errorClass = 'border-state-error focus:border-state-error focus-visible:ring-state-error/30';
 
 export type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> & {
   /** When true, renders a textarea instead of an input */
@@ -76,7 +76,6 @@ export const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputPro
     rootClass,
     sizeClasses[size],
     variantClasses[variant],
-    !isTerminal && 'focus:outline-none',
     !isTerminal && intentFocusClasses[focusIntent],
     error && errorClass,
     className
@@ -130,7 +129,10 @@ export const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputPro
       {(errorMessage || hint) && (
         <p
           id={id ? `${id}-description` : undefined}
-          className={cn('font-mono text-xs', errorMessage ? 'text-red-400' : 'text-text-secondary')}
+          className={cn(
+            'font-mono text-xs',
+            errorMessage ? 'text-state-error' : 'text-text-secondary'
+          )}
         >
           {errorMessage ?? hint}
         </p>

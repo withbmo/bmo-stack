@@ -1,4 +1,4 @@
-import { MotionFade } from '@pytholit/ui';
+import { MotionFade } from '@pytholit/ui/ui';
 
 import { Navbar } from './Navbar';
 

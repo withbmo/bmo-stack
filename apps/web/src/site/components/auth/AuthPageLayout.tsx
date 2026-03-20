@@ -1,4 +1,4 @@
-import { cn, MotionScaleIn } from '@pytholit/ui';
+import { cn, MotionScaleIn } from '@pytholit/ui/ui';
 import { BackgroundLayers } from '@pytholit/ui/blocks';
 import type { CSSProperties, ReactNode } from 'react';
 
@@ -17,11 +17,11 @@ export const AuthPageLayout = ({
 }: AuthPageLayoutProps) => (
   <div
     className={cn(
-      'min-h-screen bg-nexus-black flex items-center justify-center relative px-6 py-20',
+      'relative flex min-h-screen items-center justify-center bg-bg-app px-6 py-20',
       className
     )}
   >
-    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
       <BackgroundLayers />
     </div>
 

@@ -27,17 +27,17 @@ describe('Button', () => {
     // ─── Variants ───────────────────────────────────────────────────────────────
 
     it.each(['secondary', 'ghost', 'danger'] as const)(
-        'renders %s variant without the nexus wrapper div',
+        'renders %s variant without the offset-shadow wrapper div',
         (variant) => {
             const { container } = render(<Button variant={variant}>Btn</Button>);
             // Only primary gets the wrapper div
-            expect(container.querySelector('.nexus-shadow-btn-wrapper')).toBeNull();
+            expect(container.querySelector('.offset-shadow-button-wrapper')).toBeNull();
         }
     );
 
-    it('renders primary variant with the nexus shadow wrapper', () => {
+    it('renders primary variant with the offset-shadow wrapper', () => {
         const { container } = render(<Button variant="primary">Btn</Button>);
-        expect(container.querySelector('.nexus-shadow-btn-wrapper')).toBeInTheDocument();
+        expect(container.querySelector('.offset-shadow-button-wrapper')).toBeInTheDocument();
     });
 
     // ─── States ─────────────────────────────────────────────────────────────────
@@ -56,6 +56,7 @@ describe('Button', () => {
         render(<Button isLoading>Loading</Button>);
         // Lucide renders an svg for Loader2
         expect(screen.getByRole('button').querySelector('svg')).toBeInTheDocument();
+        expect(screen.getByRole('button')).toHaveAttribute('aria-busy', 'true');
     });
 
     it('does not call onClick when disabled', async () => {
@@ -89,6 +90,6 @@ describe('Button', () => {
 
     it('applies full-width class when fullWidth is true', () => {
         const { container } = render(<Button fullWidth>Wide</Button>);
-        expect(container.querySelector('.nexus-shadow-btn-wrapper.block')).toBeInTheDocument();
+        expect(container.querySelector('.offset-shadow-button-wrapper.block')).toBeInTheDocument();
     });
 });

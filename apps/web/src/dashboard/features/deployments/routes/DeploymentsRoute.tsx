@@ -6,7 +6,7 @@ import { useState } from 'react';
 
 import { Button, DashboardTabs } from '@/dashboard/components';
 import { AsyncState } from '@/dashboard/shared/state/AsyncState';
-import { DashboardPageHeader,PageLayout } from '@/shared/components/layout';
+import { DashboardPageHeader, PageLayout } from '@/shared/components/layout';
 
 import { useProjects } from '../../projects/hooks/useProjects';
 import { DeployJobTable } from '../components';
@@ -44,7 +44,7 @@ export const DeploymentsRoute = () => {
         badge={{ icon: Rocket, label: 'DEPLOY JOBS' }}
         title={
           <>
-            <span className="text-nexus-muted">DEPLOY</span> JOBS
+            <span className="text-text-muted">DEPLOY</span> JOBS
           </>
         }
         subtitle="Create deploy jobs and monitor progress."

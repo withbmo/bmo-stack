@@ -28,7 +28,7 @@ export function PasswordStrengthGuidance({
         <>
           <div className="space-y-2">
             <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-wider">
-              <span className="text-nexus-muted">Password strength</span>
+              <span className="text-text-muted">Password strength</span>
               <span className={strength.isStrong ? 'text-green-400' : 'text-yellow-400'}>
                 {strength.label}
               </span>
@@ -40,7 +40,7 @@ export function PasswordStrengthGuidance({
                 return (
                   <div
                     key={index}
-                    className={`h-1.5 rounded-full ${isActive ? barClass : 'bg-nexus-border/60'}`}
+                    className={`h-1.5 rounded-full ${isActive ? barClass : 'bg-border-default/60'}`}
                   />
                 );
               })}

@@ -38,14 +38,16 @@ export const Navbar = () => {
       : 'text-text-secondary hover:text-text-primary hover:bg-bg-surface/60';
 
   return (
-    <nav className="fixed top-0 left-0 w-full z-50 bg-bg-panel border-b border-border-default h-16 flex items-center shadow-lg shadow-black/20">
-      <div className="w-full px-6 flex justify-between items-center">
+    <nav className="fixed left-0 top-0 z-50 flex h-16 w-full items-center border-b border-border-default bg-bg-panel shadow-lg shadow-black/20">
+      <div className="flex w-full items-center justify-between px-6">
         <div className="flex items-center gap-8">
           <Link href="/dashboard" className="flex items-center gap-2 group">
-            <div className="w-6 h-6 bg-brand-primary flex items-center justify-center border border-brand-primary/60 group-hover:bg-nexus-neon transition-colors">
+            <div className="flex h-6 w-6 items-center justify-center border border-brand-primary/60 bg-brand-primary transition-colors group-hover:bg-brand-neon">
               <Terminal size={14} className="text-white" />
             </div>
-            <span className="font-mono font-bold text-lg tracking-tighter text-text-primary">pytholit</span>
+            <span className="font-mono text-lg font-bold tracking-tighter text-text-primary">
+              pytholit
+            </span>
           </Link>
 
           <div className="hidden md:flex gap-1 border-l border-border-default pl-6 h-8 items-center">
@@ -71,7 +73,7 @@ export const Navbar = () => {
               href="/dashboard/settings"
               className="flex items-center gap-3 cursor-pointer group border-l border-transparent pl-3 hover:border-border-default transition-colors"
             >
-                <div className="text-right hidden md:block leading-tight">
+              <div className="hidden text-right leading-tight md:block">
                 <div className="font-mono text-xs text-text-primary group-hover:text-brand-primary transition-colors">
                   {profile?.username || 'USER'}
                 </div>

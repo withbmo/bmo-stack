@@ -7,21 +7,21 @@ interface DeployJobTableProps {
 }
 
 export const DeployJobTable = ({ jobs }: DeployJobTableProps) => (
-  <div className="bg-bg-panel border border-nexus-gray overflow-hidden">
+  <div className="overflow-hidden border border-border-default bg-bg-panel">
     <div className="overflow-x-auto">
       <table className="w-full text-left border-collapse">
-        <thead className="bg-black/50 border-b border-nexus-gray">
+        <thead className="border-b border-border-default bg-black/50">
           <tr>
-            <th className="px-4 py-3 text-[10px] font-mono text-nexus-muted uppercase tracking-wider">
+            <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-text-muted">
               Time
             </th>
-            <th className="px-4 py-3 text-[10px] font-mono text-nexus-muted uppercase tracking-wider">
+            <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-text-muted">
               Status
             </th>
-            <th className="px-4 py-3 text-[10px] font-mono text-nexus-muted uppercase tracking-wider">
+            <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-text-muted">
               Triggered By
             </th>
-            <th className="px-4 py-3 text-[10px] font-mono text-nexus-muted uppercase tracking-wider w-28">
+            <th className="w-28 px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-text-muted">
               Actions
             </th>
           </tr>
@@ -29,7 +29,7 @@ export const DeployJobTable = ({ jobs }: DeployJobTableProps) => (
         <tbody>
           {jobs.length === 0 ? (
             <tr>
-              <td colSpan={4} className="px-4 py-12 text-center font-mono text-nexus-muted">
+              <td colSpan={4} className="px-4 py-12 text-center font-mono text-text-muted">
                 No deploy jobs for this project yet.
               </td>
             </tr>

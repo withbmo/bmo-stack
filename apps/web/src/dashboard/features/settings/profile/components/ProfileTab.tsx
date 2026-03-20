@@ -1,7 +1,7 @@
 import { User } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@pytholit/ui/ui';
 
 import {
   Button,

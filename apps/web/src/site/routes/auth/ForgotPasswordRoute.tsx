@@ -3,7 +3,7 @@
 import { ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@pytholit/ui/ui';
 
 import { forgotPassword, getApiErrorMessage } from '@/shared/lib/auth';
 import { AuthCard } from '@/site/components/auth/AuthCard';
@@ -34,7 +34,9 @@ export function ForgotPasswordRoute() {
       <AuthHeader mode="login" />
       <AuthCard>
         <div className="mb-6 text-center">
-          <h2 className="font-mono text-sm uppercase tracking-wider text-nexus-light">Reset password</h2>
+          <h2 className="font-mono text-sm uppercase tracking-wider text-text-secondary">
+            Reset password
+          </h2>
         </div>
         <form onSubmit={handleSubmit} className="space-y-6">
           <EmailField value={email} onChange={setEmail} placeholder="you@example.com" />
@@ -54,7 +56,7 @@ export function ForgotPasswordRoute() {
         <div className="mt-6 text-center">
           <Link
             href="/auth/login"
-            className="font-mono text-xs text-nexus-muted hover:text-nexus-purple underline decoration-dotted underline-offset-4 transition-colors uppercase tracking-wider"
+            className="font-mono text-xs uppercase tracking-wider text-text-muted underline decoration-dotted underline-offset-4 transition-colors hover:text-brand-primary"
           >
             Back to login
           </Link>

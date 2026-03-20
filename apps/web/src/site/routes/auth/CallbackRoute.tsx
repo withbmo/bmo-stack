@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@pytholit/ui/ui';
 
 import { useAuth } from '@/shared/auth';
 import { getApiErrorMessage } from '@/shared/lib';
@@ -88,13 +88,13 @@ export function CallbackRoute() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-nexus-black pt-28 pb-20 px-6">
-        <div className="max-w-2xl mx-auto border border-nexus-gray bg-nexus-dark/80 backdrop-blur p-8">
+      <div className="min-h-screen bg-bg-app pt-28 pb-20 px-6">
+        <div className="mx-auto max-w-2xl border border-border-default bg-bg-panel/80 p-8 backdrop-blur">
           <h1 className="text-2xl font-sans font-bold mb-3">OAuth callback failed</h1>
-          <p className="font-mono text-sm text-nexus-light/70 mb-6">{error}</p>
+          <p className="mb-6 font-mono text-sm text-text-secondary/70">{error}</p>
           <Link
             href="/auth/login"
-            className="font-mono text-xs uppercase tracking-wider text-nexus-muted hover:text-nexus-purple"
+            className="font-mono text-xs uppercase tracking-wider text-text-muted hover:text-brand-primary"
           >
             Back to login
           </Link>
@@ -104,10 +104,10 @@ export function CallbackRoute() {
   }
 
   return (
-    <div className="min-h-screen bg-nexus-black pt-28 pb-20 px-6">
-      <div className="max-w-2xl mx-auto border border-nexus-gray bg-nexus-dark/80 backdrop-blur p-8">
+    <div className="min-h-screen bg-bg-app pt-28 pb-20 px-6">
+      <div className="mx-auto max-w-2xl border border-border-default bg-bg-panel/80 p-8 backdrop-blur">
         <h1 className="text-2xl font-sans font-bold mb-3">Signing you in…</h1>
-        <p className="font-mono text-sm text-nexus-light/70">Redirecting to your dashboard.</p>
+        <p className="font-mono text-sm text-text-secondary/70">Redirecting to your dashboard.</p>
       </div>
     </div>
   );

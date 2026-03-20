@@ -1,105 +1,252 @@
-/* Pytholit Design System - Theme Variables
+/* Pytholit Design System - Foundations
  *
- * All tokens are defined in @theme so Tailwind v4 generates utility classes
- * (e.g. bg-bg-panel, text-brand-primary, border-border-dim).
- * Use CSS var() in plain CSS files; use Tailwind classes in components.
+ * Tailwind v4 reads tokens from `@theme`, while plain CSS files consume the
+ * mirrored `:root` variables via `var()`. Components should prefer semantic
+ * tokens (`bg-bg-panel`, `text-text-secondary`, `border-state-error`, etc.)
+ * instead of raw palette values.
  */
 
 @theme {
-  /* ── Raw Palette (avoid using directly in components) ──────────────── */
-  --color-nexus-black:  #1e1e1e;
-  --color-nexus-dark:   #252526;
-  --color-nexus-gray:   #3c3c3c;
-  --color-nexus-muted:  #9da5b4;
-  --color-nexus-light:  #d4d4d4;
+  /* Raw palette: foundation-only, do not consume directly in components. */
+  --color-nexus-black: #1e1e1e;
+  --color-nexus-dark: #252526;
+  --color-nexus-gray: #3c3c3c;
+  --color-nexus-muted: #9da5b4;
+  --color-nexus-light: #d4d4d4;
   --color-nexus-purple: #6d28d9;
-  --color-nexus-neon:   #a855f7;
+  --color-nexus-neon: #a855f7;
   --color-nexus-accent: #4ec9b0;
 
-  /* ── Background Tokens ──────────────────────────────────────────────── */
-  --color-bg-app:       #1e1e1e;
-  --color-bg-panel:     #252526;
-  --color-bg-surface:   #2d2d2d;
-  --color-bg-overlay:   rgba(0, 0, 0, 0.8); /* modal/drawer backdrops */
+  /* Surface roles */
+  --color-bg-canvas: #151515;
+  --color-bg-app: #1e1e1e;
+  --color-bg-panel: #252526;
+  --color-bg-surface: #2d2d2d;
+  --color-bg-elevated: #343436;
+  --color-bg-overlay: rgba(5, 5, 5, 0.82);
+  --color-bg-inverse: #f8fafc;
 
-  /* ── Border Tokens ──────────────────────────────────────────────────── */
-  --color-border-default:   #4a4a4a;
-  --color-border-dim:       #363636;
+  /* Border roles */
+  --color-border-subtle: #2a2a2d;
+  --color-border-dim: #363636;
+  --color-border-default: #4a4a4a;
+  --color-border-strong: #616161;
   --color-border-highlight: #7c3aed;
 
-  /* ── Text Tokens ────────────────────────────────────────────────────── */
-  --color-text-primary:   #d4d4d4;
-  --color-text-secondary: #9da5b4;
+  /* Text roles */
+  --color-text-primary: #f5f5f6;
+  --color-text-secondary: #b0b6c2;
+  --color-text-muted: #7f8795;
+  --color-text-inverse: #111827;
 
-  /* ── Brand Tokens ───────────────────────────────────────────────────── */
-  --color-brand-primary: #6d28d9;  /* primary actions */
-  --color-brand-accent:  #4ec9b0;  /* success / highlights */
-  --color-brand-neon:    #a855f7;  /* hover/active for primary */
+  /* Brand roles */
+  --color-brand-primary: #6d28d9;
+  --color-brand-emphasis: #7c3aed;
+  --color-brand-neon: #a855f7;
+  --color-brand-accent: #4ec9b0;
 
-  /* ── Semantic State Tokens ──────────────────────────────────────────── */
-  --color-state-success: #4ec9b0;  /* same as brand-accent */
-  --color-state-warning: #facc15;  /* yellow-400 */
-  --color-state-error:   #ef4444;  /* red-500 */
-  --color-state-info:    #60a5fa;  /* blue-400 */
+  /* Semantic state roles */
+  --color-state-success: #4ec9b0;
+  --color-state-warning: #facc15;
+  --color-state-error: #ef4444;
+  --color-state-info: #60a5fa;
 
-  /* ── Typography ─────────────────────────────────────────────────────── */
-  --font-mono: 'JetBrains Mono', monospace;
+  /* Typography */
   --font-sans: 'Space Grotesk', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 
-  /* ── Spacing / Radius (add as needed) ──────────────────────────────── */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+  --text-6xl: 3.75rem;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.1;
+  --line-height-snug: 1.25;
+  --line-height-base: 1.5;
+  --line-height-relaxed: 1.7;
+
+  /* Spacing */
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+
+  /* Radius */
+  --radius-none: 0;
   --radius-sm: 2px;
   --radius-md: 4px;
   --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-pill: 999px;
 
-  /* ── Named Animations ───────────────────────────────────────────────── */
-  --animate-pulse-fast:            pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  --animate-marquee:               marquee 25s linear infinite;
-  --animate-glitch:                glitch 1s linear infinite;
-  --animate-glitch-autoplay:       glitch-autoplay 5s ease-in-out infinite;
-  --animate-scan:                  scan 4s linear infinite;
-  --animate-spin-slow:             spin 12s linear infinite;
-  --animate-spin-reverse-slower:   spin 16s linear infinite reverse;
+  /* Shadow */
+  --shadow-subtle: 0 8px 24px -18px rgba(0, 0, 0, 0.55);
+  --shadow-panel: 0 24px 80px -28px rgba(0, 0, 0, 0.6);
+  --shadow-brand: 0 0 48px -16px rgba(109, 40, 217, 0.45);
+  --shadow-focus: 0 0 0 2px rgba(124, 58, 237, 0.35);
+
+  /* Z-index */
+  --z-base: 0;
+  --z-content: 10;
+  --z-sticky: 40;
+  --z-overlay: 100;
+  --z-toast: 120;
+  --z-debug: 999;
+
+  /* Motion */
+  --motion-duration-instant: 0.001s;
+  --motion-duration-fast: 0.18s;
+  --motion-duration-base: 0.28s;
+  --motion-duration-slow: 0.42s;
+  --motion-duration-slower: 0.6s;
+
+  --motion-ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-ease-crisp: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --motion-distance-sm: 8px;
+  --motion-distance-md: 16px;
+  --motion-distance-lg: 24px;
+  --motion-distance-xl: 40px;
+
+  /* Named animations */
+  --animate-pulse-fast: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-marquee: marquee 25s linear infinite;
+  --animate-glitch: glitch 1s linear infinite;
+  --animate-glitch-autoplay: glitch-autoplay 5s ease-in-out infinite;
+  --animate-scan: scan 4s linear infinite;
+  --animate-spin-slow: spin 12s linear infinite;
+  --animate-spin-reverse-slower: spin 16s linear infinite reverse;
 }
 
-/* ── CSS Custom Properties for non-Tailwind usage (var()) ─────────────────
- * Mirror the @theme tokens here so they are available to plain CSS files
- * (base.css, utilities.css, Swagger overrides, etc.)
- */
 :root {
-  --color-nexus-black:       #1e1e1e;
-  --color-nexus-dark:        #252526;
-  --color-nexus-gray:        #3c3c3c;
-  --color-nexus-muted:       #9da5b4;
-  --color-nexus-light:       #d4d4d4;
-  --color-nexus-purple:      #6d28d9;
-  --color-nexus-neon:        #a855f7;
-  --color-nexus-accent:      #4ec9b0;
+  --color-nexus-black: #1e1e1e;
+  --color-nexus-dark: #252526;
+  --color-nexus-gray: #3c3c3c;
+  --color-nexus-muted: #9da5b4;
+  --color-nexus-light: #d4d4d4;
+  --color-nexus-purple: #6d28d9;
+  --color-nexus-neon: #a855f7;
+  --color-nexus-accent: #4ec9b0;
 
-  --color-bg-app:            #1e1e1e;
-  --color-bg-panel:          #252526;
-  --color-bg-surface:        #2d2d2d;
-  --color-bg-overlay:        rgba(0, 0, 0, 0.8);
+  --color-bg-canvas: #151515;
+  --color-bg-app: #1e1e1e;
+  --color-bg-panel: #252526;
+  --color-bg-surface: #2d2d2d;
+  --color-bg-elevated: #343436;
+  --color-bg-overlay: rgba(5, 5, 5, 0.82);
+  --color-bg-inverse: #f8fafc;
 
-  --color-border-default:    #4a4a4a;
-  --color-border-dim:        #363636;
-  --color-border-highlight:  #7c3aed;
+  --color-border-subtle: #2a2a2d;
+  --color-border-dim: #363636;
+  --color-border-default: #4a4a4a;
+  --color-border-strong: #616161;
+  --color-border-highlight: #7c3aed;
 
-  --color-text-primary:      #d4d4d4;
-  --color-text-secondary:    #9da5b4;
+  --color-text-primary: #f5f5f6;
+  --color-text-secondary: #b0b6c2;
+  --color-text-muted: #7f8795;
+  --color-text-inverse: #111827;
 
-  --color-brand-primary:     #6d28d9;
-  --color-brand-accent:      #4ec9b0;
-  --color-brand-neon:        #a855f7;
+  --color-brand-primary: #6d28d9;
+  --color-brand-emphasis: #7c3aed;
+  --color-brand-neon: #a855f7;
+  --color-brand-accent: #4ec9b0;
 
-  --color-state-success:     #4ec9b0;
-  --color-state-warning:     #facc15;
-  --color-state-error:       #ef4444;
-  --color-state-info:        #60a5fa;
+  --color-state-success: #4ec9b0;
+  --color-state-warning: #facc15;
+  --color-state-error: #ef4444;
+  --color-state-info: #60a5fa;
 
-  --font-mono:               'JetBrains Mono', monospace;
-  --font-sans:               'Space Grotesk', sans-serif;
+  --font-sans: 'Space Grotesk', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+  --text-6xl: 3.75rem;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.1;
+  --line-height-snug: 1.25;
+  --line-height-base: 1.5;
+  --line-height-relaxed: 1.7;
+
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+
+  --radius-none: 0;
   --radius-sm: 2px;
   --radius-md: 4px;
   --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-pill: 999px;
+
+  --shadow-subtle: 0 8px 24px -18px rgba(0, 0, 0, 0.55);
+  --shadow-panel: 0 24px 80px -28px rgba(0, 0, 0, 0.6);
+  --shadow-brand: 0 0 48px -16px rgba(109, 40, 217, 0.45);
+  --shadow-focus: 0 0 0 2px rgba(124, 58, 237, 0.35);
+
+  --z-base: 0;
+  --z-content: 10;
+  --z-sticky: 40;
+  --z-overlay: 100;
+  --z-toast: 120;
+  --z-debug: 999;
+
+  --motion-duration-instant: 0.001s;
+  --motion-duration-fast: 0.18s;
+  --motion-duration-base: 0.28s;
+  --motion-duration-slow: 0.42s;
+  --motion-duration-slower: 0.6s;
+
+  --motion-ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-ease-crisp: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --motion-distance-sm: 8px;
+  --motion-distance-md: 16px;
+  --motion-distance-lg: 24px;
+  --motion-distance-xl: 40px;
 }

@@ -87,15 +87,15 @@ export function DocsRoute({ initialSlug }: DocsRouteProps) {
   }, [activeSlug]);
 
   return (
-    <div className="min-h-screen relative pt-28 pb-20 px-6">
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+    <div className="relative min-h-screen px-6 pb-20 pt-28">
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <BackgroundLayers />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto">
+      <div className="relative z-10 mx-auto max-w-7xl">
         <div className="flex gap-12">
-          <aside className="w-56 shrink-0 border-r border-nexus-gray pr-6 hidden md:block">
-            <div className="flex items-center gap-2 px-3 py-1 mb-6 border border-nexus-purple/50 bg-nexus-purple/10 text-nexus-purple font-mono text-xs tracking-widest w-fit">
+          <aside className="hidden w-56 shrink-0 border-r border-border-default pr-6 md:block">
+            <div className="mb-6 flex w-fit items-center gap-2 border border-brand-primary/50 bg-brand-primary/10 px-3 py-1 font-mono text-xs tracking-widest text-brand-primary">
               <BookOpen size={12} /> DOCS
             </div>
 
@@ -104,10 +104,10 @@ export function DocsRoute({ initialSlug }: DocsRouteProps) {
                 <Link
                   key={doc.slug}
                   href={`/docs/${doc.slug}`}
-                  className={`flex items-center gap-2 px-3 py-2 font-mono text-sm border-l-2 transition-colors ${
+                  className={`flex items-center gap-2 border-l-2 px-3 py-2 font-mono text-sm transition-colors ${
                     activeSlug === doc.slug
-                      ? 'border-nexus-purple bg-nexus-purple/10 text-white'
-                      : 'border-transparent text-nexus-muted hover:text-white hover:bg-nexus-gray/10 hover:border-nexus-gray'
+                      ? 'border-brand-primary bg-brand-primary/10 text-text-primary'
+                      : 'border-transparent text-text-muted hover:border-border-default hover:bg-border-default/10 hover:text-text-primary'
                   }`}
                 >
                   <FileText size={14} />
@@ -117,11 +117,11 @@ export function DocsRoute({ initialSlug }: DocsRouteProps) {
             </nav>
           </aside>
 
-          <main className="flex-1 min-w-0 max-w-3xl">
+          <main className="min-w-0 max-w-3xl flex-1">
             {error && (
-              <div className="font-mono text-nexus-muted border border-nexus-gray p-6 bg-nexus-dark/50">
+              <div className="border border-border-default bg-bg-panel/50 p-6 font-mono text-text-muted">
                 {error}.{' '}
-                <Link href="/docs" className="text-nexus-purple hover:underline">
+                <Link href="/docs" className="text-brand-primary hover:underline">
                   Back to docs
                 </Link>
                 .
@@ -129,40 +129,40 @@ export function DocsRoute({ initialSlug }: DocsRouteProps) {
             )}
 
             {loading && !content && !error && (
-              <div className="font-mono text-nexus-muted animate-pulse">Loading...</div>
+              <div className="font-mono text-text-muted animate-pulse">Loading...</div>
             )}
 
             {content && !error && (
-              <article className="docs-content border border-nexus-gray bg-nexus-black/80 p-8 font-mono text-sm text-nexus-light leading-relaxed">
+              <article className="docs-content border border-border-default bg-bg-app/80 p-8 font-mono text-sm leading-relaxed text-text-secondary">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
                     h1: ({ children }) => (
-                      <h1 className="text-3xl font-sans font-bold text-white mb-6 pb-2 border-b border-nexus-gray">
+                      <h1 className="mb-6 border-b border-border-default pb-2 font-sans text-3xl font-bold text-text-primary">
                         {children}
                       </h1>
                     ),
                     h2: ({ children }) => (
-                      <h2 className="text-xl font-sans font-bold text-white mt-8 mb-4">
+                      <h2 className="mb-4 mt-8 font-sans text-xl font-bold text-text-primary">
                         {children}
                       </h2>
                     ),
                     h3: ({ children }) => (
-                      <h3 className="text-lg font-sans font-bold text-nexus-light mt-6 mb-3">
+                      <h3 className="mb-3 mt-6 font-sans text-lg font-bold text-text-secondary">
                         {children}
                       </h3>
                     ),
-                    p: ({ children }) => <p className="mb-4 text-nexus-light/90">{children}</p>,
+                    p: ({ children }) => <p className="mb-4 text-text-secondary/90">{children}</p>,
                     ul: ({ children }) => (
                       <ul className="list-none mb-4 space-y-2 pl-0">{children}</ul>
                     ),
                     ol: ({ children }) => (
-                      <ol className="list-decimal list-inside mb-4 space-y-2 text-nexus-light/90">
+                      <ol className="mb-4 list-decimal list-inside space-y-2 text-text-secondary/90">
                         {children}
                       </ol>
                     ),
                     li: ({ children }) => (
-                      <li className="pl-4 border-l-2 border-nexus-purple/30 mb-2 text-nexus-light/90">
+                      <li className="mb-2 border-l-2 border-brand-primary/30 pl-4 text-text-secondary/90">
                         {children}
                       </li>
                     ),
@@ -171,7 +171,7 @@ export function DocsRoute({ initialSlug }: DocsRouteProps) {
                         return (
                           <Link
                             href={href}
-                            className="text-nexus-purple hover:text-nexus-neon underline underline-offset-2"
+                            className="text-brand-primary underline underline-offset-2 hover:text-brand-neon"
                           >
                             {children}
                           </Link>
@@ -182,7 +182,7 @@ export function DocsRoute({ initialSlug }: DocsRouteProps) {
                           href={href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-nexus-purple hover:text-nexus-neon underline underline-offset-2"
+                          className="text-brand-primary underline underline-offset-2 hover:text-brand-neon"
                         >
                           {children}
                         </a>
@@ -192,14 +192,14 @@ export function DocsRoute({ initialSlug }: DocsRouteProps) {
                       const isBlock = className?.includes('language-');
                       if (isBlock) {
                         return (
-                          <pre className="bg-nexus-dark border border-nexus-gray p-4 overflow-x-auto mb-4 text-xs text-nexus-light">
+                          <pre className="mb-4 overflow-x-auto border border-border-default bg-bg-panel p-4 text-xs text-text-secondary">
                             <code {...props}>{children}</code>
                           </pre>
                         );
                       }
                       return (
                         <code
-                          className="bg-nexus-gray/50 border border-nexus-gray/50 px-1.5 py-0.5 text-nexus-accent"
+                          className="border border-border-default/50 bg-border-default/30 px-1.5 py-0.5 text-brand-accent"
                           {...props}
                         >
                           {children}
@@ -208,34 +208,34 @@ export function DocsRoute({ initialSlug }: DocsRouteProps) {
                     },
                     pre: ({ children }) => <>{children}</>,
                     table: ({ children }) => (
-                      <div className="overflow-x-auto mb-4 border border-nexus-gray">
+                      <div className="mb-4 overflow-x-auto border border-border-default">
                         <table className="w-full text-left border-collapse">{children}</table>
                       </div>
                     ),
                     thead: ({ children }) => (
-                      <thead className="bg-nexus-dark border-b border-nexus-gray">{children}</thead>
+                      <thead className="border-b border-border-default bg-bg-panel">{children}</thead>
                     ),
                     th: ({ children }) => (
-                      <th className="px-4 py-2 text-nexus-purple font-bold text-xs uppercase tracking-wider">
+                      <th className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-brand-primary">
                         {children}
                       </th>
                     ),
                     tbody: ({ children }) => (
-                      <tbody className="text-nexus-light/80">{children}</tbody>
+                      <tbody className="text-text-secondary/80">{children}</tbody>
                     ),
                     tr: ({ children }) => (
-                      <tr className="border-b border-nexus-gray/50 hover:bg-nexus-gray/10">
+                      <tr className="border-b border-border-default/50 hover:bg-border-default/10">
                         {children}
                       </tr>
                     ),
                     td: ({ children }) => <td className="px-4 py-2">{children}</td>,
                     blockquote: ({ children }) => (
-                      <blockquote className="border-l-2 border-nexus-purple pl-4 py-1 my-4 text-nexus-muted italic">
+                      <blockquote className="my-4 border-l-2 border-brand-primary py-1 pl-4 italic text-text-muted">
                         {children}
                       </blockquote>
                     ),
                     strong: ({ children }) => (
-                      <strong className="font-bold text-white">{children}</strong>
+                      <strong className="font-bold text-text-primary">{children}</strong>
                     ),
                   }}
                 >

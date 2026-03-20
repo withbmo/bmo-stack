@@ -6,7 +6,7 @@ import { ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@pytholit/ui/ui';
 
 import { env } from '@/env';
 import { useAuth } from '@/shared/auth';
@@ -100,20 +100,26 @@ export function VerifyOtpRoute() {
       <AuthHeader mode="login" />
       <AuthCard>
         <div className="mb-6 text-center space-y-2">
-          <h2 className="font-mono text-sm uppercase tracking-wider text-nexus-light">Verify Email OTP</h2>
-          <p className="font-mono text-xs text-nexus-muted">Enter the 6-digit code sent to {maskedEmail || 'your email'}.</p>
+          <h2 className="font-mono text-sm uppercase tracking-wider text-text-secondary">
+            Verify Email OTP
+          </h2>
+          <p className="font-mono text-xs text-text-muted">
+            Enter the 6-digit code sent to {maskedEmail || 'your email'}.
+          </p>
         </div>
 
         <form onSubmit={handleVerify} className="space-y-6">
           <div className="space-y-2">
-            <label className="font-mono text-xs text-nexus-purple uppercase tracking-wider">OTP Code</label>
+            <label className="font-mono text-xs uppercase tracking-wider text-brand-primary">
+              OTP Code
+            </label>
             <input
               inputMode="numeric"
               pattern="[0-9]*"
               maxLength={6}
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              className="w-full bg-nexus-black border border-nexus-gray px-3 py-3 text-center tracking-[0.4em] font-mono text-sm text-nexus-light"
+              className="w-full border border-border-default bg-bg-app px-3 py-3 text-center font-mono text-sm tracking-[0.4em] text-text-secondary"
               placeholder="000000"
               required
             />
@@ -150,14 +156,14 @@ export function VerifyOtpRoute() {
             type="button"
             onClick={handleResend}
             disabled={resending}
-            className="font-mono text-xs text-nexus-muted hover:text-nexus-purple underline decoration-dotted underline-offset-4 transition-colors uppercase tracking-wider disabled:opacity-60"
+            className="font-mono text-xs uppercase tracking-wider text-text-muted underline decoration-dotted underline-offset-4 transition-colors hover:text-brand-primary disabled:opacity-60"
           >
             {resending ? 'SENDING...' : 'Resend OTP'}
           </button>
           <div>
             <Link
               href="/auth/login"
-              className="font-mono text-xs text-nexus-muted hover:text-nexus-purple underline decoration-dotted underline-offset-4 transition-colors uppercase tracking-wider"
+              className="font-mono text-xs uppercase tracking-wider text-text-muted underline decoration-dotted underline-offset-4 transition-colors hover:text-brand-primary"
             >
               Back to login
             </Link>

@@ -20,27 +20,27 @@ export const OptionCard = ({
 }: OptionCardProps) => {
   const borderClass = selected
     ? accent === 'accent'
-      ? 'border-nexus-accent bg-nexus-accent/5'
-      : 'border-nexus-purple bg-nexus-purple/10'
-    : 'border-nexus-gray bg-[#080808] hover:border-nexus-light';
+      ? 'border-brand-accent bg-brand-accent/5'
+      : 'border-brand-primary bg-brand-primary/10'
+    : 'border-border-default bg-bg-app hover:border-text-secondary';
   const iconClass = selected
     ? accent === 'accent'
-      ? 'text-nexus-accent'
-      : 'text-nexus-purple'
-    : 'text-nexus-muted group-hover:text-white';
-  const checkClass = accent === 'accent' ? 'text-nexus-accent' : 'text-nexus-purple';
+      ? 'text-brand-accent'
+      : 'text-brand-primary'
+    : 'text-text-muted group-hover:text-text-primary';
+  const checkClass = accent === 'accent' ? 'text-brand-accent' : 'text-brand-primary';
 
   return (
     <button
       type="button"
       onClick={onSelect}
-      className={`relative p-6 border text-left transition-all group overflow-hidden ${borderClass}`}
+      className={`group relative overflow-hidden border p-6 text-left transition-all ${borderClass}`}
     >
       <div className={`mb-4 ${iconClass}`}>
         <Icon size={20} />
       </div>
-      <h3 className="font-sans font-bold text-lg text-white mb-1">{name}</h3>
-      <p className="font-mono text-xs text-nexus-light/50">{description}</p>
+      <h3 className="mb-1 font-sans text-lg font-bold text-text-primary">{name}</h3>
+      <p className="font-mono text-xs text-text-secondary/50">{description}</p>
       {selected && (
         <div className={`absolute top-0 right-0 p-2 ${checkClass}`}>
           <Check size={16} />

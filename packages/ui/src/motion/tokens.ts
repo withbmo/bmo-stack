@@ -3,6 +3,7 @@ export const MOTION_DURATION = {
   fast: 0.18,
   base: 0.28,
   slow: 0.42,
+  slower: 0.6,
 } as const;
 
 export const MOTION_EASE = {
@@ -15,4 +16,5 @@ export const MOTION_DISTANCE = {
   sm: 8,
   md: 16,
   lg: 24,
+  xl: 40,
 } as const;

@@ -6,7 +6,7 @@ import { VerifyOtpRoute } from '@/site/routes/auth';
 
 export default function VerifyOtpPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-nexus-black" />}>
+    <Suspense fallback={<div className="min-h-screen bg-bg-app" />}>
       <VerifyOtpRoute />
     </Suspense>
   );

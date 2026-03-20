@@ -4,7 +4,7 @@ import { Mail, Trash2 } from 'lucide-react';
 import { Button } from './Button';
 
 const meta: Meta<typeof Button> = {
-  title: 'UI/Button',
+  title: 'Primitives/Button',
   component: Button,
   tags: ['autodocs'],
   args: {

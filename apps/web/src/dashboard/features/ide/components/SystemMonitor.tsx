@@ -1,5 +1,5 @@
-import { Activity,Clock, Server } from 'lucide-react';
-import { useEffect,useState } from 'react';
+import { Activity, Clock, Server } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export const SystemMonitor = () => {
   const [stats, setStats] = useState({
@@ -26,13 +26,13 @@ export const SystemMonitor = () => {
   }, []);
 
   return (
-    <div className="h-full w-full min-w-0 flex flex-col bg-[#0C0C0C] overflow-hidden animate-in fade-in duration-300 p-6 space-y-6">
-      <div className="flex justify-between items-end border-b border-nexus-gray pb-4">
+    <div className="flex h-full w-full min-w-0 flex-col space-y-6 overflow-hidden bg-bg-app p-6 animate-in fade-in duration-300">
+      <div className="flex items-end justify-between border-b border-border-default pb-4">
         <div>
-          <h2 className="text-2xl font-sans font-bold text-white mb-1">
+          <h2 className="mb-1 font-sans text-2xl font-bold text-white">
             SYSTEM_DIAGNOSTICS
           </h2>
-          <div className="flex gap-4 font-mono text-[10px] text-nexus-muted">
+          <div className="flex gap-4 font-mono text-[10px] text-text-muted">
             <span className="flex items-center gap-1">
               <Server size={10} /> CONTAINER_ID: 8f921a
             </span>
@@ -41,48 +41,48 @@ export const SystemMonitor = () => {
             </span>
           </div>
         </div>
-        <div className="inline-flex items-center gap-2 px-3 py-1 border border-nexus-accent/30 bg-nexus-accent/10 text-nexus-accent font-mono text-xs animate-pulse">
+        <div className="inline-flex items-center gap-2 border border-brand-accent/30 bg-brand-accent/10 px-3 py-1 font-mono text-xs text-brand-accent animate-pulse">
           <Activity size={12} /> HEALTHY
         </div>
       </div>
 
       <div className="grid grid-cols-4 gap-4">
-        <div className="bg-[#080808] border border-nexus-gray p-4">
-          <div className="text-[10px] text-nexus-muted font-mono mb-2">
+        <div className="border border-border-default bg-bg-panel p-4">
+          <div className="mb-2 font-mono text-[10px] text-text-muted">
             CPU_LOAD
           </div>
-          <div className="text-3xl font-mono font-bold text-nexus-purple">
+          <div className="font-mono text-3xl font-bold text-brand-primary">
             {stats.cpu}%
           </div>
         </div>
-        <div className="bg-[#080808] border border-nexus-gray p-4">
-          <div className="text-[10px] text-nexus-muted font-mono mb-2">
+        <div className="border border-border-default bg-bg-panel p-4">
+          <div className="mb-2 font-mono text-[10px] text-text-muted">
             MEMORY
           </div>
           <div className="text-3xl font-mono font-bold text-white">
             {stats.memory}MB
           </div>
         </div>
-        <div className="bg-[#080808] border border-nexus-gray p-4">
-          <div className="text-[10px] text-nexus-muted font-mono mb-2">
+        <div className="border border-border-default bg-bg-panel p-4">
+          <div className="mb-2 font-mono text-[10px] text-text-muted">
             NETWORK
           </div>
           <div className="text-3xl font-mono font-bold text-blue-400">
             3.5MB/s
           </div>
         </div>
-        <div className="bg-[#080808] border border-nexus-gray p-4">
-          <div className="text-[10px] text-nexus-muted font-mono mb-2">
+        <div className="border border-border-default bg-bg-panel p-4">
+          <div className="mb-2 font-mono text-[10px] text-text-muted">
             DISK
           </div>
-          <div className="text-3xl font-mono font-bold text-nexus-accent">
+          <div className="font-mono text-3xl font-bold text-brand-accent">
             42%
           </div>
         </div>
       </div>
 
-      <div className="flex-1 bg-[#080808] border border-nexus-gray p-4">
-        <div className="font-mono text-xs text-nexus-muted mb-4">
+      <div className="flex-1 border border-border-default bg-bg-panel p-4">
+        <div className="mb-4 font-mono text-xs text-text-muted">
           PROCESS_LIST
         </div>
         <div className="space-y-2 font-mono text-[10px]">
@@ -91,8 +91,8 @@ export const SystemMonitor = () => {
             { pid: 89, cmd: '/usr/bin/monitor', cpu: 1.2 },
             { pid: 22, cmd: 'postgres: checkpointer', cpu: 0.5 },
           ].map((p) => (
-            <div key={p.pid} className="flex gap-4 text-nexus-light/80">
-              <span className="text-nexus-accent w-12">{p.pid}</span>
+            <div key={p.pid} className="flex gap-4 text-text-secondary/80">
+              <span className="w-12 text-brand-accent">{p.pid}</span>
               <span className="w-16">{p.cpu}%</span>
               <span className="flex-1 truncate">{p.cmd}</span>
             </div>

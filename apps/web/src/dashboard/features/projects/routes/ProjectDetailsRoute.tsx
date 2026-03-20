@@ -2,15 +2,15 @@
 
 import { DEPLOY_JOB_STATUS } from '@pytholit/contracts';
 import { Rocket, Terminal } from 'lucide-react';
-import { useParams,useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@pytholit/ui/ui';
 
-import { Button, DashboardTabs, EmptyState,LoadingState } from '@/dashboard/components';
-import { DashboardPageHeader,PageLayout } from '@/shared/components/layout';
+import { Button, DashboardTabs, EmptyState, LoadingState } from '@/dashboard/components';
+import { DashboardPageHeader, PageLayout } from '@/shared/components/layout';
 
 import { DeployJobTable } from '../../deployments/components/DeployJobTable';
-import { useCreateDeployJob,useDeployJobs } from '../../deployments/hooks/useDeployJobs';
+import { useCreateDeployJob, useDeployJobs } from '../../deployments/hooks/useDeployJobs';
 import { useProject } from '../hooks/useProject';
 
 function useProjectIdParam(): string | undefined {
@@ -57,7 +57,7 @@ export const ProjectDetailsRoute = () => {
       <PageLayout className="pb-12">
         <EmptyState message="Project not found." />
       </PageLayout>
-      );
+    );
   }
 
   const statusTabs = [
@@ -97,8 +97,8 @@ export const ProjectDetailsRoute = () => {
 
       <div className="space-y-4">
         <div>
-          <h2 className="text-xl font-sans font-bold text-white">Deploy Jobs</h2>
-          <p className="text-xs font-mono text-nexus-muted mt-1">
+          <h2 className="font-sans text-xl font-bold text-text-primary">Deploy Jobs</h2>
+          <p className="mt-1 font-mono text-xs text-text-muted">
             Job history and step status for this project.
           </p>
         </div>

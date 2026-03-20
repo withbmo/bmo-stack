@@ -12,7 +12,7 @@ export const ProjectListRoute = () => {
         badge={{ icon: Terminal, label: 'PROJECTS' }}
         title={
           <>
-            <span className="text-nexus-muted">COMMAND</span> CENTER
+            <span className="text-text-muted">COMMAND</span> CENTER
           </>
         }
         subtitle="Create and manage your projects"

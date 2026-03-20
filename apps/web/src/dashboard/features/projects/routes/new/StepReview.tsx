@@ -25,59 +25,61 @@ export const StepReview = ({ config, onBack, onDeploy, isDeploying }: StepReview
 
   return (
     <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-500">
-      <div className="bg-[#080808] border border-nexus-gray p-8 mb-8 relative">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-nexus-purple to-nexus-accent" />
+      <div className="relative mb-8 border border-border-default bg-bg-app p-8">
+        <div className="absolute left-0 top-0 h-1 w-full bg-gradient-to-r from-brand-primary to-brand-accent" />
 
-        <h3 className="font-sans font-bold text-2xl text-white mb-6">MANIFEST SUMMARY</h3>
+        <h3 className="mb-6 font-sans text-2xl font-bold text-text-primary">MANIFEST SUMMARY</h3>
 
         <div className="space-y-6 font-mono text-sm">
-          <div className="flex justify-between border-b border-nexus-gray/30 pb-4">
-            <span className="text-nexus-muted uppercase">Project Name</span>
-            <span className="text-white">{config.name}</span>
+          <div className="flex justify-between border-b border-border-default/30 pb-4">
+            <span className="uppercase text-text-muted">Project Name</span>
+            <span className="text-text-primary">{config.name}</span>
           </div>
-          <div className="flex justify-between border-b border-nexus-gray/30 pb-4">
-            <span className="text-nexus-muted uppercase">Description</span>
-            <span className="text-white text-right max-w-[60%]">{config.description || '—'}</span>
+          <div className="flex justify-between border-b border-border-default/30 pb-4">
+            <span className="uppercase text-text-muted">Description</span>
+            <span className="max-w-[60%] text-right text-text-primary">
+              {config.description || '—'}
+            </span>
           </div>
-          <div className="flex justify-between border-b border-nexus-gray/30 pb-4">
-            <span className="text-nexus-muted uppercase">Runtime Framework</span>
-            <span className="text-nexus-purple font-bold uppercase">{config.framework}</span>
+          <div className="flex justify-between border-b border-border-default/30 pb-4">
+            <span className="uppercase text-text-muted">Runtime Framework</span>
+            <span className="font-bold uppercase text-brand-primary">{config.framework}</span>
           </div>
-          <div className="flex justify-between border-b border-nexus-gray/30 pb-4">
-            <span className="text-nexus-muted uppercase">Visibility</span>
-            <span className="text-white uppercase">{config.visibility}</span>
+          <div className="flex justify-between border-b border-border-default/30 pb-4">
+            <span className="uppercase text-text-muted">Visibility</span>
+            <span className="uppercase text-text-primary">{config.visibility}</span>
           </div>
-          <div className="flex justify-between border-b border-nexus-gray/30 pb-4">
-            <span className="text-nexus-muted uppercase">Region</span>
-            <span className="text-white uppercase">{config.region}</span>
+          <div className="flex justify-between border-b border-border-default/30 pb-4">
+            <span className="uppercase text-text-muted">Region</span>
+            <span className="uppercase text-text-primary">{config.region}</span>
           </div>
-          <div className="flex justify-between border-b border-nexus-gray/30 pb-4">
-            <span className="text-nexus-muted uppercase">Structure</span>
-            <span className="text-white uppercase">{config.structure}</span>
+          <div className="flex justify-between border-b border-border-default/30 pb-4">
+            <span className="uppercase text-text-muted">Structure</span>
+            <span className="uppercase text-text-primary">{config.structure}</span>
           </div>
-          <div className="flex justify-between border-b border-nexus-gray/30 pb-4">
-            <span className="text-nexus-muted uppercase">Dependencies</span>
-            <span className="text-white uppercase">{config.dependencyManager}</span>
+          <div className="flex justify-between border-b border-border-default/30 pb-4">
+            <span className="uppercase text-text-muted">Dependencies</span>
+            <span className="uppercase text-text-primary">{config.dependencyManager}</span>
           </div>
-          <div className="flex justify-between border-b border-nexus-gray/30 pb-4">
-            <span className="text-nexus-muted uppercase">Databases</span>
-            <span className="text-nexus-accent">
+          <div className="flex justify-between border-b border-border-default/30 pb-4">
+            <span className="uppercase text-text-muted">Databases</span>
+            <span className="text-brand-accent">
               {config.databases.length > 0 ? config.databases.join(', ').toUpperCase() : 'NONE'}
             </span>
           </div>
-          <div className="flex justify-between border-b border-nexus-gray/30 pb-4">
-            <span className="text-nexus-muted uppercase">Runtime</span>
-            <span className="text-white uppercase">
+          <div className="flex justify-between border-b border-border-default/30 pb-4">
+            <span className="uppercase text-text-muted">Runtime</span>
+            <span className="uppercase text-text-primary">
               {config.cpu} CPU / {config.memory} MB / {config.port} PORT
             </span>
           </div>
-          <div className="flex justify-between border-b border-nexus-gray/30 pb-4">
-            <span className="text-nexus-muted uppercase">Scaffolding</span>
-            <span className="text-white">{scaffolding}</span>
+          <div className="flex justify-between border-b border-border-default/30 pb-4">
+            <span className="uppercase text-text-muted">Scaffolding</span>
+            <span className="text-text-primary">{scaffolding}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-nexus-muted uppercase">Env Vars</span>
-            <span className="text-white">{config.envVars.filter(row => row.key).length}</span>
+            <span className="uppercase text-text-muted">Env Vars</span>
+            <span className="text-text-primary">{config.envVars.filter(row => row.key).length}</span>
           </div>
         </div>
       </div>
@@ -87,7 +89,7 @@ export const StepReview = ({ config, onBack, onDeploy, isDeploying }: StepReview
           onClick={onBack}
           variant="secondary"
           size="md"
-          className="flex-1 border border-nexus-gray bg-transparent text-nexus-muted hover:text-white hover:border-white"
+          className="flex-1 border border-border-default bg-transparent text-text-muted hover:border-text-primary hover:text-text-primary"
         >
           BACK
         </Button>

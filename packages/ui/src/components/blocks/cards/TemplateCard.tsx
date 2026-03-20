@@ -4,22 +4,22 @@ import type { MouseEvent } from 'react';
 import type { Template } from '../../../types';
 import { BaseInteractiveCard } from './BaseInteractiveCard';
 
-interface TemplateCardProps {
+export interface TemplateCardProps {
   template: Template;
   onUseTemplate?: (template: Template) => void;
+  actionHref?: string;
 }
 
-export const TemplateCard = ({ template, onUseTemplate }: TemplateCardProps) => {
+export const TemplateCard = ({
+  template,
+  onUseTemplate,
+  actionHref = '/dashboard/new',
+}: TemplateCardProps) => {
   const handleUseTemplate = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
 
     if (onUseTemplate) {
       onUseTemplate(template);
-      return;
-    }
-
-    if (typeof window !== 'undefined') {
-      window.location.href = '/dashboard/new';
     }
   };
 
@@ -49,12 +49,21 @@ export const TemplateCard = ({ template, onUseTemplate }: TemplateCardProps) => 
           <div className="font-mono text-[10px] text-text-secondary">
             by <span className="text-white">{template.author}</span>
           </div>
-          <button
-            onClick={handleUseTemplate}
-            className="flex items-center gap-2 px-4 py-2 bg-border-dim/20 hover:bg-brand-primary hover:text-white text-xs font-mono font-bold transition-all border border-border-dim hover:border-brand-primary"
-          >
-            <Play size={10} fill="currentColor" /> USE_TEMPLATE
-          </button>
+          {onUseTemplate ? (
+            <button
+              onClick={handleUseTemplate}
+              className="flex items-center gap-2 border border-border-dim bg-border-dim/20 px-4 py-2 font-mono text-xs font-bold transition-all hover:border-brand-primary hover:bg-brand-primary hover:text-white"
+            >
+              <Play size={10} fill="currentColor" /> USE_TEMPLATE
+            </button>
+          ) : (
+            <a
+              href={actionHref}
+              className="flex items-center gap-2 border border-border-dim bg-border-dim/20 px-4 py-2 font-mono text-xs font-bold transition-all hover:border-brand-primary hover:bg-brand-primary hover:text-white"
+            >
+              <Play size={10} fill="currentColor" /> USE_TEMPLATE
+            </a>
+          )}
         </>
       }
     />

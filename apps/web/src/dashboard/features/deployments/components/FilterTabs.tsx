@@ -8,15 +8,15 @@ interface FilterTabsProps {
 }
 
 export const FilterTabs = ({ filter, onFilterChange }: FilterTabsProps) => (
-  <div className="flex flex-wrap gap-2 mb-6">
+  <div className="mb-6 flex flex-wrap gap-2">
     {FILTER_OPTIONS.map(f => (
       <button
         key={f}
         onClick={() => onFilterChange(f)}
-        className={`px-4 py-2 font-mono text-xs font-bold border transition-all tracking-wider ${
+        className={`border px-4 py-2 font-mono text-xs font-bold tracking-wider transition-all ${
           filter === f
-            ? 'bg-nexus-purple text-white border-nexus-purple'
-            : 'bg-[#0A0A0A] text-nexus-muted border-nexus-gray hover:text-white hover:border-nexus-purple/50'
+            ? 'border-brand-primary bg-brand-primary text-white'
+            : 'border-border-default bg-bg-app text-text-muted hover:border-brand-primary/50 hover:text-text-primary'
         }`}
       >
         {f === 'all' ? 'ALL' : f.toUpperCase()}

@@ -1,4 +1,5 @@
-import { BackgroundLayers, cn, PageTransition } from '@pytholit/ui';
+import { BackgroundLayers } from '@pytholit/ui/blocks';
+import { cn, PageTransition } from '@pytholit/ui/ui';
 import type { ReactNode } from 'react';
 
 export interface PageLayoutProps {

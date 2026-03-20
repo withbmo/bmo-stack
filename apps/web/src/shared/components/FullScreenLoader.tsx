@@ -10,10 +10,9 @@ export function FullScreenLoader({
   return (
     <div className={`min-h-screen ${backgroundClassName} flex items-center justify-center`}>
       <div className="flex flex-col items-center gap-4">
-        <Loader2 className="animate-spin text-nexus-purple" size={48} />
-        <span className="font-mono text-xs text-nexus-muted animate-pulse">{label}</span>
+        <Loader2 className="animate-spin text-brand-primary" size={48} />
+        <span className="animate-pulse font-mono text-xs text-text-muted">{label}</span>
       </div>
     </div>
   );
 }
-

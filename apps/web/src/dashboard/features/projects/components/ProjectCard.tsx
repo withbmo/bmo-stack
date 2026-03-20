@@ -31,14 +31,14 @@ export const ProjectCard = ({ project, onArchive, onRestore, actionPending = fal
         {/* Header */}
         <div className="flex justify-between items-start mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-nexus-gray/10 border border-nexus-gray flex items-center justify-center text-nexus-purple group-hover:bg-nexus-purple group-hover:text-white transition-colors">
+            <div className="flex h-10 w-10 items-center justify-center border border-border-default bg-border-default/10 text-brand-primary transition-colors group-hover:bg-brand-primary group-hover:text-white">
               <Box size={20} />
             </div>
             <div>
-              <h3 className="font-sans font-bold text-white text-lg leading-none mb-1 group-hover:text-nexus-purple transition-colors">
+              <h3 className="mb-1 font-sans text-lg font-bold leading-none text-text-primary transition-colors group-hover:text-brand-primary">
                 {project.name}
               </h3>
-              <div className="flex items-center gap-2 text-[10px] font-mono text-nexus-muted">
+              <div className="flex items-center gap-2 font-mono text-[10px] text-text-muted">
                 <Globe size={10} /> {project.region.toUpperCase()}
               </div>
             </div>
@@ -46,7 +46,7 @@ export const ProjectCard = ({ project, onArchive, onRestore, actionPending = fal
           <Button
             variant="ghost"
             size="sm"
-            className="px-0 py-0 text-nexus-muted hover:text-white"
+            className="px-0 py-0 text-text-muted hover:text-text-primary"
             onClick={e => e.stopPropagation()}
           >
             <MoreVertical size={16} />
@@ -55,27 +55,27 @@ export const ProjectCard = ({ project, onArchive, onRestore, actionPending = fal
 
         {/* Specs */}
         <div className="grid grid-cols-2 gap-2 mb-6">
-          <div className="bg-black/50 p-2 border border-nexus-gray/50">
-            <div className="text-[9px] text-nexus-muted mb-0.5">FRAMEWORK</div>
-            <div className="text-xs text-white font-mono">{project.framework}</div>
+          <div className="border border-border-default/50 bg-black/50 p-2">
+            <div className="mb-0.5 text-[9px] text-text-muted">FRAMEWORK</div>
+            <div className="font-mono text-xs text-text-primary">{project.framework}</div>
           </div>
-          <div className="bg-black/50 p-2 border border-nexus-gray/50">
-            <div className="text-[9px] text-nexus-muted mb-0.5">DEPLOYED</div>
-            <div className="text-xs text-white font-mono">
+          <div className="border border-border-default/50 bg-black/50 p-2">
+            <div className="mb-0.5 text-[9px] text-text-muted">DEPLOYED</div>
+            <div className="font-mono text-xs text-text-primary">
               {formatTimestamp(project.lastDeployed)}
             </div>
           </div>
         </div>
 
         {/* Footer / Status */}
-        <div className="mt-auto flex items-center justify-between border-t border-nexus-gray/30 pt-4">
+        <div className="mt-auto flex items-center justify-between border-t border-border-default/30 pt-4">
           <StatusBadge status={project.status} />
 
           <div className="flex gap-2" onClick={e => e.stopPropagation()}>
             <Button
               variant="secondary"
               size="sm"
-              className="px-2 py-1 border-border-dim hover:border-brand-primary text-nexus-muted hover:text-brand-primary"
+              className="px-2 py-1 text-text-muted hover:border-brand-primary hover:text-brand-primary"
               title="Open IDE"
               onClick={() => router.push(`/editor/${project.id}`)}
             >
@@ -85,7 +85,7 @@ export const ProjectCard = ({ project, onArchive, onRestore, actionPending = fal
               <Button
                 variant="secondary"
                 size="sm"
-                className="px-2 py-1 border-border-dim hover:border-red-500 text-nexus-muted hover:text-red-500"
+                className="px-2 py-1 text-text-muted hover:border-red-500 hover:text-red-500"
                 title="Stop"
                 disabled={project.lifecycleState === 'archived'}
               >
@@ -95,7 +95,7 @@ export const ProjectCard = ({ project, onArchive, onRestore, actionPending = fal
               <Button
                 variant="secondary"
                 size="sm"
-                className="px-2 py-1 border-border-dim hover:border-brand-accent text-nexus-muted hover:text-brand-accent"
+                className="px-2 py-1 text-text-muted hover:border-brand-accent hover:text-brand-accent"
                 title="Start"
                 disabled={project.lifecycleState === 'archived'}
               >
@@ -106,7 +106,7 @@ export const ProjectCard = ({ project, onArchive, onRestore, actionPending = fal
               <Button
                 variant="secondary"
                 size="sm"
-                className="px-2 py-1 border-border-dim hover:border-brand-accent text-nexus-muted hover:text-brand-accent"
+                className="px-2 py-1 text-text-muted hover:border-brand-accent hover:text-brand-accent"
                 title="Restore"
                 disabled={actionPending}
                 onClick={() => onRestore?.(project.id)}
@@ -117,7 +117,7 @@ export const ProjectCard = ({ project, onArchive, onRestore, actionPending = fal
               <Button
                 variant="secondary"
                 size="sm"
-                className="px-2 py-1 border-border-dim hover:border-yellow-400 text-nexus-muted hover:text-yellow-400"
+                className="px-2 py-1 text-text-muted hover:border-yellow-400 hover:text-yellow-400"
                 title="Archive"
                 disabled={actionPending}
                 onClick={() => onArchive?.(project.id)}
@@ -128,7 +128,7 @@ export const ProjectCard = ({ project, onArchive, onRestore, actionPending = fal
             <Button
               variant="secondary"
               size="sm"
-              className="px-2 py-1 border-border-dim hover:border-brand-primary text-nexus-muted hover:text-brand-primary"
+              className="px-2 py-1 text-text-muted hover:border-brand-primary hover:text-brand-primary"
               title="Settings"
             >
               <Settings size={12} />
@@ -137,8 +137,8 @@ export const ProjectCard = ({ project, onArchive, onRestore, actionPending = fal
         </div>
 
         {/* Decorative Corners */}
-        <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-nexus-gray group-hover:border-nexus-purple transition-colors"></div>
-        <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-nexus-gray group-hover:border-nexus-purple transition-colors"></div>
+        <div className="absolute right-0 top-0 h-2 w-2 border-r border-t border-border-default transition-colors group-hover:border-brand-primary"></div>
+        <div className="absolute bottom-0 left-0 h-2 w-2 border-b border-l border-border-default transition-colors group-hover:border-brand-primary"></div>
       </Card>
     </div>
   );

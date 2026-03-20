@@ -6,7 +6,7 @@ import { Input } from './Input';
 import { Modal } from './Modal';
 
 const meta: Meta<typeof Modal> = {
-  title: 'UI/Modal',
+  title: 'Primitives/Modal',
   component: Modal,
   tags: ['autodocs'],
   parameters: {

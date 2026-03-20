@@ -17,11 +17,11 @@ export const AuthHeader = ({ mode, title, subtitle }: AuthHeaderProps) => {
       <h1 className="text-3xl font-sans font-bold tracking-tighter mb-2">
         {title ?? (
           <>
-            SYSTEM <span className="text-nexus-purple">ACCESS</span>
+            SYSTEM <span className="text-brand-primary">ACCESS</span>
           </>
         )}
       </h1>
-      <p className="font-mono text-xs text-nexus-light/60 tracking-widest uppercase">
+      <p className="font-mono text-xs text-text-secondary/70 tracking-widest uppercase">
         {resolvedSubtitle}
       </p>
     </div>

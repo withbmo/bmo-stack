@@ -1,8 +1,8 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from '@pytholit/ui/ui';
 import { useState } from 'react';
-import { Toaster } from 'sonner';
 
 import { AuthProvider } from '@/shared/auth/stores/auth-context';
 
@@ -23,7 +23,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         {children}
-        <Toaster position="top-right" />
+        <Toaster />
       </AuthProvider>
     </QueryClientProvider>
   );

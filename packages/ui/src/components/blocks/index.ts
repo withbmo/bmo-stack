@@ -1,10 +1,8 @@
-export { FeatureCard } from './cards/FeatureCard';
-export { PricingCard } from './cards/PricingCard';
+export type { ResourceCardProps } from './cards/ResourceCard';
 export { ResourceCard } from './cards/ResourceCard';
+export type { TemplateCardProps } from './cards/TemplateCard';
 export { TemplateCard } from './cards/TemplateCard';
-export { ErrorBoundary } from './common/ErrorBoundary';
 export { GlitchText } from './common/GlitchText';
-export { ScrollToHash } from './common/ScrollToHash';
 export type { DashboardTab, DashboardTabsProps } from './DashboardTabs';
 export { DashboardTabs } from './DashboardTabs';
 export { BackgroundLayers } from './effects/BackgroundLayers';

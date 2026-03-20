@@ -2,12 +2,12 @@ import Link from 'next/link';
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-nexus-black flex flex-col items-center justify-center p-6 font-sans">
-      <h1 className="text-6xl font-bold text-white mb-2 font-mono">404</h1>
-      <p className="text-nexus-muted font-mono text-sm mb-6">PAGE_NOT_FOUND</p>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-bg-app p-6 font-sans">
+      <h1 className="mb-2 font-mono text-6xl font-bold text-text-primary">404</h1>
+      <p className="mb-6 font-mono text-sm text-text-muted">PAGE_NOT_FOUND</p>
       <Link
         href="/"
-        className="px-4 py-2 border border-nexus-purple text-nexus-purple hover:bg-nexus-purple hover:text-white font-mono text-xs font-bold transition-colors"
+        className="border border-brand-primary px-4 py-2 font-mono text-xs font-bold text-brand-primary transition-colors hover:bg-brand-primary hover:text-white"
       >
         RETURN_HOME
       </Link>

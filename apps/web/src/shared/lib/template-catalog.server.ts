@@ -3,7 +3,7 @@ import 'server-only';
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import type { Template as UITemplate } from '@pytholit/ui';
+import type { Template as UITemplate } from '@pytholit/ui/ui';
 import { parseProjectSpec, validateProjectSpec } from '../../../../../packages/project-spec/dist/index.js';
 
 function inferTags(spec: ReturnType<typeof validateProjectSpec>): string[] {

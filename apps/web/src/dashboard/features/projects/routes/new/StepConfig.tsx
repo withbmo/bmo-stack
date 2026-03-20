@@ -96,7 +96,7 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-right-8 duration-500">
       <div className="space-y-6">
-        <label className="font-mono text-sm text-nexus-light/70 uppercase tracking-wider block">
+        <label className="block font-mono text-sm uppercase tracking-wider text-text-secondary/70">
           01 // Project Identity
         </label>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -111,7 +111,7 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                   name: e.target.value,
                 }))
               }
-              className="bg-nexus-dark border-2 border-nexus-muted/40 rounded-sm p-6 text-2xl placeholder-nexus-muted focus:ring-nexus-purple/30"
+              className="rounded-sm border-2 border-text-muted/40 bg-bg-panel p-6 text-2xl placeholder-text-muted focus:ring-brand-primary/30"
               autoFocus
             />
             <Input
@@ -122,12 +122,12 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
               placeholder="Describe what this service does, for your team and future you."
               variant="panel"
               intent="brand"
-              className="w-full min-h-[140px] flex-1 bg-nexus-dark border border-nexus-muted/40 rounded-sm p-4 text-sm text-white placeholder-nexus-muted"
+              className="min-h-[140px] w-full flex-1 rounded-sm border border-text-muted/40 bg-bg-panel p-4 text-sm text-white placeholder-text-muted"
             />
           </div>
           <div className="flex flex-col h-full gap-3">
-            <div className="border border-nexus-gray bg-[#080808] p-4 space-y-3 flex-1">
-              <div className="text-[10px] font-mono text-nexus-muted uppercase tracking-wider">
+            <div className="flex-1 space-y-3 border border-border-default bg-bg-app p-4">
+              <div className="font-mono text-[10px] uppercase tracking-wider text-text-muted">
                 Visibility
               </div>
               <div className="flex gap-2">
@@ -139,8 +139,8 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                     size="sm"
                     className={`flex-1 border px-3 py-2 text-xs font-mono uppercase tracking-wider transition-colors ${
                       config.visibility === vis
-                        ? 'border-nexus-purple text-nexus-purple bg-nexus-purple/10'
-                        : 'border-border-dim text-nexus-muted hover:text-white'
+                        ? 'border-brand-primary bg-brand-primary/10 text-brand-primary'
+                        : 'border-border-dim text-text-muted hover:text-white'
                     }`}
                   >
                     {vis}
@@ -148,14 +148,14 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                 ))}
               </div>
             </div>
-            <div className="border border-nexus-gray bg-[#080808] p-4 space-y-3 flex-1">
-              <div className="text-[10px] font-mono text-nexus-muted uppercase tracking-wider">
+            <div className="flex-1 space-y-3 border border-border-default bg-bg-app p-4">
+              <div className="font-mono text-[10px] uppercase tracking-wider text-text-muted">
                 Region
               </div>
               <select
                 value={config.region}
                 onChange={e => setConfig(c => ({ ...c, region: e.target.value }))}
-                className="w-full bg-black/60 border border-border-dim text-white text-sm font-mono px-3 py-2 focus:outline-none focus:border-brand-primary"
+                className="w-full border border-border-dim bg-black/60 px-3 py-2 font-mono text-sm text-white focus:border-brand-primary focus:outline-none"
               >
                 {['us-east-1', 'us-west-2', 'eu-west-2', 'ap-south-1'].map(region => (
                   <option key={region} value={region}>
@@ -169,7 +169,7 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
       </div>
 
       <div className="space-y-4">
-        <label className="font-mono text-sm text-nexus-light/70 uppercase tracking-wider block">
+        <label className="block font-mono text-sm uppercase tracking-wider text-text-secondary/70">
           02 // Framework
         </label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -187,7 +187,7 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
       </div>
 
       <div className="space-y-4">
-        <label className="font-mono text-sm text-nexus-light/70 uppercase tracking-wider block">
+        <label className="block font-mono text-sm uppercase tracking-wider text-text-secondary/70">
           03 // Persistence (Optional)
         </label>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -206,7 +206,7 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
       </div>
 
       <div className="space-y-4">
-        <label className="font-mono text-sm text-nexus-light/70 uppercase tracking-wider block">
+        <label className="block font-mono text-sm uppercase tracking-wider text-text-secondary/70">
           04 // Project structure
         </label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -229,7 +229,7 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
       </div>
 
       <div className="space-y-4">
-        <label className="font-mono text-sm text-nexus-light/70 uppercase tracking-wider block">
+        <label className="block font-mono text-sm uppercase tracking-wider text-text-secondary/70">
           05 // Dependency management
         </label>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -247,12 +247,12 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
               size="sm"
               className={`border p-4 text-left font-mono transition-all ${
                 config.dependencyManager === manager
-                  ? 'border-nexus-purple bg-nexus-purple/10 text-white'
-                  : 'border-border-dim text-nexus-muted hover:text-white'
+                  ? 'border-brand-primary bg-brand-primary/10 text-white'
+                  : 'border-border-dim text-text-muted hover:text-white'
               }`}
             >
               <div className="text-sm uppercase">{manager}</div>
-              <div className="text-[10px] text-nexus-muted mt-2">
+              <div className="mt-2 text-[10px] text-text-muted">
                 {manager === 'uv'
                   ? 'Fast, modern resolver'
                   : manager === 'poetry'
@@ -265,7 +265,7 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
       </div>
 
       <div className="space-y-4">
-        <label className="font-mono text-sm text-nexus-light/70 uppercase tracking-wider block">
+        <label className="block font-mono text-sm uppercase tracking-wider text-text-secondary/70">
           06 // Runtime sizing
         </label>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -290,12 +290,12 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
               size="sm"
               className={`border p-4 text-left font-mono transition-all ${
                 config.runtimePreset === preset.id
-                  ? 'border-nexus-purple bg-nexus-purple/10 text-white'
-                  : 'border-border-dim text-nexus-muted hover:text-white'
+                  ? 'border-brand-primary bg-brand-primary/10 text-white'
+                  : 'border-border-dim text-text-muted hover:text-white'
               }`}
             >
               <div className="text-sm uppercase">{preset.label}</div>
-              <div className="text-[10px] text-nexus-muted mt-2">
+              <div className="mt-2 text-[10px] text-text-muted">
                 {preset.cpu} CPU / {preset.memory} MB
               </div>
             </Button>
@@ -303,7 +303,7 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <label className="text-[10px] font-mono uppercase tracking-wider text-nexus-muted">
+            <label className="font-mono text-[10px] uppercase tracking-wider text-text-muted">
               CPU (units)
             </label>
             <Input
@@ -313,11 +313,11 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 setConfig(c => ({ ...c, cpu: Number(e.target.value) }))
               }
-              className="bg-black/60 border border-border-dim rounded-sm p-3 text-sm placeholder-nexus-muted"
+              className="rounded-sm border border-border-dim bg-black/60 p-3 text-sm placeholder-text-muted"
             />
           </div>
           <div className="space-y-2">
-            <label className="text-[10px] font-mono uppercase tracking-wider text-nexus-muted">
+            <label className="font-mono text-[10px] uppercase tracking-wider text-text-muted">
               Memory (MB)
             </label>
             <Input
@@ -327,11 +327,11 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 setConfig(c => ({ ...c, memory: Number(e.target.value) }))
               }
-              className="bg-black/60 border border-border-dim rounded-sm p-3 text-sm placeholder-nexus-muted"
+              className="rounded-sm border border-border-dim bg-black/60 p-3 text-sm placeholder-text-muted"
             />
           </div>
           <div className="space-y-2">
-            <label className="text-[10px] font-mono uppercase tracking-wider text-nexus-muted">
+            <label className="font-mono text-[10px] uppercase tracking-wider text-text-muted">
               App Port
             </label>
             <Input
@@ -341,14 +341,14 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 setConfig(c => ({ ...c, port: Number(e.target.value) }))
               }
-              className="bg-black/60 border border-border-dim rounded-sm p-3 text-sm placeholder-nexus-muted"
+              className="rounded-sm border border-border-dim bg-black/60 p-3 text-sm placeholder-text-muted"
             />
           </div>
         </div>
       </div>
 
       <div className="space-y-4">
-        <label className="font-mono text-sm text-nexus-light/70 uppercase tracking-wider block">
+        <label className="block font-mono text-sm uppercase tracking-wider text-text-secondary/70">
           07 // Tooling & scaffolding
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -359,8 +359,8 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                   key={key}
                   className={`border transition-all ${
                     config.typeHinting
-                      ? 'border-nexus-purple bg-nexus-purple/10 shadow-[0_0_18px_rgba(109,40,217,0.2)]'
-                      : 'border-nexus-gray bg-[#080808] hover:border-nexus-purple/60'
+                      ? 'border-brand-primary bg-brand-primary/10 shadow-[0_0_18px_rgba(109,40,217,0.2)]'
+                      : 'border-border-default bg-bg-app hover:border-brand-primary/60'
                   }`}
                 >
                   <div className="flex items-center gap-4 p-4">
@@ -376,8 +376,8 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                       className="sr-only"
                     />
                     <div className="flex-1">
-                      <span className="font-mono text-sm text-white block">{label}</span>
-                      <span className="font-mono text-[10px] text-nexus-muted">
+                      <span className="block font-mono text-sm text-white">{label}</span>
+                      <span className="font-mono text-[10px] text-text-muted">
                         {config.typeHintingLevel.toUpperCase()}
                       </span>
                     </div>
@@ -386,15 +386,15 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                       onClick={() => setShowTypeHintDialog(open => !open)}
                       variant="secondary"
                       size="sm"
-                      className="p-2 border border-border-dim text-nexus-muted hover:text-white hover:border-nexus-purple"
+                      className="border border-border-dim p-2 text-text-muted hover:border-brand-primary hover:text-white"
                       title="Configure type hinting"
                     >
                       <Settings2 size={14} />
                     </Button>
                   </div>
                   {showTypeHintDialog && (
-                    <div className="border-t border-nexus-gray/60 px-4 pb-4">
-                      <div className="text-[10px] font-mono uppercase tracking-wider text-nexus-muted mt-3 mb-2">
+                    <div className="border-t border-border-default/60 px-4 pb-4">
+                      <div className="mb-2 mt-3 font-mono text-[10px] uppercase tracking-wider text-text-muted">
                         Type Hinting Level
                       </div>
                       <div className="grid grid-cols-2 gap-2">
@@ -412,8 +412,8 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                             size="sm"
                             className={`border px-3 py-2 font-mono text-[10px] uppercase tracking-wider transition-colors ${
                               config.typeHintingLevel === level
-                                ? 'border-nexus-purple text-nexus-purple bg-nexus-purple/10'
-                                : 'border-border-dim text-nexus-muted hover:text-white'
+                                ? 'border-brand-primary bg-brand-primary/10 text-brand-primary'
+                                : 'border-border-dim text-text-muted hover:text-white'
                             }`}
                           >
                             {level}
@@ -431,8 +431,8 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                   key={key}
                   className={`border transition-all ${
                     config.formatters
-                      ? 'border-nexus-purple bg-nexus-purple/10 shadow-[0_0_18px_rgba(109,40,217,0.2)]'
-                      : 'border-nexus-gray bg-[#080808] hover:border-nexus-purple/60'
+                      ? 'border-brand-primary bg-brand-primary/10 shadow-[0_0_18px_rgba(109,40,217,0.2)]'
+                      : 'border-border-default bg-bg-app hover:border-brand-primary/60'
                   }`}
                 >
                   <div className="flex items-center gap-4 p-4">
@@ -443,8 +443,8 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                       className="sr-only"
                     />
                     <div className="flex-1">
-                      <span className="font-mono text-sm text-white block">{label}</span>
-                      <span className="font-mono text-[10px] text-nexus-muted">
+                      <span className="block font-mono text-sm text-white">{label}</span>
+                      <span className="font-mono text-[10px] text-text-muted">
                         {config.formatterChoice.toUpperCase()}
                       </span>
                     </div>
@@ -453,15 +453,15 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                       onClick={() => setShowFormatterDialog(open => !open)}
                       variant="secondary"
                       size="sm"
-                      className="p-2 border border-border-dim text-nexus-muted hover:text-white hover:border-nexus-purple"
+                      className="border border-border-dim p-2 text-text-muted hover:border-brand-primary hover:text-white"
                       title="Configure formatter"
                     >
                       <Settings2 size={14} />
                     </Button>
                   </div>
                   {showFormatterDialog && (
-                    <div className="border-t border-nexus-gray/60 px-4 pb-4">
-                      <div className="text-[10px] font-mono uppercase tracking-wider text-nexus-muted mt-3 mb-2">
+                    <div className="border-t border-border-default/60 px-4 pb-4">
+                      <div className="mb-2 mt-3 font-mono text-[10px] uppercase tracking-wider text-text-muted">
                         Formatter Selection
                       </div>
                       <div className="grid grid-cols-2 gap-2">
@@ -479,8 +479,8 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                             size="sm"
                             className={`border px-3 py-2 font-mono text-[10px] uppercase tracking-wider transition-colors ${
                               config.formatterChoice === fmt
-                                ? 'border-nexus-purple text-nexus-purple bg-nexus-purple/10'
-                                : 'border-border-dim text-nexus-muted hover:text-white'
+                                ? 'border-brand-primary bg-brand-primary/10 text-brand-primary'
+                                : 'border-border-dim text-text-muted hover:text-white'
                             }`}
                           >
                             {fmt}
@@ -512,7 +512,7 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
       </div>
 
       <div className="space-y-4">
-        <label className="font-mono text-sm text-nexus-light/70 uppercase tracking-wider block">
+        <label className="block font-mono text-sm uppercase tracking-wider text-text-secondary/70">
           08 // Environment variables
         </label>
         <div className="space-y-3">
@@ -559,7 +559,7 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
                 }
                 variant="secondary"
                 size="sm"
-                className="border border-border-dim text-nexus-muted hover:text-red-500 hover:border-red-500 px-3 py-2 text-xs uppercase tracking-wider"
+                className="border border-border-dim px-3 py-2 text-xs uppercase tracking-wider text-text-muted hover:border-red-500 hover:text-red-500"
               >
                 <Trash2 size={12} />
               </Button>
@@ -574,7 +574,7 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
             }
             variant="secondary"
             size="sm"
-            className="inline-flex items-center gap-2 border border-border-dim text-nexus-muted hover:text-white hover:border-nexus-purple px-3 py-2 text-xs uppercase tracking-wider"
+            className="inline-flex items-center gap-2 border border-border-dim px-3 py-2 text-xs uppercase tracking-wider text-text-muted hover:border-brand-primary hover:text-white"
           >
             <Plus size={12} /> Add env var
           </Button>
@@ -587,7 +587,7 @@ export const StepConfig = ({ config, setConfig, schema, onNext }: StepConfigProp
           disabled={!config.name}
           variant="primary"
           size="md"
-          className="text-sm px-8 py-4 flex items-center gap-3 transition-all hover:bg-nexus-light enabled:hover:translate-x-1"
+          className="flex items-center gap-3 px-8 py-4 text-sm transition-all enabled:hover:translate-x-1 hover:bg-text-secondary"
         >
           REVIEW CONFIG <ArrowRight size={16} />
         </Button>

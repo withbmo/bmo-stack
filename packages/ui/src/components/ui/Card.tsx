@@ -1,10 +1,8 @@
-import type { ReactNode } from 'react';
+import { forwardRef, type HTMLAttributes } from 'react';
 
 import { cn } from '../../utils/cn';
 
-export interface CardProps {
-  children: ReactNode;
-  className?: string;
+export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'glass' | 'interactive';
   padding?: 'none' | 'sm' | 'md' | 'lg';
 }
@@ -22,20 +20,24 @@ const paddings = {
   lg: 'p-8',
 };
 
-export const Card = ({ children, className, variant = 'default', padding }: CardProps) => {
-  const effectivePadding = padding ?? 'md';
-  return (
-    <div
-      className={cn(
-        'border border-border-dim transition-all',
-        variants[variant],
-        paddings[effectivePadding],
-        className
-      )}
-    >
-      {children}
-    </div>
-  );
-};
+export const Card = forwardRef<HTMLDivElement, CardProps>(
+  ({ children, className, variant = 'default', padding, ...props }, ref) => {
+    const effectivePadding = padding ?? 'md';
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          'border border-border-dim transition-all shadow-[var(--shadow-subtle)]',
+          variants[variant],
+          paddings[effectivePadding],
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </div>
+    );
+  }
+);
 
 Card.displayName = 'Card';

@@ -5,7 +5,7 @@ import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@pytholit/ui/ui';
 
 import { Button, Card, Skeleton } from '@/dashboard/components';
 import { queryKeys } from '@/shared/lib/query-keys';
@@ -107,7 +107,7 @@ export const ProjectList = () => {
       </Card>
 
       {list.length === 0 ? (
-        <Card className="bg-bg-panel p-8 text-center text-nexus-muted font-mono text-sm">
+        <Card className="bg-bg-panel p-8 text-center font-mono text-sm text-text-muted">
           {state === 'archived'
             ? 'No archived projects yet.'
             : 'No projects yet. Create your first project to get started.'}

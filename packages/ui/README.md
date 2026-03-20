@@ -1,214 +1,150 @@
 # @pytholit/ui
 
-> Pytholit's design system and shared component library.
+Pytholit's internal design system package.
 
-## Stack
+It provides four layers:
 
-| Tool                             | Purpose                      |
-| -------------------------------- | ---------------------------- |
-| React 19                         | Component framework          |
-| Tailwind CSS                     | Utility-first styling        |
-| `class-variance-authority` (CVA) | Type-safe component variants |
-| `@radix-ui/react-*`              | Accessible UI primitives     |
-| `motion` (Framer Motion)         | Animation primitives         |
-| `tsup`                           | Build (ESM + CJS + `.d.ts`)  |
-| Storybook                        | Visual component explorer    |
-| Vitest + RTL                     | Unit / interaction tests     |
+- Foundations: tokens, styles, motion rules, and shared utilities
+- Primitives: generic reusable UI building blocks exported from `@pytholit/ui/ui`
+- Blocks: sanctioned shared compositions exported from `@pytholit/ui/blocks`
+- Guidance: Storybook, docs, and contribution rules that explain how the system evolves
 
----
+## Public Entry Points
 
-## Directory Structure
+```ts
+import '@pytholit/ui/styles';
 
+import { Button, MotionFade, cn } from '@pytholit/ui/ui';
+import { SectionHeader, TemplateCard } from '@pytholit/ui/blocks';
 ```
+
+`@pytholit/ui` still exists as a compatibility barrel, but new code should prefer the subpath entrypoints because they preserve the architecture.
+
+## Migration Status
+
+- `@pytholit/ui/ui` and `@pytholit/ui/blocks` are the canonical import paths
+- app consumers have been migrated away from the root compatibility barrel
+- Storybook is structured by `Foundations`, `Primitives`, `Blocks`, and `Motion`
+- generated Storybook output is treated as local build output and is ignored in git
+
+## Layer Rules
+
+Add something to `ui` when:
+
+- it is generic across unrelated screens
+- it solves a reusable interaction or styling problem
+- it can keep a stable API over time
+
+Add something to `blocks` when:
+
+- it is a repeated product-facing composition
+- it combines primitives into a recognizable shared pattern
+- it is reused across multiple areas of the product
+
+Keep something in app code when:
+
+- it is route-specific or feature-coupled
+- its props mirror one page's data shape
+- reuse is only speculative
+
+Behavioral utilities like `ScrollToHash` and broad app error boundaries are not design-system blocks. They belong in application code unless they prove to be true package-level primitives.
+The same applies to product cards that do not have an active shared consumer; unused exports should move out of the public surface until reuse is proven.
+
+## Package Shape
+
+```text
 packages/ui/src/
+├── foundations/      # Storybook coverage for tokens and system rules
 ├── components/
-│   ├── ui/           # Atomic primitives (Button, Input, Modal, Badge, Card…)
-│   └── blocks/       # Composite / domain-specific components
-│       ├── cards/      # FeatureCard, PricingCard, ResourceCard, TemplateCard
-│       ├── common/     # ErrorBoundary, GlitchText, ScrollToHash
-│       ├── effects/    # BackgroundLayers, CyberRings, LivingGrid
-│       └── states/     # EmptyState, LoadingState
-├── motion/           # Shared animation primitives & tokens
-├── styles/           # CSS design system (theme, base, animations, utilities)
-├── types/            # Shared TypeScript types
-└── utils/            # cn() and other helpers
+│   ├── ui/           # Primitive design-system components
+│   └── blocks/       # Shared product/branded compositions
+├── motion/           # Motion primitives, variants, and tokens
+├── styles/           # Theme tokens and global CSS entrypoint
+├── types/            # Shared UI-facing types
+└── utils/            # Low-level helpers such as cn()
 ```
 
-## Architecture
+## Current Primitive Surface
 
-### Why a component should exist at all
+- `Button`
+- `Input`
+- `Modal`
+- `Card`
+- `Badge`
+- `Tabs`
+- `Select`
+- `DropdownMenu`
+- `Accordion`
+- `Popover`
+- `Tooltip`
+- `Toast`
+- `Skeleton`
+- `DynamicSkeleton`
+- motion primitives
+- `cn`
 
-Add a component only when at least one of these is true:
+Queued next primitives for the design-system roadmap:
 
-- It creates a stable contract the app can rely on.
-- It centralizes accessibility, behavior, or styling that would otherwise drift.
-- It expresses a repeated concept in the product language.
+- richer overlay patterns as needed
 
-Do **not** add a component just to remove a few lines of JSX duplication. A wrapper with no durable API, no behavior, and no semantic meaning adds indirection faster than it adds value.
+These should be built on top of Radix or shadcn-style internals while keeping Pytholit-owned APIs and styling.
 
-### `ui/` vs `blocks/`
+## Foundations
 
-`ui/` is for primitives:
-
-- Generic building blocks like `Button`, `Input`, `Modal`, `Card`, `Badge`, `Skeleton`
-- Reusable outside a specific screen or feature
-- Should avoid product nouns like "template", "deployment", "dashboard", "hub"
-- Should be composable enough that apps can build their own higher-level structures from them
-
-`blocks/` is for compositions:
-
-- Opinionated combinations of primitives with a recognizable product role
-- Often closer to page sections, repeated feature layouts, branded effects, or workflow-specific cards
-- Allowed to know about product vocabulary and shared app-facing data shapes
-- More likely to change with product direction than primitives
-
-### When something should stay out of the package
-
-Keep a component in the app layer instead of `packages/ui` when:
-
-- Only one route or feature uses it
-- Its props are tightly coupled to one page's server data shape
-- Its reuse is speculative rather than proven
-- The package would need to import feature-specific business logic to support it
-
-### Public API guidance
-
-Prefer subpath imports when writing new app code:
-
-```ts
-import { Button, Input, Modal } from '@pytholit/ui/ui';
-import { DashboardTabs, SectionHeader, TemplateCard } from '@pytholit/ui/blocks';
-```
-
-The root `@pytholit/ui` entrypoint still exists for backward compatibility, but it intentionally flattens the distinction and is less helpful as an architectural signal.
-
----
-
-## Adding a New Component
-
-### 1. Create the file
-
-```
-src/components/ui/MyComponent.tsx          # atomic
-src/components/blocks/MyBlock.tsx          # composite
-```
-
-### 2. Use CVA for variants
-
-All components with multiple visual styles must use `class-variance-authority`:
-
-```tsx
-import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '../../utils/cn';
-
-const myComponentVariants = cva(
-  'base-classes-here', // always applied
-  {
-    variants: {
-      variant: {
-        primary: 'bg-brand-primary text-white',
-        secondary: 'bg-transparent border border-border-dim',
-      },
-      size: {
-        sm: 'text-sm px-3 py-1.5',
-        md: 'text-base px-4 py-2',
-      },
-    },
-    defaultVariants: {
-      variant: 'primary',
-      size: 'md',
-    },
-  }
-);
-
-export interface MyComponentProps
-  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof myComponentVariants> {}
-
-export const MyComponent = ({ className, variant, size, ...props }: MyComponentProps) => (
-  <div className={cn(myComponentVariants({ variant, size }), className)} {...props} />
-);
-```
-
-### 3. Use Radix UI for interactive / accessible components
-
-For components that require keyboard navigation, focus management, or ARIA roles (dialogs, tooltips, dropdowns, checkboxes…) **always** build on top of a `@radix-ui/react-*` primitive:
-
-```tsx
-import * as Dialog from '@radix-ui/react-dialog';
-
-// Radix handles: focus trapping, ESC key, scroll-lock, ARIA roles, portal
-export const MyDialog = ({ open, onClose, children }) => (
-  <Dialog.Root open={open} onOpenChange={o => !o && onClose()}>
-    <Dialog.Portal>
-      <Dialog.Overlay className="fixed inset-0 bg-black/70" />
-      <Dialog.Content className="fixed inset-0 flex items-center justify-center">
-        {children}
-      </Dialog.Content>
-    </Dialog.Portal>
-  </Dialog.Root>
-);
-```
-
-### 4. Export it
-
-Add the export to the `index.ts` of the relevant subdirectory:
-
-```ts
-// src/components/ui/index.ts
-export { MyComponent } from './MyComponent';
-```
-
-### 5. Write a Story
-
-Create `MyComponent.stories.tsx` next to the component. Storybook will auto-discover it.
-Use `UI/...` titles for primitives and `Blocks/...` titles for composition-level stories.
-
----
-
-## Running Locally
-
-Storybook requires the repo-supported Node version range. In this workspace that means `20.19+`, `22.12+`, or newer.
-
-```bash
-# Build the package (watch mode)
-pnpm dev
-
-# Type-check
-pnpm type-check
-
-# Lint
-pnpm lint
-
-# Tests
-pnpm test
-
-# Storybook (visual explorer)
-pnpm storybook
-
-# Static Storybook build
-pnpm storybook:build
-```
-
----
-
-## Styles
-
-Import the styles once at the root of your consuming application:
+The required stylesheet entrypoint is:
 
 ```ts
 import '@pytholit/ui/styles';
 ```
 
-The stylesheet is structured as:
+Foundations currently cover:
 
-1. **`theme.css`** — Design tokens (`--color-brand-primary`, etc.)
-2. **`base.css`** — Global resets
-3. **`animations.css`** — Keyframe definitions
-4. **`utilities.css`** — Custom utility classes
+- semantic colors for surface, border, text, brand, and state roles
+- typography families, scale, weights, and line heights
+- spacing and radius scales
+- shadow and z-index tokens
+- motion duration, easing, and distance tokens
 
----
+Components should consume semantic tokens like `bg-bg-panel` or `text-state-error` rather than raw palette names.
 
-## Publishing
+Shared blocks should also avoid hidden navigation or route side effects. If a block needs to trigger navigation, prefer explicit props like `href`, `actionHref`, or callbacks supplied by the consumer.
 
-This package is an internal workspace package and is not published to npm.
-It is consumed locally via `"@pytholit/ui": "workspace:*"` in sibling `apps/`.
+## Storybook
+
+Storybook is the visual source of truth and should mirror the design-system layers:
+
+- `Foundations/*`
+- `Primitives/*`
+- `Blocks/*`
+- `Motion/*`
+
+Node must match the repo-supported range before Storybook will run cleanly.
+
+```bash
+pnpm storybook
+pnpm storybook:build
+```
+
+## Local Commands
+
+```bash
+pnpm dev
+pnpm lint
+pnpm type-check
+pnpm test
+pnpm build
+pnpm storybook
+```
+
+## Standards
+
+- Prefer semantic tokens over one-off values.
+- Use Radix-backed patterns for accessibility-heavy primitives.
+- Keep `BaseInteractiveCard` and similar helpers internal.
+- Document every public primitive and shared block in Storybook.
+- Prefer `@pytholit/ui/ui` and `@pytholit/ui/blocks` in consuming apps.
+
+## Further Docs
+
+- [`docs/design-system.md`](./docs/design-system.md)
+- [`docs/components.md`](./docs/components.md)

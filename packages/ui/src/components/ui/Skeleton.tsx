@@ -10,7 +10,11 @@ interface SkeletonProps {
 export const Skeleton = ({ className, style }: SkeletonProps) => {
   return (
     <div
-      className={cn('animate-pulse bg-border-dim/20 border border-border-dim/40', className)}
+      className={cn(
+        'animate-pulse border border-border-dim/40 bg-border-dim/20',
+        className
+      )}
+      aria-hidden="true"
       style={style}
     />
   );

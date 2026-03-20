@@ -12,14 +12,15 @@
   border: 2px solid var(--color-border-default);
 }
 
-/* ===== Nexus Shadow Button Effect ===== */
+/* ===== Offset Shadow Effects ===== */
 /*
- * Usage: wrap a <button class="nexus-shadow-btn"> inside
- *        <div class="nexus-shadow-btn-wrapper">.
+ * Usage: wrap a <button class="offset-shadow-button"> inside
+ *        <div class="offset-shadow-button-wrapper">.
  *
  * On hover, the pseudo-element behind the button slides to align,
  * creating a retro offset-shadow reveal effect.
  */
+.offset-shadow-button-wrapper,
 .nexus-shadow-btn-wrapper {
   position: relative;
   display: inline-block;
@@ -27,6 +28,7 @@
   isolation: isolate;
 }
 
+.offset-shadow-button-wrapper::before,
 .nexus-shadow-btn-wrapper::before {
   content: '';
   display: block;
@@ -42,11 +44,13 @@
     background-color 0.2s ease;
 }
 
+.offset-shadow-button-wrapper:hover::before,
 .nexus-shadow-btn-wrapper:hover::before {
   transform: translate(0px, 0px);
   background-color: var(--color-brand-neon);
 }
 
+.offset-shadow-button,
 .nexus-shadow-btn {
   position: relative;
   z-index: 1;
@@ -57,16 +61,21 @@
     background-color 0.2s ease;
 }
 
+.offset-shadow-button-wrapper:hover .offset-shadow-button,
+.offset-shadow-button-wrapper:hover .nexus-shadow-btn,
+.nexus-shadow-btn-wrapper:hover .offset-shadow-button,
 .nexus-shadow-btn-wrapper:hover .nexus-shadow-btn {
   transform: translate(0px, 0px);
   background-color: var(--color-brand-neon);
 }
 
 /* Static shadow variant (no wrapper needed) */
+.offset-shadow,
 .nexus-shadow {
   box-shadow: 8px 8px 0px 0px var(--color-brand-primary);
 }
 
+.offset-shadow-hover:hover,
 .nexus-shadow-hover:hover {
   box-shadow: 4px 4px 0px 0px var(--color-brand-neon);
   transform: translate(2px, 2px);

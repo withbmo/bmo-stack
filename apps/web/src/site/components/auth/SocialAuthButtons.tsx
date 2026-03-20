@@ -3,7 +3,7 @@
 import { Chrome, Github } from 'lucide-react';
 import { useState } from 'react';
 
-import { getApiErrorMessage, type OAuthProvider,signInWithOAuth } from '@/shared/lib/auth';
+import { getApiErrorMessage, signInWithOAuth, type OAuthProvider } from '@/shared/lib/auth';
 
 type OAuthButtonProvider = 'github' | 'google';
 
@@ -38,9 +38,9 @@ export const SocialAuthButtons = ({
   return (
     <>
       <div className="my-8 flex items-center gap-4">
-        <div className="h-[1px] bg-nexus-gray flex-1" />
-        <span className="font-mono text-[10px] text-nexus-muted uppercase">Or authenticate via</span>
-        <div className="h-[1px] bg-nexus-gray flex-1" />
+        <div className="h-[1px] flex-1 bg-border-default" />
+        <span className="font-mono text-[10px] uppercase text-text-muted">Or authenticate via</span>
+        <div className="h-[1px] flex-1 bg-border-default" />
       </div>
 
       {error ? (
@@ -83,13 +83,13 @@ const SocialButton = ({ icon, label, onClick, isLoading }: SocialButtonProps) =>
       disabled={isLoading}
       className={`
         flex items-center justify-center gap-2 py-3
-        border border-nexus-gray hover:border-nexus-purple/50 hover:bg-nexus-gray/20
-        font-mono text-xs text-nexus-light uppercase
+        border border-border-default hover:border-brand-primary/50 hover:bg-border-default/20
+        font-mono text-xs uppercase text-text-primary
         disabled:cursor-not-allowed disabled:opacity-60
-        ${isLoading ? 'border-nexus-purple/50 bg-nexus-gray/20' : ''}
+        ${isLoading ? 'border-brand-primary/50 bg-border-default/20' : ''}
       `}
     >
-      <span className="text-nexus-muted">{icon}</span>
+      <span className="text-text-muted">{icon}</span>
       <span>{label}</span>
     </button>
   );

@@ -1,4 +1,4 @@
-import { Modal } from '@pytholit/ui/ui';
+import { Button, Modal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@pytholit/ui/ui';
 import { RefreshCw, Rocket } from 'lucide-react';
 
 import type { Project } from '@/shared/types';
@@ -22,6 +22,11 @@ export const DeployModal = ({
   onDeploy,
   isDeploying,
 }: DeployModalProps) => {
+  const projectOptions = projects.map(project => ({
+    value: project.id,
+    label: `${project.name} (${project.region})`,
+  }));
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} isLoading={isDeploying} variant="default">
       {/* Custom title with icon */}
@@ -35,32 +40,30 @@ export const DeployModal = ({
         Select a project to deploy. Deployed projects will appear in the list with status.
       </p>
 
-      <select
-        value={selectedProjectId}
-        onChange={e => onSelectedProjectChange(e.target.value)}
-        className="w-full bg-nexus-dark border border-nexus-gray p-3 font-mono text-sm text-white focus:border-nexus-purple focus:ring-1 focus:ring-nexus-purple/30 outline-none mb-6"
-      >
-        <option value="">Choose project...</option>
-        {projects.map(p => (
-          <option key={p.id} value={p.id}>
-            {p.name} ({p.region})
-          </option>
-        ))}
-      </select>
+      <div className="relative mb-6">
+        <Select value={selectedProjectId} onValueChange={onSelectedProjectChange}>
+          <SelectTrigger>
+            <SelectValue placeholder="Choose project..." options={projectOptions} />
+          </SelectTrigger>
+          <SelectContent>
+            {projectOptions.map(option => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       <div className="flex gap-3 justify-end">
-        <button
-          type="button"
-          onClick={() => !isDeploying && onClose()}
-          className="px-4 py-2 border border-nexus-gray text-nexus-muted font-mono text-xs font-bold hover:text-white hover:border-white transition-colors"
-        >
+        <Button variant="ghost" size="sm" onClick={() => !isDeploying && onClose()}>
           CANCEL
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="primary"
+          size="sm"
           onClick={onDeploy}
           disabled={!selectedProjectId || isDeploying}
-          className="px-4 py-2 bg-nexus-purple text-white font-mono text-xs font-bold hover:bg-nexus-neon disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
         >
           {isDeploying ? (
             <>
@@ -73,7 +76,7 @@ export const DeployModal = ({
               DEPLOY
             </>
           )}
-        </button>
+        </Button>
       </div>
     </Modal>
   );

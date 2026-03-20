@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { FileCode2, Layers3 } from 'lucide-react';
 import { useState } from 'react';
 
+import { ResourceCard } from './cards/ResourceCard';
+import { TemplateCard } from './cards/TemplateCard';
 import { DashboardTabs } from './DashboardTabs';
 import { SectionHeader } from './SectionHeader';
 import { EmptyState } from './states/EmptyState';
@@ -60,6 +62,39 @@ export const SharedStates: Story = {
     <div className="grid max-w-3xl gap-4 bg-bg-app p-8">
       <LoadingState message="Loading shared runtime state..." />
       <EmptyState message="No shared resources match the current filters." />
+    </div>
+  ),
+};
+
+export const SharedCards: Story = {
+  render: () => (
+    <div className="grid max-w-5xl gap-6 bg-bg-app p-8 md:grid-cols-2">
+      <TemplateCard
+        template={{
+          id: 'template-fastapi',
+          title: 'FastAPI Runtime',
+          description: 'Pre-wired API runtime with typed routes, docs, and deployment defaults.',
+          tags: ['python', 'api', 'runtime'],
+          author: 'Pytholit Core',
+          stars: 1840,
+          isOfficial: true,
+        }}
+        actionHref="/dashboard/new"
+      />
+      <ResourceCard
+        resource={{
+          id: 'resource-skill-tree',
+          type: 'skill',
+          title: 'Agent Skill Tree',
+          description: 'A verified workflow for moving from prompts to maintainable automation.',
+          tags: ['agents', 'workflow', 'skills'],
+          author: 'Operations',
+          stars: 412,
+          forks: 37,
+          updatedAt: '2d ago',
+          verified: true,
+        }}
+      />
     </div>
   ),
 };

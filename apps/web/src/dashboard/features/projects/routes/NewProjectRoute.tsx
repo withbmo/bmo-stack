@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Terminal } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@pytholit/ui/ui';
 
 import { DashboardPageHeader, PageLayout } from '@/dashboard/components';
 import { env } from '@/env';
@@ -87,11 +87,11 @@ export const NewProjectRoute = () => {
           badge={{ icon: Terminal, label: 'NEW PROJECT' }}
           title={
             <>
-              NEW <span className="text-nexus-muted">PROJECT</span>
+              NEW <span className="text-text-muted">PROJECT</span>
             </>
           }
           subtitle="Configure and create a new project"
-          actions={<div className="font-mono text-xs text-nexus-muted">STEP {step} / 2</div>}
+          actions={<div className="font-mono text-xs text-text-muted">STEP {step} / 2</div>}
           className="mb-12"
         />
 
@@ -104,29 +104,29 @@ export const NewProjectRoute = () => {
           />
         )}
         {step === 1 && !schema && (
-          <div className="text-sm text-nexus-muted font-mono">
+          <div className="font-mono text-sm text-text-muted">
             {schemaError ? (
-              <div className="border border-nexus-gray bg-[#080808] p-6">
+              <div className="border border-border-default bg-bg-app p-6">
                 WIZARD_SCHEMA_UNAVAILABLE. Please try again later.
               </div>
             ) : (
               <div className="space-y-8">
                 <div className="space-y-3">
-                  <div className="h-4 w-56 rounded bg-nexus-gray/30 animate-pulse" />
+                  <div className="h-4 w-56 animate-pulse rounded bg-border-default/30" />
                   <div className="space-y-3">
-                    <div className="h-14 w-full rounded border border-nexus-gray bg-nexus-gray/10 animate-pulse" />
-                    <div className="h-24 w-full rounded border border-nexus-gray bg-nexus-gray/10 animate-pulse" />
+                    <div className="h-14 w-full animate-pulse rounded border border-border-default bg-border-default/10" />
+                    <div className="h-24 w-full animate-pulse rounded border border-border-default bg-border-default/10" />
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <div className="h-4 w-40 rounded bg-nexus-gray/30 animate-pulse" />
-                  <div className="h-24 w-full rounded border border-nexus-gray bg-nexus-gray/10 animate-pulse" />
+                  <div className="h-4 w-40 animate-pulse rounded bg-border-default/30" />
+                  <div className="h-24 w-full animate-pulse rounded border border-border-default bg-border-default/10" />
                 </div>
 
                 <div className="space-y-3">
-                  <div className="h-4 w-56 rounded bg-nexus-gray/30 animate-pulse" />
-                  <div className="h-20 w-full rounded border border-nexus-gray bg-nexus-gray/10 animate-pulse" />
+                  <div className="h-4 w-56 animate-pulse rounded bg-border-default/30" />
+                  <div className="h-20 w-full animate-pulse rounded border border-border-default bg-border-default/10" />
                 </div>
               </div>
             )}

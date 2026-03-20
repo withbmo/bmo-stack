@@ -12,7 +12,7 @@ export const UsageSettingsRoute = () => {
     <SettingsLayout>
       <Link
         href="/dashboard"
-        className="absolute top-6 right-6 flex items-center gap-2 text-nexus-muted hover:text-white transition-colors font-mono text-xs uppercase tracking-wider"
+        className="absolute right-6 top-6 flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-text-muted transition-colors hover:text-white"
       >
         <ChevronLeft size={16} /> BACK
       </Link>
