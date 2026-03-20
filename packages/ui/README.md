@@ -67,6 +67,7 @@ packages/ui/src/
 ## Current Primitive Surface
 
 - `Button`
+- `FormField`
 - `Input`
 - `Modal`
 - `Card`
@@ -117,6 +118,8 @@ Storybook is the visual source of truth and should mirror the design-system laye
 - `Primitives/*`
 - `Blocks/*`
 - `Motion/*`
+- `Patterns/*`
+- `Guidance/*`
 
 Node must match the repo-supported range before Storybook will run cleanly.
 
@@ -148,3 +151,4 @@ pnpm storybook
 
 - [`docs/design-system.md`](./docs/design-system.md)
 - [`docs/components.md`](./docs/components.md)
+- [`docs/contributing.md`](./docs/contributing.md)

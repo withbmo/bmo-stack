@@ -79,6 +79,18 @@ Guidance turns a component library into a real design system:
 - contribution rules
 - deprecation rules
 
+## Contribution Rules
+
+Before something is promoted into the package:
+
+- decide whether it belongs in `ui`, `blocks`, or app code
+- make sure it uses semantic tokens rather than raw palette values
+- add Storybook coverage for intended usage
+- add tests when interaction behavior matters
+- prefer explicit props over hidden route or state side effects
+
+Pattern-level shared code should only be promoted when it has real reuse. The current preferred example is `FormField`, which standardizes label, hint, and error presentation around existing primitives without coupling itself to one feature.
+
 ## Promotion Rules
 
 Put something in `ui` when:

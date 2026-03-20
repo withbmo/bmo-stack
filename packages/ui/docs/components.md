@@ -22,6 +22,7 @@ import {
   DynamicSkeletonProvider,
   DynamicSlot,
   DynamicValue,
+  FormField,
   Input,
   Modal,
   MotionFade,
@@ -89,6 +90,18 @@ Use for generic text entry and textarea needs.
 - Accessibility notes:
   - sets `aria-invalid`
   - wires `aria-describedby` when hint or error copy is present
+
+### FormField
+
+Use for shared form composition around existing primitives.
+
+- standardizes:
+  - labels
+  - hint copy
+  - error copy
+  - required markers
+- composes with `Input`, `Select`, and other field-like children
+- injects `aria-describedby` and `aria-invalid` when the child does not already provide them
 
 ### Modal
 
@@ -269,6 +282,7 @@ Available token exports:
 
 - `MOTION_DURATION`
 - `MOTION_EASE`
+- `MOTION_DISTANCE`
 
 ## Utility Classes
 
@@ -278,9 +292,6 @@ Available globally after importing `@pytholit/ui/styles`.
 - `offset-shadow-hover`
 - `offset-shadow-button`
 - `offset-shadow-button-wrapper`
-
-The older `nexus-shadow*` names still exist as compatibility aliases, but new code should use the semantic `offset-shadow*` names.
-- `MOTION_DISTANCE`
 
 ## Contribution Rules
 
