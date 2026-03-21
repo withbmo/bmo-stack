@@ -1,4 +1,4 @@
-import type { ProjectVisibility } from '../constants/project-wizard';
+type ProjectVisibility = 'public' | 'private';
 
 export interface Template {
   id: string;
@@ -6,7 +6,7 @@ export interface Template {
   description: string;
   framework: string;
   author: string;
-  stars: string;
+  stars: string | number;
   tags: string[];
   isOfficial?: boolean;
   parts?: TemplateParts;

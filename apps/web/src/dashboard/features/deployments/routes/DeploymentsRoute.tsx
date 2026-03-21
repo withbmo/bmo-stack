@@ -4,9 +4,10 @@ import { Plus, Rocket } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import { Button, DashboardTabs } from '@/dashboard/components';
+import { Button } from '@/ui/shadcn/ui/button';
+import { Card, CardContent } from '@/ui/shadcn/ui/card';
 import { AsyncState } from '@/dashboard/shared/state/AsyncState';
-import { DashboardPageHeader, PageLayout } from '@/shared/components/layout';
+import { DashboardPageHeader, PageLayout } from '@/dashboard/components/layout';
 
 import { useProjects } from '../../projects/hooks/useProjects';
 import { DeployJobTable } from '../components';
@@ -42,25 +43,28 @@ export const DeploymentsRoute = () => {
     <PageLayout className="pb-12">
       <DashboardPageHeader
         badge={{ icon: Rocket, label: 'DEPLOY JOBS' }}
-        title={
-          <>
-            <span className="text-text-muted">DEPLOY</span> JOBS
-          </>
-        }
+        title="Deploy Jobs"
         subtitle="Create deploy jobs and monitor progress."
         actions={
-          <Button variant="primary" size="sm" onClick={() => setShowDeployModal(true)}>
-            <Plus size={16} /> NEW_DEPLOY_JOB
+          <Button onClick={() => setShowDeployModal(true)}>
+            <Plus size={16} /> New Deploy Job
           </Button>
         }
       />
 
-      <DashboardTabs
-        tabs={DEPLOY_JOB_STATUS_TABS}
-        active={jobFilter}
-        onChange={value => setJobFilter(value as DeployJobStatusFilter)}
-        className="mb-6"
-      />
+      <Card className="mb-6">
+        <CardContent className="flex flex-wrap gap-2 pt-6">
+          {DEPLOY_JOB_STATUS_TABS.map(tab => (
+            <Button
+              key={tab.value}
+              variant={jobFilter === tab.value ? 'default' : 'outline'}
+              onClick={() => setJobFilter(tab.value as DeployJobStatusFilter)}
+            >
+              {tab.label}
+            </Button>
+          ))}
+        </CardContent>
+      </Card>
 
       <AsyncState
         isLoading={isLoading}

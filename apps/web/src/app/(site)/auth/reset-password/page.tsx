@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 
-import { ResetPasswordRoute } from '@/site/routes/auth/ResetPasswordRoute';
+import { ResetPasswordRoute } from '@/site/routes/auth';
 
 export default function ResetPasswordPage() {
   return (

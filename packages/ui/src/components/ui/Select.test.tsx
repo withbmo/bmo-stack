@@ -57,4 +57,58 @@ describe('Select', () => {
 
         expect(screen.getByRole('button', { name: /api service/i })).toBeInTheDocument();
     });
+
+    it('closes the listbox after an option is selected', async () => {
+        const user = userEvent.setup();
+
+        render(
+            <div className="relative">
+                <Select defaultValue="">
+                    <SelectTrigger>
+                        <SelectValue placeholder="Choose project..." options={OPTIONS} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {OPTIONS.map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+        );
+
+        await user.click(screen.getByRole('button', { name: /choose project/i }));
+        expect(screen.getByRole('listbox')).toBeInTheDocument();
+
+        await user.click(screen.getByRole('option', { name: 'Worker' }));
+
+        expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    });
+
+    it('closes when escape is pressed', async () => {
+        const user = userEvent.setup();
+
+        render(
+            <div className="relative">
+                <Select defaultValue="">
+                    <SelectTrigger>
+                        <SelectValue placeholder="Choose project..." options={OPTIONS} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {OPTIONS.map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+        );
+
+        await user.click(screen.getByRole('button', { name: /choose project/i }));
+        await user.keyboard('{Escape}');
+
+        expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    });
 });

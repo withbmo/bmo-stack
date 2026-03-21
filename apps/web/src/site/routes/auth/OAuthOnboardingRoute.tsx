@@ -1,18 +1,19 @@
 'use client';
 
-import { Button, Input } from '@pytholit/ui/ui';
+import { toast } from '@/ui/system';
 import { AUTH_CONSTANTS } from '@pytholit/validation';
-import { Loader2, Save } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { toast } from '@pytholit/ui/ui';
 
+import { AuthLayout } from '@/site/components/auth/AuthLayout';
+import { Button } from '@/ui/shadcn/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/shadcn/ui/card';
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/ui/shadcn/ui/field';
+import { InputWithIcon } from '@/ui/shadcn/ui/input-with-icon';
+import { FileTextIcon, Loader2, Save, UserIcon } from 'lucide-react';
 import { useAuth } from '@/shared/auth';
 import { getApiErrorMessage } from '@/shared/lib';
 import { completeOAuthOnboarding } from '@/shared/lib/user';
-import { AuthCard } from '@/site/components/auth/AuthCard';
-import { AuthHeader } from '@/site/components/auth/AuthHeader';
-import { AuthPageLayout } from '@/site/components/auth/AuthPageLayout';
 
 type FormState = {
   username: string;
@@ -140,93 +141,105 @@ export function OAuthOnboardingRoute() {
   };
 
   return (
-    <AuthPageLayout>
-      <AuthHeader mode="register" title="Complete profile" subtitle="Required to continue" />
-      <AuthCard>
-        {loading ? (
-          <div className="font-mono text-xs uppercase tracking-wider text-text-secondary/70">
-            Loading profile…
-          </div>
-        ) : (
-          <form className="space-y-4" onSubmit={onSubmit}>
-            <div className="space-y-2">
-              <label className="font-mono text-xs uppercase tracking-wider text-brand-primary">
-                Username
-              </label>
-              <Input
-                value={form.username}
-                onChange={event => onChange('username', event.target.value)}
-                error={Boolean(errors.username)}
-                autoComplete="username"
-                placeholder="your-handle"
-              />
-              {errors.username ? (
-                <p className="font-mono text-xs text-red-500">{errors.username}</p>
-              ) : null}
+    <AuthLayout>
+      <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+        <CardHeader className="text-center">
+          <CardTitle className="text-xl">Complete profile</CardTitle>
+          <CardDescription>Required to continue</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex min-h-[220px] items-center justify-center text-sm text-muted-foreground">
+              <Loader2 size={16} className="mr-2 animate-spin" />
+              Loading profile...
             </div>
+          ) : (
+            <form onSubmit={onSubmit}>
+              <FieldGroup>
+                <Field>
+                  <FieldLabel htmlFor="username">Username</FieldLabel>
+                  <InputWithIcon
+                    icon={UserIcon}
+                    iconLabel="Username"
+                    id="username"
+                    value={form.username}
+                    onChange={event => onChange('username', event.target.value)}
+                    aria-invalid={Boolean(errors.username)}
+                    autoComplete="username"
+                    placeholder="your-handle"
+                  />
+                  <FieldError>{errors.username}</FieldError>
+                </Field>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="font-mono text-xs uppercase tracking-wider text-brand-primary">
-                  First name
-                </label>
-                <Input
-                  value={form.firstName}
-                  onChange={event => onChange('firstName', event.target.value)}
-                  error={Boolean(errors.firstName)}
-                  autoComplete="given-name"
-                />
-                {errors.firstName ? (
-                  <p className="font-mono text-xs text-red-500">{errors.firstName}</p>
-                ) : null}
-              </div>
+                <Field>
+                  <FieldLabel htmlFor="firstName">First name</FieldLabel>
+                  <InputWithIcon
+                    icon={UserIcon}
+                    iconLabel="First name"
+                    id="firstName"
+                    value={form.firstName}
+                    onChange={event => onChange('firstName', event.target.value)}
+                    aria-invalid={Boolean(errors.firstName)}
+                    autoComplete="given-name"
+                  />
+                  <FieldError>{errors.firstName}</FieldError>
+                </Field>
 
-              <div className="space-y-2">
-                <label className="font-mono text-xs uppercase tracking-wider text-brand-primary">
-                  Last name
-                </label>
-                <Input
-                  value={form.lastName}
-                  onChange={event => onChange('lastName', event.target.value)}
-                  error={Boolean(errors.lastName)}
-                  autoComplete="family-name"
-                />
-                {errors.lastName ? (
-                  <p className="font-mono text-xs text-red-500">{errors.lastName}</p>
-                ) : null}
-              </div>
-            </div>
+                <Field>
+                  <FieldLabel htmlFor="lastName">Last name</FieldLabel>
+                  <InputWithIcon
+                    icon={UserIcon}
+                    iconLabel="Last name"
+                    id="lastName"
+                    value={form.lastName}
+                    onChange={event => onChange('lastName', event.target.value)}
+                    aria-invalid={Boolean(errors.lastName)}
+                    autoComplete="family-name"
+                  />
+                  <FieldError>{errors.lastName}</FieldError>
+                </Field>
 
-            <div className="space-y-2">
-              <label className="font-mono text-xs uppercase tracking-wider text-brand-primary">
-                Bio (optional)
-              </label>
-              <Input
-                multiline
-                rows={4}
-                value={form.bio}
-                onChange={event => onChange('bio', event.target.value)}
-                maxLength={500}
-                placeholder="Tell us about what you build."
-              />
-            </div>
+                <Field>
+                  <FieldLabel htmlFor="bio">Bio (optional)</FieldLabel>
+                  <div className="relative">
+                    <div className="text-muted-foreground pointer-events-none absolute left-0 top-0 flex items-center justify-center pl-3 pt-2.5">
+                      <FileTextIcon className="size-4" />
+                      <span className="sr-only">Bio</span>
+                    </div>
+                    <textarea
+                      id="bio"
+                      value={form.bio}
+                      onChange={event => onChange('bio', event.target.value)}
+                      maxLength={500}
+                      placeholder="Tell us about what you build."
+                      className="min-h-24 w-full rounded-lg border border-input bg-transparent pl-9 pr-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                    />
+                  </div>
+                </Field>
 
-            <Button type="submit" variant="primary" fullWidth disabled={saving} size="sm">
-              {saving ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  <span>SAVING…</span>
-                </>
-              ) : (
-                <>
-                  <span>CONTINUE</span>
-                  <Save size={16} />
-                </>
-              )}
-            </Button>
-          </form>
-        )}
-      </AuthCard>
-    </AuthPageLayout>
+                <Field>
+                  <Button type="submit" disabled={saving}>
+                    {saving ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        Continue
+                        <Save size={16} />
+                      </>
+                    )}
+                  </Button>
+                  <FieldDescription className="text-center">
+                    Back to <a href="/auth/login">login</a>
+                  </FieldDescription>
+                </Field>
+              </FieldGroup>
+            </form>
+          )}
+        </CardContent>
+      </Card>
+    </AuthLayout>
   );
 }

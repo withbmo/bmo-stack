@@ -8,7 +8,6 @@ const nextConfig: NextConfig = {
   transpilePackages: [
     '@pytholit/contracts',
     '@pytholit/validation',
-    '@pytholit/ui',
   ],
   experimental: {
     optimizePackageImports: ['lucide-react'],

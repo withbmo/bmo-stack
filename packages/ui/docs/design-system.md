@@ -68,7 +68,24 @@ Canonical import path:
 import { SectionHeader, TemplateCard } from '@pytholit/ui/blocks';
 ```
 
-### 4. Guidance
+### 4. System
+
+System exports are shared cross-app utilities that coordinate behavior or loading state.
+
+Examples:
+
+- `toast`
+- `Toaster`
+- `DynamicSkeletonProvider`
+- `DynamicSlot`
+
+Canonical import path:
+
+```ts
+import { toast, Toaster } from '@pytholit/ui/system';
+```
+
+### 5. Guidance
 
 Guidance turns a component library into a real design system:
 
@@ -146,7 +163,8 @@ Rules:
 ## Deprecation Rules
 
 - `@pytholit/ui` root exports remain a compatibility surface
-- new code should prefer `@pytholit/ui/ui` and `@pytholit/ui/blocks`
+- new code should prefer `@pytholit/ui/ui`, `@pytholit/ui/blocks`, and `@pytholit/ui/system`
+- the root barrel should not be treated as an equal architectural choice in new code
 - internal helpers should not be re-exported publicly
 - behavioral utilities that are not design-system UI should move to app code rather than remain in shared exports
 
@@ -156,11 +174,12 @@ Rules:
 - `ScrollToHash` is not part of the public block surface
 - `ErrorBoundary` is not part of the public block surface
 - motion and `cn` belong to the primitive entrypoint
+- `toast` / `Toaster` and `DynamicSkeleton*` belong to the system entrypoint
 - shared blocks should expose explicit navigation/action props instead of triggering hidden route side effects internally
 
 ## Migration Status
 
-- `@pytholit/ui/ui` and `@pytholit/ui/blocks` are the canonical public entrypoints
+- `@pytholit/ui/ui`, `@pytholit/ui/blocks`, and `@pytholit/ui/system` are the canonical public entrypoints
 - the root `@pytholit/ui` barrel remains compatibility-only
 - active app consumers have been moved to the canonical subpaths
 - Storybook mirrors the system layers and includes foundation, primitive, block, and motion coverage

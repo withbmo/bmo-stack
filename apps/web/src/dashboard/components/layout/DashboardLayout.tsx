@@ -1,4 +1,4 @@
-import { MotionFade } from '@pytholit/ui/ui';
+import { MotionFade } from '@/ui';
 
 import { Navbar } from './Navbar';
 
@@ -8,9 +8,13 @@ import { Navbar } from './Navbar';
  */
 export const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="min-h-screen bg-bg-dashboard text-white font-sans flex flex-col">
+    <div className="relative flex min-h-dvh flex-col overflow-x-hidden bg-transparent text-foreground">
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute inset-x-0 top-0 h-[26rem] bg-[radial-gradient(60%_100%_at_50%_0%,color-mix(in_oklab,var(--primary)_18%,transparent),transparent)]" />
+        <div className="absolute inset-x-0 bottom-0 h-[28rem] bg-[radial-gradient(70%_100%_at_50%_100%,color-mix(in_oklab,var(--accent)_10%,transparent),transparent)]" />
+      </div>
       <Navbar />
-      <MotionFade as="main" className="flex-grow min-h-[calc(100vh-4rem)] flex flex-col pt-16">
+      <MotionFade as="main" className="flex flex-1 flex-col pb-24">
         {children}
       </MotionFade>
     </div>

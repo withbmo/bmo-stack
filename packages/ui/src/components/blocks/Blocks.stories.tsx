@@ -1,10 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { FileCode2, Layers3 } from 'lucide-react';
+import { Brain, FileCode2, Layers3 } from 'lucide-react';
 import { useState } from 'react';
 
 import { ResourceCard } from './cards/ResourceCard';
 import { TemplateCard } from './cards/TemplateCard';
+import { GlitchText } from './common/GlitchText';
 import { DashboardTabs } from './DashboardTabs';
+import { BackgroundLayers } from './effects/BackgroundLayers';
+import { CyberRings } from './effects/CyberRings';
+import { LivingGrid } from './effects/LivingGrid';
+import { FilterTabButton } from './FilterTabButton';
 import { SectionHeader } from './SectionHeader';
 import { EmptyState } from './states/EmptyState';
 import { LoadingState } from './states/LoadingState';
@@ -95,6 +100,61 @@ export const SharedCards: Story = {
           verified: true,
         }}
       />
+    </div>
+  ),
+};
+
+export const FilterButtons: Story = {
+  render: () => (
+    <div className="flex max-w-3xl flex-wrap gap-3 bg-bg-app p-8">
+      <FilterTabButton active onClick={() => {}}>
+        ALL
+      </FilterTabButton>
+      <FilterTabButton active={false} onClick={() => {}} icon={Brain}>
+        SKILLS
+      </FilterTabButton>
+      <FilterTabButton active={false} onClick={() => {}} icon={FileCode2}>
+        ARTIFACTS
+      </FilterTabButton>
+    </div>
+  ),
+};
+
+export const BrandedText: Story = {
+  render: () => (
+    <div className="max-w-4xl bg-bg-app p-8 text-text-primary">
+      <h2 className="font-sans text-4xl font-bold">
+        HUMAN <span className="text-text-muted">///</span>{' '}
+        <GlitchText
+          text="INTELLIGENCE"
+          className="bg-gradient-to-r from-white to-text-secondary bg-clip-text text-transparent"
+        />
+      </h2>
+    </div>
+  ),
+};
+
+export const AmbientEffects: Story = {
+  render: () => (
+    <div className="relative h-[480px] overflow-hidden border border-border-default bg-bg-canvas">
+      <BackgroundLayers />
+      <CyberRings />
+      <div className="relative z-10 flex h-full items-center justify-center">
+        <div className="border border-border-default bg-bg-panel/80 px-6 py-4 font-mono text-xs uppercase tracking-[0.24em] text-text-secondary backdrop-blur">
+          Ambient Block Effects
+        </div>
+      </div>
+    </div>
+  ),
+};
+
+export const LivingGridOnly: Story = {
+  render: () => (
+    <div className="relative h-[360px] overflow-hidden border border-border-default bg-bg-canvas">
+      <LivingGrid />
+      <div className="relative z-10 flex h-full items-center justify-center font-mono text-xs uppercase tracking-[0.24em] text-text-secondary">
+        LivingGrid
+      </div>
     </div>
   ),
 };

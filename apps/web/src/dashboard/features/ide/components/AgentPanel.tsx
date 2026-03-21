@@ -6,7 +6,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@pytholit/ui/ui';
+} from '@/ui';
 import {
   AtSign,
   Check,
@@ -275,7 +275,7 @@ export const AgentPanel = ({
   const filesMap = useIdeStore(s => s.files);
   const allFiles = Object.values(filesMap).filter(f => f.type === 'file');
 
-  // react-mentions-ts stores markup like @[filename](@filename)
+  // react-mentions-ts stores markup like [filename](filename)
   // we keep both: markup value (for the MentionsInput) + plain text (for sending)
   const [mentionMarkup, setMentionMarkup] = useState('');
 
@@ -298,7 +298,7 @@ export const AgentPanel = ({
       ...new Set([
         ...agentContext.files,
         // extract mentioned display names from markup
-        ...[...mentionMarkup.matchAll(/@\[([^\]]+)\]/g)].map(m => m[1] ?? '').filter(Boolean),
+        ...[...mentionMarkup.matchAll(/\[([^\]]+)\]/g)].map(m => m[1] ?? '').filter(Boolean),
       ]),
     ];
     handleChatSubmit(e);
@@ -314,14 +314,14 @@ export const AgentPanel = ({
   };
 
   const insertAtTrigger = () => {
-    setMentionMarkup(prev => prev + '@');
-    setChatInput(`${chatInput}@`);
+    setMentionMarkup(prev => prev + '');
+    setChatInput(`${chatInput}`);
   };
 
   const placeholder =
-    chatMode === 'ask' ? `Ask ${currentLLM?.label ?? 'AI'}… (@ to mention files)` :
-    chatMode === 'edit' ? 'Describe the change… (@ to mention a file)' :
-    'Describe a task… (@ to mention files)';
+    chatMode === 'ask' ? `Ask ${currentLLM?.label ?? 'AI'}… ( to mention files)` :
+    chatMode === 'edit' ? 'Describe the change… ( to mention a file)' :
+    'Describe a task… ( to mention files)';
 
   return (
     <div className="shrink-0 flex flex-col overflow-hidden border-r border-border-default/50 bg-bg-panel" style={{ width }}>
@@ -391,7 +391,7 @@ export const AgentPanel = ({
             }}
           >
             <Mention
-              trigger="@"
+              trigger=""
               data={mentionData}
               appendSpaceOnAdd
               className="!rounded-sm border border-brand-primary/40 !bg-brand-primary/25 px-0.5"
@@ -490,11 +490,11 @@ export const AgentPanel = ({
             </DropdownMenu>
           </div>
 
-          {/* @ button */}
+          {/*  button */}
           <button
             type="button"
             onClick={insertAtTrigger}
-            title="Mention a file (@)"
+            title="Mention a file ()"
             className="flex items-center gap-1 border border-border-default/40 px-2 py-1 font-mono text-[10px] text-text-muted transition-colors hover:border-brand-primary/40 hover:text-brand-primary"
           >
             <AtSign size={10} />

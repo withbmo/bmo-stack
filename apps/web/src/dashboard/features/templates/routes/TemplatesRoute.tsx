@@ -1,27 +1,14 @@
 'use client';
 
-import type { Template } from '@pytholit/ui/ui';
-import { Box, LayoutTemplate, Search, ShieldCheck } from 'lucide-react';
+import { Box, LayoutTemplate, Search, ShieldCheck, Star } from 'lucide-react';
 import { useState } from 'react';
 
-import { FilterTabButton, Input, TemplateCard } from '@/dashboard/components';
-import { DashboardPageHeader, PageLayout } from '@/shared/components/layout';
-
-function toUICemplate(t: {
-  id: string;
-  title: string;
-  description: string;
-  tags: string[];
-  author: string;
-  stars: string | number;
-  isOfficial?: boolean;
-}): Template {
-  const stars =
-    typeof t.stars === 'number'
-      ? t.stars
-      : parseInt(String(t.stars).replace(/k$/i, '000'), 10) || 0;
-  return { ...t, stars, isOfficial: t.isOfficial ?? false };
-}
+import { Badge } from '@/ui/shadcn/ui/badge';
+import { Button } from '@/ui/shadcn/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/ui/shadcn/ui/card';
+import { Input } from '@/ui/shadcn/ui/input';
+import { DashboardPageHeader, PageLayout } from '@/dashboard/components/layout';
+import type { Template } from '@/shared/types';
 
 interface TemplatesRouteProps {
   templates: Template[];
@@ -44,69 +31,71 @@ export const TemplatesRoute = ({ templates }: TemplatesRouteProps) => {
 
   return (
     <PageLayout className="pb-12">
-      {/* Header */}
       <DashboardPageHeader
         badge={{ icon: LayoutTemplate, label: 'TEMPLATES' }}
-        title={
-          <>
-            TEMPLATE <span className="text-text-muted">STORE</span>
-          </>
-        }
-        subtitle="Jumpstart your next breakthrough with pre-architected foundations. Verified by the Pytholit Core Team and the Community."
+        title="Template Store"
+        subtitle="Start faster with curated project templates."
       />
 
-      {/* Controls - in page flow, scrolls with content (same as HubPage) */}
-      <div className="mb-8 border border-border-default bg-bg-canvas/95 px-6 py-4 backdrop-blur-xl">
-        <div className="flex flex-col md:flex-row gap-6 justify-between md:items-center">
-          {/* Search */}
-          <div className="relative flex-grow max-w-2xl group">
-            <div className="absolute bottom-0 left-0 top-0 z-10 flex w-16 items-center justify-center border-r border-border-default bg-border-default/5 transition-all duration-300 group-focus-within:border-brand-primary group-focus-within:bg-brand-primary/10">
-              <Search
-                className="text-text-muted transition-colors duration-300 group-focus-within:text-brand-primary"
-                size={20}
+      <Card className="mb-8">
+        <CardContent className="pt-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="relative w-full md:max-w-xl">
+              <Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search templates..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="pl-9"
               />
             </div>
-
-            <Input
-              type="text"
-              placeholder="SEARCH_TEMPLATES..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="bg-bg-surface py-4 pl-24 pr-4 uppercase tracking-widest placeholder-text-muted/40 duration-300"
-            />
+            <div className="flex flex-wrap gap-2">
+              <Button variant={filter === 'all' ? 'default' : 'outline'} onClick={() => setFilter('all')}>
+                All
+              </Button>
+              <Button variant={filter === 'official' ? 'default' : 'outline'} onClick={() => setFilter('official')}>
+                <ShieldCheck />
+                Official
+              </Button>
+              <Button variant={filter === 'community' ? 'default' : 'outline'} onClick={() => setFilter('community')}>
+                <Box />
+                Community
+              </Button>
+            </div>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Filters */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
-            <FilterTabButton active={filter === 'all'} onClick={() => setFilter('all')}>
-              ALL
-            </FilterTabButton>
-            <FilterTabButton
-              active={filter === 'official'}
-              onClick={() => setFilter('official')}
-              icon={ShieldCheck}
-            >
-              OFFICIAL
-            </FilterTabButton>
-            <FilterTabButton
-              active={filter === 'community'}
-              onClick={() => setFilter('community')}
-              icon={Box}
-            >
-              COMMUNITY
-            </FilterTabButton>
-          </div>
-        </div>
-      </div>
-
-      {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredTemplates.map(template => (
-          <TemplateCard
-            key={template.id}
-            template={toUICemplate(template)}
-            actionHref="/dashboard/new"
-          />
+          <Card key={template.id} className="h-full">
+            <CardHeader className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Badge variant={template.isOfficial ? 'default' : 'outline'}>
+                  {template.isOfficial ? 'Official' : 'Community'}
+                </Badge>
+                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                  <Star className="size-3" />
+                  {String(template.stars)}
+                </span>
+              </div>
+              <CardTitle className="text-lg">{template.title}</CardTitle>
+              <CardDescription>{template.description}</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-2">
+              {template.tags.map(tag => (
+                <Badge key={`${template.id}-${tag}`} variant="outline">
+                  {tag}
+                </Badge>
+              ))}
+            </CardContent>
+            <CardFooter className="mt-auto">
+              <Button className="w-full" variant="outline" disabled>
+                Use Template
+              </Button>
+            </CardFooter>
+          </Card>
         ))}
       </div>
     </PageLayout>

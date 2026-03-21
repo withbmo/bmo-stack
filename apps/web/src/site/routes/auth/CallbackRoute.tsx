@@ -1,9 +1,9 @@
 'use client';
 
+import { toast } from '@/ui/system';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { toast } from '@pytholit/ui/ui';
 
 import { useAuth } from '@/shared/auth';
 import { getApiErrorMessage } from '@/shared/lib';
@@ -88,7 +88,7 @@ export function CallbackRoute() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-bg-app pt-28 pb-20 px-6">
+      <div className="min-h-[calc(100svh-5rem)] bg-bg-app pt-8 pb-20 px-6">
         <div className="mx-auto max-w-2xl border border-border-default bg-bg-panel/80 p-8 backdrop-blur">
           <h1 className="text-2xl font-sans font-bold mb-3">OAuth callback failed</h1>
           <p className="mb-6 font-mono text-sm text-text-secondary/70">{error}</p>
@@ -104,7 +104,7 @@ export function CallbackRoute() {
   }
 
   return (
-    <div className="min-h-screen bg-bg-app pt-28 pb-20 px-6">
+    <div className="min-h-[calc(100svh-5rem)] bg-bg-app pt-8 pb-20 px-6">
       <div className="mx-auto max-w-2xl border border-border-default bg-bg-panel/80 p-8 backdrop-blur">
         <h1 className="text-2xl font-sans font-bold mb-3">Signing you in…</h1>
         <p className="font-mono text-sm text-text-secondary/70">Redirecting to your dashboard.</p>

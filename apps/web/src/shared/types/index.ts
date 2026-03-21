@@ -7,4 +7,3 @@ export * from './marketing';
 export * from './navigation';
 export * from './projects';
 export * from './templates';
-export * from './wizard';

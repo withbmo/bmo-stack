@@ -16,12 +16,11 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import SwaggerUI from 'swagger-ui-react';
 
 import { Input } from '@/dashboard/components';
-import { useAuth } from '@/shared/auth';
 
 import {
   AgentPanel,
@@ -34,12 +33,6 @@ import {
   TerminalPanel,
   useIdeState,
 } from '..';
-import { fetchWizardManifest } from '../api/wizard-manifest';
-import { buildFileTreeFromManifest } from '../utils/manifest-file-tree';
-
-function pathToId(path: string): string {
-  return path.replace(/\//g, '-').replace(/^\./, '');
-}
 
 const OPENAPI_SPEC_URL = '/openapi.json';
 
@@ -135,8 +128,6 @@ function useProjectIdParam(): string | undefined {
 export const IDERoute = () => {
   const projectId = useProjectIdParam();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const { user, hydrated } = useAuth();
 
   const {
     chatMessages,
@@ -162,29 +153,7 @@ export const IDERoute = () => {
     setChatPanelWidth,
     projectConfig,
     setProjectConfig,
-    replaceFileTree,
   } = useIdeState(projectId);
-
-  useEffect(() => {
-    const manifestId = searchParams?.get('manifestId');
-    if (!manifestId) return;
-    if (!hydrated || !user) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const manifest = await fetchWizardManifest(undefined, manifestId);
-        if (cancelled) return;
-        const tree = buildFileTreeFromManifest(manifest);
-        const entryId = manifest.entryFile ? pathToId(manifest.entryFile) : undefined;
-        replaceFileTree(tree, entryId);
-      } catch {
-        // Silent fail: IDE stays on default files.
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [searchParams, replaceFileTree, hydrated, user]);
 
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-bg-app font-sans text-text-primary">

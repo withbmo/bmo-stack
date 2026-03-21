@@ -1,12 +1,21 @@
 import { Box, Play, ShieldCheck, Star } from 'lucide-react';
 import type { MouseEvent } from 'react';
 
-import type { Template } from '../../../types';
-import { BaseInteractiveCard } from './BaseInteractiveCard';
+import { BaseInteractiveCard } from '../_internal/BaseInteractiveCard';
+
+export interface TemplateCardData {
+  id: string;
+  title: string;
+  description: string;
+  tags: string[];
+  author: string;
+  stars: number;
+  isOfficial: boolean;
+}
 
 export interface TemplateCardProps {
-  template: Template;
-  onUseTemplate?: (template: Template) => void;
+  template: TemplateCardData;
+  onUseTemplate?: (template: TemplateCardData) => void;
   actionHref?: string;
 }
 

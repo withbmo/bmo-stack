@@ -1,13 +1,13 @@
 'use client';
 
 import { DEPLOY_JOB_STATUS } from '@pytholit/contracts';
-import { Rocket, Terminal } from 'lucide-react';
+import { toast } from '@/ui/system';
+import { Loader2, Rocket, Terminal } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import { toast } from '@pytholit/ui/ui';
 
 import { Button, DashboardTabs, EmptyState, LoadingState } from '@/dashboard/components';
-import { DashboardPageHeader, PageLayout } from '@/shared/components/layout';
+import { DashboardPageHeader, PageLayout } from '@/dashboard/components/layout';
 
 import { DeployJobTable } from '../../deployments/components/DeployJobTable';
 import { useCreateDeployJob, useDeployJobs } from '../../deployments/hooks/useDeployJobs';
@@ -73,22 +73,18 @@ export const ProjectDetailsRoute = () => {
         subtitle={`${project.framework} / ${project.region}`}
         actions={
           <>
-            <Button variant="secondary" size="sm" onClick={() => router.push('/dashboard')}>
+            <Button onClick={() => router.push('/dashboard')}>
               Back to Projects
             </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handleDeploy}
-              isLoading={createDeploy.isPending}
-            >
-              <Rocket size={14} /> Deploy Project
+            <Button onClick={handleDeploy} disabled={createDeploy.isPending}>
+              {createDeploy.isPending ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Rocket size={14} />
+              )}
+              Deploy Project
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push(`/editor/${project.id}`)}
-            >
+            <Button onClick={() => router.push(`/editor/${project.id}`)}>
               Open IDE
             </Button>
           </>
@@ -102,12 +98,7 @@ export const ProjectDetailsRoute = () => {
             Job history and step status for this project.
           </p>
         </div>
-        <DashboardTabs
-          tabs={statusTabs}
-          active={jobFilter}
-          onChange={setJobFilter}
-          size="small"
-        />
+        <DashboardTabs tabs={statusTabs} active={jobFilter} onChange={setJobFilter} size="small" />
         <DeployJobTable jobs={projectJobs} />
       </div>
     </PageLayout>

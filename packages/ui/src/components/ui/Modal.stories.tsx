@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
-import { Button } from './Button';
 import { Input } from './Input';
 import { Modal } from './Modal';
 
@@ -24,18 +24,18 @@ export const Default: Story = {
     const [open, setOpen] = useState(false);
     return (
       <>
-        <Button onClick={() => setOpen(true)}>Open Modal</Button>
+        <button onClick={() => setOpen(true)}>Open Modal</button>
         <Modal isOpen={open} onClose={() => setOpen(false)} title="CONFIRM ACTION">
           <p className="text-text-secondary text-sm">
             Are you sure you want to proceed? This action cannot be undone.
           </p>
           <div className="flex gap-3 justify-end mt-6">
-            <Button variant="ghost" onClick={() => setOpen(false)}>
+            <button onClick={() => setOpen(false)}>
               Cancel
-            </Button>
-            <Button variant="danger" onClick={() => setOpen(false)}>
+            </button>
+            <button onClick={() => setOpen(false)}>
               Delete
-            </Button>
+            </button>
           </div>
         </Modal>
       </>
@@ -49,7 +49,7 @@ export const Wide: Story = {
     const [open, setOpen] = useState(false);
     return (
       <>
-        <Button onClick={() => setOpen(true)}>Open Wide Modal</Button>
+        <button onClick={() => setOpen(true)}>Open Wide Modal</button>
         <Modal isOpen={open} onClose={() => setOpen(false)} title="CREATE PROJECT" variant="wide">
           <div className="flex flex-col gap-4">
             <Input id="name" label="Project Name" placeholder="my-awesome-project" />
@@ -62,10 +62,10 @@ export const Wide: Story = {
             />
           </div>
           <div className="flex gap-3 justify-end mt-6">
-            <Button variant="secondary" onClick={() => setOpen(false)}>
+            <button onClick={() => setOpen(false)}>
               Cancel
-            </Button>
-            <Button>Create</Button>
+            </button>
+            <button>Create</button>
           </div>
         </Modal>
       </>
@@ -79,11 +79,14 @@ export const Loading: Story = {
     const [open, setOpen] = useState(false);
     return (
       <>
-        <Button onClick={() => setOpen(true)}>Open Loading Modal</Button>
+        <button onClick={() => setOpen(true)}>Open Loading Modal</button>
         <Modal isOpen={open} onClose={() => setOpen(false)} title="SAVING…" isLoading>
           <p className="text-text-secondary text-sm">Submitting, please wait…</p>
           <div className="flex justify-end mt-6">
-            <Button isLoading>Saving</Button>
+            <button disabled>
+              <Loader2 className="size-4 animate-spin" />
+              Saving
+            </button>
           </div>
         </Modal>
       </>

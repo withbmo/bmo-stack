@@ -1,19 +1,16 @@
 /**
  * @pytholit/ui
  *
- * Backward-compatible flat entrypoint for the full package.
- * Prefer subpath imports (`@pytholit/ui/ui` and `@pytholit/ui/blocks`)
- * when you want to preserve the architectural distinction in app code.
+ * Compatibility-only flat entrypoint for legacy consumers.
+ *
+ * New code should prefer:
+ * - `@pytholit/ui/ui`
+ * - `@pytholit/ui/blocks`
+ *
+ * This barrel intentionally remains available to avoid breaking older imports,
+ * but it collapses the architecture boundary and should not be used for new
+ * application code.
  */
-
-// Utilities
-export { cn } from './utils/cn';
-
-// Types
-export type * from './types';
-
-// Components
-export * from './components';
-
-// Motion
-export * from './motion';
+export * from './blocks';
+export * from './system';
+export * from './ui';

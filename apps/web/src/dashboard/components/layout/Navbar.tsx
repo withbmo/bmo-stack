@@ -1,111 +1,112 @@
 'use client';
 
-import { LogOut, Terminal, User } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
+import { BookOpen, FolderKanban, Layers3, LogOut, Rocket, Settings } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import type { MouseEvent } from 'react';
+import { useState } from 'react';
 
-import { NovuInbox } from '@/dashboard/components/notifications/NovuInbox';
 import { useAuth } from '@/shared/auth';
-import { resolveAvatarUrl } from '@/shared/lib/avatar';
-import type { User as CurrentUser } from '@/shared/lib/user';
+import { FloatingDock } from '@/ui/shadcn/ui/floating-dock';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/ui/shadcn/ui/dialog';
+import { Button } from '@/ui/shadcn/ui/button';
 
-const DASH_LINKS = [
-  { to: '/dashboard', label: 'PROJECTS' },
-  { to: '/dashboard/hub', label: 'HUB' },
-  { to: '/dashboard/templates', label: 'TEMPLATES' },
-  { to: '/dashboard/deployments', label: 'DEPLOYMENTS' },
-] as const;
-
-/** App shell navbar for /dashboard/*: projects/hub/templates/deployments, notifications, user menu */
+/** Floating dock navbar for /dashboard/* */
 export const Navbar = () => {
   const pathname = usePathname();
   const router = useRouter();
-  const { logout, user, hydrated } = useAuth();
-  const [profile, setProfile] = useState<CurrentUser | null>(null);
+  const { logout } = useAuth();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  useEffect(() => {
-    if (!hydrated) return;
-    setProfile(user);
-  }, [hydrated, user]);
+  const isActive = (path: string) => pathname === path || pathname?.startsWith(`${path}/`);
 
-  const avatarUrl = useMemo(() => resolveAvatarUrl(profile?.avatarUrl), [profile?.avatarUrl]);
+  const dockItems = [
+    { title: 'Projects', icon: <FolderKanban />, href: '/dashboard', active: isActive('/dashboard') },
+    { title: 'Hub', icon: <BookOpen />, href: '/dashboard/hub', active: isActive('/dashboard/hub') },
+    {
+      title: 'Templates',
+      icon: <Layers3 />,
+      href: '/dashboard/templates',
+      active: isActive('/dashboard/templates'),
+    },
+    {
+      title: 'Deployments',
+      icon: <Rocket />,
+      href: '/dashboard/deployments',
+      active: isActive('/dashboard/deployments'),
+    },
+    {
+      title: 'Settings',
+      icon: <Settings />,
+      href: '/dashboard/settings',
+      active: isActive('/dashboard/settings'),
+    },
+    {
+      title: 'Logout',
+      icon: <LogOut />,
+      href: '#',
+      destructive: true,
+      onClick: (e: MouseEvent<HTMLElement>) => {
+        e.preventDefault();
+        setShowLogoutDialog(true);
+      },
+    },
+  ];
 
-  const navLinkClass = (path: string) =>
-    pathname === path
-      ? 'text-text-primary bg-bg-surface'
-      : 'text-text-secondary hover:text-text-primary hover:bg-bg-surface/60';
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      router.push('/auth/login');
+    } finally {
+      setIsLoggingOut(false);
+      setShowLogoutDialog(false);
+    }
+  };
 
   return (
-    <nav className="fixed left-0 top-0 z-50 flex h-16 w-full items-center border-b border-border-default bg-bg-panel shadow-lg shadow-black/20">
-      <div className="flex w-full items-center justify-between px-6">
-        <div className="flex items-center gap-8">
-          <Link href="/dashboard" className="flex items-center gap-2 group">
-            <div className="flex h-6 w-6 items-center justify-center border border-brand-primary/60 bg-brand-primary transition-colors group-hover:bg-brand-neon">
-              <Terminal size={14} className="text-white" />
-            </div>
-            <span className="font-mono text-lg font-bold tracking-tighter text-text-primary">
-              pytholit
-            </span>
-          </Link>
-
-          <div className="hidden md:flex gap-1 border-l border-border-default pl-6 h-8 items-center">
-            {DASH_LINKS.map(({ to, label }) => (
-              <Link key={to} href={to}>
-                <button
-                  className={`px-3 py-1 font-mono text-xs font-bold transition-colors tracking-wider rounded-sm ${navLinkClass(
-                    to
-                  )}`}
-                >
-                  {label}
-                </button>
-              </Link>
-            ))}
-          </div>
+    <>
+      <nav className="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex items-center justify-center px-4">
+        <div className="pointer-events-auto flex w-full max-w-6xl items-center justify-center">
+          <FloatingDock items={dockItems} />
         </div>
+      </nav>
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3 relative">
-            <NovuInbox />
-
-            <Link
-              href="/dashboard/settings"
-              className="flex items-center gap-3 cursor-pointer group border-l border-transparent pl-3 hover:border-border-default transition-colors"
+      <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm logout</DialogTitle>
+            <DialogDescription>
+              You will be signed out of your account and redirected to login.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowLogoutDialog(false)}
+              disabled={isLoggingOut}
             >
-              <div className="hidden text-right leading-tight md:block">
-                <div className="font-mono text-xs text-text-primary group-hover:text-brand-primary transition-colors">
-                  {profile?.username || 'USER'}
-                </div>
-              </div>
-              <div className="w-8 h-8 bg-bg-surface border border-border-default flex items-center justify-center text-text-primary group-hover:border-brand-primary group-hover:text-white group-hover:bg-brand-primary transition-all overflow-hidden">
-                {avatarUrl ? (
-                  <Image
-                    src={avatarUrl}
-                    alt="Avatar"
-                    width={32}
-                    height={32}
-                    className="w-full h-full object-cover"
-                    unoptimized
-                  />
-                ) : (
-                  <User size={14} />
-                )}
-              </div>
-            </Link>
-            <button
-              onClick={async () => {
-                await logout();
-                router.push('/auth/login');
-              }}
-              className="text-text-secondary hover:text-red-400 transition-colors ml-2"
-              title="Logout"
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
             >
-              <LogOut size={16} />
-            </button>
-          </div>
-        </div>
-      </div>
-    </nav>
+              {isLoggingOut ? 'Logging out...' : 'Logout'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };

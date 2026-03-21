@@ -114,7 +114,7 @@ export const MOCK_TEMPLATES: Template[] = [
     title: 'Real-time Analytics Dashboard',
     description: 'High-throughput event ingestion using Redis Streams and WebSockets.',
     framework: 'FastAPI',
-    author: 'data_wizard',
+    author: 'data_builder',
     stars: '1.9k',
     tags: ['analytics', 'redis', 'websockets'],
     isOfficial: false,

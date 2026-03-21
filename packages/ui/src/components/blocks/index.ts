@@ -1,6 +1,6 @@
-export type { ResourceCardProps } from './cards/ResourceCard';
+export type { ResourceCardData, ResourceCardProps } from './cards/ResourceCard';
 export { ResourceCard } from './cards/ResourceCard';
-export type { TemplateCardProps } from './cards/TemplateCard';
+export type { TemplateCardData, TemplateCardProps } from './cards/TemplateCard';
 export { TemplateCard } from './cards/TemplateCard';
 export { GlitchText } from './common/GlitchText';
 export type { DashboardTab, DashboardTabsProps } from './DashboardTabs';

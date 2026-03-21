@@ -87,4 +87,26 @@ describe('Modal', () => {
         await userEvent.keyboard('{Escape}');
         expect(onClose).not.toHaveBeenCalled();
     });
+
+    it('exposes dialog semantics while open', () => {
+        renderModal({ title: 'Deploy project' });
+
+        const dialog = screen.getByRole('dialog');
+        const title = screen.getByText('Deploy project');
+
+        expect(dialog).toHaveAttribute('aria-labelledby', title.id);
+        expect(title.id).toBeTruthy();
+    });
+
+    it('calls onClose when the overlay is clicked', async () => {
+        const onClose = vi.fn();
+        renderModal({ onClose });
+
+        const overlay = document.body.querySelector('[data-state="open"][class*="backdrop-blur-sm"]');
+        expect(overlay).toBeTruthy();
+
+        await userEvent.click(overlay as Element);
+
+        expect(onClose).toHaveBeenCalledOnce();
+    });
 });

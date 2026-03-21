@@ -1,56 +1,35 @@
 'use client';
 
 import type { TurnstileInstance } from '@marsidev/react-turnstile';
-import { Turnstile } from '@marsidev/react-turnstile';
-import { ArrowRight } from 'lucide-react';
-import Link from 'next/link';
+import { toast } from '@/ui/system';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useRef, useState } from 'react';
-import { toast } from '@pytholit/ui/ui';
 
 import { env } from '@/env';
+import { Turnstile } from '@marsidev/react-turnstile';
+import { Button } from '@/ui/shadcn/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/shadcn/ui/card';
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldSeparator } from '@/ui/shadcn/ui/field';
+import { InputWithIcon } from '@/ui/shadcn/ui/input-with-icon';
+import { ArrowRight, Chrome, Github, Loader2, LockIcon, MailIcon, UserIcon } from 'lucide-react';
+import Link from 'next/link';
+import { PasswordStrengthField } from '@/ui/shadcn/ui/password-strength-field';
+import { AuthLayout } from '@/site/components/auth/AuthLayout';
 import { useAuth } from '@/shared/auth';
 import { useAuthForm } from '@/shared/auth/hooks/useAuthForm';
 import { usePasswordStrength } from '@/shared/auth/hooks/usePasswordStrength';
-import { useOAuthProviders } from '@/shared/auth/hooks/useOAuthProviders';
 import {
   type ApiError,
   getApiErrorMessage,
   getApiFieldErrors,
+  signInWithOAuth,
   signup,
 } from '@/shared/lib/auth';
-import { AuthCard } from '@/site/components/auth/AuthCard';
-import { AuthHeader } from '@/site/components/auth/AuthHeader';
-import { AuthPageLayout } from '@/site/components/auth/AuthPageLayout';
-import { AuthPanelLoader } from '@/site/components/auth/AuthPanelLoader';
-import { PasswordStrengthGuidance } from '@/site/components/auth/PasswordStrengthGuidance';
-import { AuthSubmitButton } from '@/site/components/auth/AuthSubmitButton';
-import {
-  EmailField,
-  FirstNameField,
-  LastNameField,
-  PasswordField,
-  UsernameField,
-} from '@/site/components/auth/FormFields';
-import { SocialAuthButtons } from '@/site/components/auth/SocialAuthButtons';
 
 const TURNSTILE_SITE_KEY = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
 const IS_DEV = process.env.NODE_ENV === 'development';
 
-/**
- * CAPTCHA Policy:
- * - Production: CAPTCHA required (bot protection via Cloudflare Turnstile)
- * - Development: CAPTCHA optional (for faster local testing)
- *
- * Rate Limiting Compensation:
- * Backend rate limits apply regardless of CAPTCHA (see auth.controller.ts):
- * - Signup: 5 requests per 60 seconds
- * - OTP Send: 5 requests per 60 seconds (with 60s cooldown + hourly/daily limits)
- * - OTP Verify: 10 requests per 60 seconds
- *
- * In development, backend rate limiting is the primary protection.
- * In production, CAPTCHA + rate limiting provide defense-in-depth.
- */
+type OAuthButtonProvider = 'github' | 'google';
 
 export function SignupRoute() {
   const router = useRouter();
@@ -58,7 +37,6 @@ export function SignupRoute() {
   const { refreshSession } = useAuth();
   const nextParam = searchParams.get('next');
 
-  // Form state
   const {
     email,
     setEmail,
@@ -82,9 +60,7 @@ export function SignupRoute() {
     clearError,
   } = useAuthForm({ mode: 'register' });
 
-  // Turnstile (Cloudflare CAPTCHA)
   const [turnstileToken, setTurnstileToken] = useState('');
-  const { providers: oauthProviders, isLoading: isPanelLoading } = useOAuthProviders();
   const turnstileRef = useRef<TurnstileInstance | null>(null);
   const passwordStrength = usePasswordStrength(password);
 
@@ -93,7 +69,14 @@ export function SignupRoute() {
     setTurnstileToken('');
   }, []);
 
-  // Form submission
+  const handleOAuthSignIn = async (provider: OAuthButtonProvider) => {
+    try {
+      await signInWithOAuth(provider, nextParam || '/dashboard');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'OAuth sign-in failed. Please try again.'));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
@@ -115,7 +98,6 @@ export function SignupRoute() {
     setIsLoading(true);
 
     try {
-      // Create the account and sign in
       const response = await signup(
         email,
         password,
@@ -143,154 +125,198 @@ export function SignupRoute() {
       router.replace(nextParam || '/dashboard');
     } catch (err) {
       resetTurnstile();
-      handleSubmitError(err as ApiError);
+      const apiErr = err as ApiError;
+      const message = getApiErrorMessage(
+        err,
+        apiErr.status === 400 || apiErr.status === 422
+          ? 'Request failed. Please try again.'
+          : 'Request failed'
+      );
+
+      if (apiErr.status === 400 && typeof apiErr.detail === 'string') {
+        const d = (apiErr.detail as string).toLowerCase();
+        if (d.includes('username already taken')) {
+          toast.error('Username already taken. Please choose another username.');
+          setFieldErrors(current => ({ ...current, username: 'Username already taken.' }));
+          return;
+        }
+      }
+
+      if (apiErr.code === 'AUTH_WEAK_PASSWORD') {
+        setFieldError(
+          'password',
+          typeof apiErr.detail === 'string' ? apiErr.detail : 'Choose a stronger password.'
+        );
+        return;
+      }
+
+      if (apiErr.status === 422) {
+        const errors = getApiFieldErrors(err);
+        if (Object.keys(errors).length > 0) {
+          setFieldErrors(errors);
+          toast.error('Please fix the errors below.');
+          return;
+        }
+      }
+
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSubmitError = (err: unknown) => {
-    const apiErr = err as ApiError;
-    const message = getApiErrorMessage(
-      err,
-      apiErr.status === 400 || apiErr.status === 422
-        ? 'Request failed. Please try again.'
-        : 'Request failed'
-    );
-
-    // 400: Username already taken
-    if (apiErr.status === 400 && typeof apiErr.detail === 'string') {
-      const d = (apiErr.detail as string).toLowerCase();
-      if (d.includes('username already taken')) {
-        toast.error('Username already taken. Please choose another username.');
-        setFieldErrors((current) => ({ ...current, username: 'Username already taken.' }));
-        return;
-      }
-    }
-
-    if (apiErr.code === 'AUTH_WEAK_PASSWORD') {
-      setFieldError('password', typeof apiErr.detail === 'string' ? apiErr.detail : 'Choose a stronger password.');
-      return;
-    }
-
-    // 422: Validation errors
-    if (apiErr.status === 422) {
-      const errors = getApiFieldErrors(err);
-      if (Object.keys(errors).length > 0) {
-        setFieldErrors(errors);
-        toast.error('Please fix the errors below.');
-        return;
-      }
-    }
-
-    toast.error(message);
-  };
-
   return (
-    <AuthPageLayout>
-      <AuthHeader mode="register" />
+    <AuthLayout>
+      <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+        <CardHeader className="text-center">
+          <CardTitle className="text-xl">Create your account</CardTitle>
+          <CardDescription>Sign up to continue</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit}>
+            <FieldGroup>
+              <Field>
+                <Button variant="outline" type="button" onClick={() => handleOAuthSignIn('github')}>
+                  <Github size={16} />
+                  Sign up with GitHub
+                </Button>
+                <Button variant="outline" type="button" onClick={() => handleOAuthSignIn('google')}>
+                  <Chrome size={16} />
+                  Sign up with Google
+                </Button>
+              </Field>
 
-      <AuthCard>
-        {isPanelLoading ? (
-          <AuthPanelLoader label="Loading signup..." />
-        ) : (
-          <>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Email Field */}
-              <EmailField value={email} onChange={setEmail} />
+              <FieldSeparator>Or continue with</FieldSeparator>
 
-              {/* Username Field */}
-              <UsernameField
-                value={username}
-                onChange={setUsername}
-                error={fieldErrors.username}
-              />
+              <Field>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <InputWithIcon
+                  icon={MailIcon}
+                  iconLabel="Email"
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                />
+              </Field>
 
-              {/* Name Fields */}
-              <FirstNameField
-                value={firstName}
-                onChange={setFirstName}
-                error={fieldErrors.firstName}
-              />
-              <LastNameField
-                value={lastName}
-                onChange={setLastName}
-                error={fieldErrors.lastName}
-              />
+              <Field>
+                <FieldLabel htmlFor="username">Username</FieldLabel>
+                <InputWithIcon
+                  icon={UserIcon}
+                  iconLabel="Username"
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
+                  aria-invalid={!!fieldErrors.username}
+                  required
+                />
+                <FieldError>{fieldErrors.username}</FieldError>
+              </Field>
 
-              {/* Password Field */}
-              <PasswordField
-                value={password}
-                onChange={(value) => {
-                  setPassword(value);
-                  setFieldErrors((current) => {
-                    if (!current.password) return current;
-                    const next = { ...current };
-                    delete next.password;
-                    return next;
-                  });
-                }}
-                error={!!fieldErrors.password}
-                required
-              />
-              <PasswordStrengthGuidance
-                strength={passwordStrength}
-                error={fieldErrors.password}
-              />
+              <Field>
+                <FieldLabel htmlFor="firstName">First name</FieldLabel>
+                <InputWithIcon
+                  icon={UserIcon}
+                  iconLabel="First name"
+                  id="firstName"
+                  type="text"
+                  value={firstName}
+                  onChange={e => setFirstName(e.target.value)}
+                  aria-invalid={!!fieldErrors.firstName}
+                  required
+                />
+                <FieldError>{fieldErrors.firstName}</FieldError>
+              </Field>
 
-              {/* Confirm Password Field */}
-              <PasswordField
-                value={confirmPassword}
-                onChange={(val) => {
-                  setConfirmPassword(val);
-                  setFieldError('confirmPassword');
-                }}
-                label="Confirm Password"
-                error={!!fieldErrors.confirmPassword}
-              />
-              {fieldErrors.confirmPassword ? (
-                <p className="font-mono text-xs text-red-500">{fieldErrors.confirmPassword}</p>
-              ) : null}
+              <Field>
+                <FieldLabel htmlFor="lastName">Last name</FieldLabel>
+                <InputWithIcon
+                  icon={UserIcon}
+                  iconLabel="Last name"
+                  id="lastName"
+                  type="text"
+                  value={lastName}
+                  onChange={e => setLastName(e.target.value)}
+                  aria-invalid={!!fieldErrors.lastName}
+                />
+                <FieldError>{fieldErrors.lastName}</FieldError>
+              </Field>
 
-              {/* Turnstile */}
-              {!IS_DEV && TURNSTILE_SITE_KEY && (
-                <div className="flex justify-center">
+              <Field>
+                <PasswordStrengthField
+                  id="password"
+                  label="Password"
+                  value={password}
+                  error={fieldErrors.password}
+                  strength={passwordStrength}
+                  onChange={value => {
+                    setPassword(value);
+                    setFieldErrors(current => {
+                      if (!current.password) return current;
+                      const next = { ...current };
+                      delete next.password;
+                      return next;
+                    });
+                  }}
+                />
+                <FieldError>{fieldErrors.password}</FieldError>
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="confirmPassword">Confirm password</FieldLabel>
+                <InputWithIcon
+                  icon={LockIcon}
+                  iconLabel="Confirm password"
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={e => {
+                    setConfirmPassword(e.target.value);
+                    setFieldError('confirmPassword');
+                  }}
+                  aria-invalid={!!fieldErrors.confirmPassword}
+                  required
+                />
+                <FieldError>{fieldErrors.confirmPassword}</FieldError>
+              </Field>
+
+              {!IS_DEV && TURNSTILE_SITE_KEY ? (
+                <Field>
                   <Turnstile
                     ref={turnstileRef}
                     siteKey={TURNSTILE_SITE_KEY}
                     options={{ theme: 'dark' }}
-                    onSuccess={(token) => setTurnstileToken(token)}
+                    onSuccess={setTurnstileToken}
                     onExpire={() => setTurnstileToken('')}
                   />
-                </div>
-              )}
+                </Field>
+              ) : null}
 
-              {/* Submit Button */}
-              <AuthSubmitButton type="submit" disabled={isLoading}>
-                {isLoading ? (
-                  'CREATING ACCOUNT...'
-                ) : (
-                  <>
-                    SIGN UP <ArrowRight size={16} />
-                  </>
-                )}
-              </AuthSubmitButton>
-            </form>
-
-            <SocialAuthButtons next={nextParam || '/dashboard'} providers={oauthProviders ?? undefined} />
-          </>
-        )}
-      </AuthCard>
-
-      {/* Footer Navigation */}
-      <div className="mt-6 text-center">
-        <Link
-          href="/auth/login"
-          className="font-mono text-xs uppercase tracking-wider text-text-muted underline decoration-dotted underline-offset-4 transition-colors hover:text-brand-primary"
-        >
-          HAVE ACCOUNT? [LOGIN]
-        </Link>
-      </div>
-    </AuthPageLayout>
+              <Field>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Creating account...
+                    </>
+                  ) : (
+                    <>
+                      Sign up
+                      <ArrowRight size={16} />
+                    </>
+                  )}
+                </Button>
+                <FieldDescription className="text-center">
+                  Already have an account? <Link href="/auth/login">Login</Link>
+                </FieldDescription>
+              </Field>
+            </FieldGroup>
+          </form>
+        </CardContent>
+      </Card>
+    </AuthLayout>
   );
 }

@@ -1,6 +1,14 @@
-import { Button, Modal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@pytholit/ui/ui';
+import {
+  Modal,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/ui';
 import { RefreshCw, Rocket } from 'lucide-react';
 
+import { Button } from '@/ui/shadcn/ui/button';
 import type { Project } from '@/shared/types';
 
 interface DeployModalProps {
@@ -56,15 +64,10 @@ export const DeployModal = ({
       </div>
 
       <div className="flex gap-3 justify-end">
-        <Button variant="ghost" size="sm" onClick={() => !isDeploying && onClose()}>
+        <Button onClick={() => !isDeploying && onClose()}>
           CANCEL
         </Button>
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={onDeploy}
-          disabled={!selectedProjectId || isDeploying}
-        >
+        <Button onClick={onDeploy} disabled={!selectedProjectId || isDeploying}>
           {isDeploying ? (
             <>
               <RefreshCw size={12} className="animate-spin" />

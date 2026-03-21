@@ -1,25 +1,24 @@
 'use client';
 
+import { toast } from '@/ui/system';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { toast } from '@pytholit/ui/ui';
 
-import { Button, Card, Skeleton } from '@/dashboard/components';
+import { Card, CardContent } from '@/ui/shadcn/ui/card';
+import { Separator } from '@/ui/shadcn/ui/separator';
+import { Tabs, TabsList, TabsTrigger } from '@/ui/shadcn/ui/tabs';
+import { archiveProject, type ProjectListState, restoreProject } from '@/shared/lib/projects';
 import { queryKeys } from '@/shared/lib/query-keys';
-import { archiveProject, restoreProject, type ProjectListState } from '@/shared/lib/projects';
 
 import { useProjects } from '../hooks/useProjects';
 import { ProjectCard } from './ProjectCard';
 
 export const ProjectList = () => {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const [state, setState] = useState<ProjectListState>('active');
   const { data: projects, isLoading, error } = useProjects(state);
   const list = projects ?? [];
+
   const archiveMutation = useMutation({
     mutationFn: (projectId: string) => archiveProject(undefined, projectId),
     onSuccess: () => {
@@ -28,11 +27,12 @@ export const ProjectList = () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.projects('archived') });
       void queryClient.invalidateQueries({ queryKey: queryKeys.projects('all') });
     },
-    onError: error => {
-      const message = error instanceof Error ? error.message : 'Failed to archive project.';
+    onError: err => {
+      const message = err instanceof Error ? err.message : 'Failed to archive project.';
       toast.error(message);
     },
   });
+
   const restoreMutation = useMutation({
     mutationFn: (projectId: string) => restoreProject(undefined, projectId),
     onSuccess: () => {
@@ -41,79 +41,87 @@ export const ProjectList = () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.projects('archived') });
       void queryClient.invalidateQueries({ queryKey: queryKeys.projects('all') });
     },
-    onError: error => {
-      const message = error instanceof Error ? error.message : 'Failed to restore project.';
+    onError: err => {
+      const message = err instanceof Error ? err.message : 'Failed to restore project.';
       toast.error(message);
     },
   });
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[1, 2, 3].map(i => (
-          <Card key={i} className="h-64 space-y-4">
-            <Skeleton className="h-8 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-            <div className="mt-8 space-y-2">
-              <Skeleton className="h-20 w-full" />
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="flex items-center justify-between gap-4 pt-6">
+            <div className="flex gap-2">
+              <div className="h-8 w-20 animate-pulse rounded-md bg-muted" />
+              <div className="h-8 w-24 animate-pulse rounded-md bg-muted" />
             </div>
-          </Card>
-        ))}
+            <div className="h-9 w-36 animate-pulse rounded-md bg-muted" />
+          </CardContent>
+        </Card>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map(i => (
+            <Card key={i}>
+              <CardContent className="space-y-4 pt-6">
+                <div className="h-5 w-2/3 animate-pulse rounded bg-muted" />
+                <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
+                <div className="h-16 w-full animate-pulse rounded bg-muted" />
+                <div className="h-8 w-full animate-pulse rounded bg-muted" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
 
   if (error) {
-    return <div className="text-red-500 font-mono text-sm">Failed to load projects.</div>;
+    return (
+      <Card>
+        <CardContent className="py-8 text-sm text-destructive">
+          Failed to load projects.
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
-    <div className="space-y-8">
-      {/* Action Bar */}
-      <Card className="mb-6 flex items-center justify-between bg-bg-surface p-4 pb-6 pr-6">
-        <div className="flex gap-4 font-mono text-sm">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`px-0 py-0 text-sm rounded-none ${
-              state === 'active'
-                ? 'text-white border-b border-brand-primary'
-                : 'text-text-secondary hover:text-white'
-            }`}
-            onClick={() => setState('active')}
+    <div className="space-y-6">
+      <Separator />
+
+      <section className="space-y-4">
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Project View
+          </p>
+          <Tabs
+            value={state}
+            onValueChange={value => setState(value as ProjectListState)}
+            className="w-auto"
           >
-            Active Runtimes
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`px-0 py-0 text-sm rounded-none ${
-              state === 'archived'
-                ? 'text-white border-b border-brand-primary'
-                : 'text-text-secondary hover:text-white'
-            }`}
-            onClick={() => setState('archived')}
-          >
-            Archived
-          </Button>
+            <TabsList>
+              <TabsTrigger value="active">Active</TabsTrigger>
+              <TabsTrigger value="archived">Archived</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
-        <div className="relative z-0">
-          <Button size="sm" asChild>
-            <Link href="/dashboard/new">
-              <Plus size={16} /> NEW PROJECT
-            </Link>
-          </Button>
-        </div>
-      </Card>
+        <p className="text-sm text-muted-foreground">
+          {state === 'archived'
+            ? 'Review and restore archived projects.'
+            : 'Create and manage active projects.'}
+        </p>
+      </section>
 
       {list.length === 0 ? (
-        <Card className="bg-bg-panel p-8 text-center font-mono text-sm text-text-muted">
-          {state === 'archived'
-            ? 'No archived projects yet.'
-            : 'No projects yet. Create your first project to get started.'}
+        <Card>
+          <CardContent className="py-10 text-center text-muted-foreground">
+            {state === 'archived'
+              ? 'No archived projects yet.'
+              : 'No projects yet. Create your first project to get started.'}
+          </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {list.map(project => (
             <ProjectCard
               key={project.id}
@@ -123,25 +131,6 @@ export const ProjectList = () => {
               actionPending={archiveMutation.isPending || restoreMutation.isPending}
             />
           ))}
-
-          {/* Create New Placeholder */}
-          {state === 'active' ? (
-            <Button
-              onClick={() => router.push('/dashboard/new')}
-              variant="secondary"
-              className="group min-h-[240px] w-full border-2 border-dashed border-border-dim bg-black/20 hover:border-brand-primary/50 hover:bg-brand-primary/5 flex-col items-center justify-center"
-            >
-              <div className="w-12 h-12 rounded-full bg-border-dim/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <Plus
-                  size={24}
-                  className="text-text-secondary group-hover:text-brand-primary transition-colors"
-                />
-              </div>
-              <span className="font-mono text-xs text-text-secondary group-hover:text-white transition-colors">
-                INITIALIZE CONTAINER
-              </span>
-            </Button>
-          ) : null}
         </div>
       )}
     </div>

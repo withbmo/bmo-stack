@@ -1,23 +1,40 @@
 'use client';
 
 import type { TurnstileInstance } from '@marsidev/react-turnstile';
-import { Turnstile } from '@marsidev/react-turnstile';
-import { ArrowRight, Loader2 } from 'lucide-react';
-import Link from 'next/link';
+import { toast } from '@/ui/system';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useMemo, useRef, useState } from 'react';
-import { toast } from '@pytholit/ui/ui';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { env } from '@/env';
+import { Turnstile } from '@marsidev/react-turnstile';
+import { Button } from '@/ui/shadcn/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/shadcn/ui/card';
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/ui/shadcn/ui/field';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/ui/shadcn/ui/input-otp';
+import { ArrowRight, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { AuthLayout } from '@/site/components/auth/AuthLayout';
 import { useAuth } from '@/shared/auth';
 import { getApiErrorMessage, sendOtp, verifyOtp } from '@/shared/lib/auth';
-import { AuthCard } from '@/site/components/auth/AuthCard';
-import { AuthHeader } from '@/site/components/auth/AuthHeader';
-import { AuthPageLayout } from '@/site/components/auth/AuthPageLayout';
-import { AuthSubmitButton } from '@/site/components/auth/AuthSubmitButton';
 
 const TURNSTILE_SITE_KEY = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
 const IS_DEV = process.env.NODE_ENV === 'development';
+const OTP_LENGTH = 6;
+const DEFAULT_RESEND_SECONDS = 60;
+const DEFAULT_EXPIRES_SECONDS = 10 * 60;
+
+function parseIsoMs(value: string | null): number | null {
+  if (!value) return null;
+  const time = Date.parse(value);
+  return Number.isNaN(time) ? null : time;
+}
+
+function formatCountdown(totalSeconds: number): string {
+  const safe = Math.max(0, totalSeconds);
+  const mins = Math.floor(safe / 60);
+  const secs = safe % 60;
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
 
 export function VerifyOtpRoute() {
   const router = useRouter();
@@ -32,10 +49,86 @@ export function VerifyOtpRoute() {
   const [resending, setResending] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState('');
   const turnstileRef = useRef<TurnstileInstance | null>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  const [nextRequestAtMs, setNextRequestAtMs] = useState<number | null>(() => {
+    const queryMs = parseIsoMs(searchParams.get('nextRequestAt'));
+    return queryMs ?? Date.now() + DEFAULT_RESEND_SECONDS * 1000;
+  });
+  const [expiresAtMs, setExpiresAtMs] = useState<number | null>(() => {
+    const queryMs = parseIsoMs(searchParams.get('expiresAt'));
+    return queryMs ?? Date.now() + DEFAULT_EXPIRES_SECONDS * 1000;
+  });
 
-  const canUseCaptcha = !IS_DEV && TURNSTILE_SITE_KEY;
+  const canUseCaptcha = !IS_DEV && Boolean(TURNSTILE_SITE_KEY);
+  const timerStorageKey = useMemo(
+    () => (email ? `auth:otp-timers:${email}` : null),
+    [email]
+  );
 
-  const submitDisabled = loading || code.length !== 6 || !email;
+  useEffect(() => {
+    const tick = window.setInterval(() => setNowMs(Date.now()), 1000);
+    return () => window.clearInterval(tick);
+  }, []);
+
+  useEffect(() => {
+    if (!timerStorageKey) return;
+
+    const queryNextMs = parseIsoMs(searchParams.get('nextRequestAt'));
+    const queryExpiresMs = parseIsoMs(searchParams.get('expiresAt'));
+
+    let storageNextMs: number | null = null;
+    let storageExpiresMs: number | null = null;
+
+    try {
+      const raw = window.localStorage.getItem(timerStorageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { nextRequestAt?: string; expiresAt?: string };
+        storageNextMs = parseIsoMs(parsed.nextRequestAt ?? null);
+        storageExpiresMs = parseIsoMs(parsed.expiresAt ?? null);
+      }
+    } catch {
+      // Ignore broken storage payloads.
+    }
+
+    const nextMs = Math.max(
+      queryNextMs ?? 0,
+      storageNextMs ?? 0,
+      Date.now() + DEFAULT_RESEND_SECONDS * 1000
+    );
+    const expiresMs = Math.max(
+      queryExpiresMs ?? 0,
+      storageExpiresMs ?? 0,
+      Date.now() + DEFAULT_EXPIRES_SECONDS * 1000
+    );
+
+    setNextRequestAtMs(nextMs);
+    setExpiresAtMs(expiresMs);
+  }, [searchParams, timerStorageKey]);
+
+  useEffect(() => {
+    if (!timerStorageKey || !nextRequestAtMs || !expiresAtMs) return;
+    try {
+      window.localStorage.setItem(
+        timerStorageKey,
+        JSON.stringify({
+          nextRequestAt: new Date(nextRequestAtMs).toISOString(),
+          expiresAt: new Date(expiresAtMs).toISOString(),
+        })
+      );
+    } catch {
+      // Ignore storage failures (e.g. private mode restrictions).
+    }
+  }, [expiresAtMs, nextRequestAtMs, timerStorageKey]);
+
+  const resendSecondsLeft = useMemo(() => {
+    if (!nextRequestAtMs) return 0;
+    return Math.max(0, Math.ceil((nextRequestAtMs - nowMs) / 1000));
+  }, [nextRequestAtMs, nowMs]);
+
+  const expirySecondsLeft = useMemo(() => {
+    if (!expiresAtMs) return 0;
+    return Math.max(0, Math.ceil((expiresAtMs - nowMs) / 1000));
+  }, [expiresAtMs, nowMs]);
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +144,9 @@ export function VerifyOtpRoute() {
         toast.error('OTP verification requires another step.');
         return;
       }
+      if (timerStorageKey) {
+        window.localStorage.removeItem(timerStorageKey);
+      }
       await refreshSession();
       router.replace(next);
     } catch (err) {
@@ -65,6 +161,9 @@ export function VerifyOtpRoute() {
       toast.error('Missing email for OTP resend.');
       return;
     }
+    if (resendSecondsLeft > 0) {
+      return;
+    }
     if (canUseCaptcha && !turnstileToken) {
       toast.error('Please complete the security check first.');
       return;
@@ -75,6 +174,8 @@ export function VerifyOtpRoute() {
       const resp = await sendOtp(email, turnstileToken);
       toast.success(`New code sent. Expires at ${new Date(resp.otpExpiresAt).toLocaleTimeString()}.`);
       setCode('');
+      setNextRequestAtMs(parseIsoMs(resp.nextRequestAt));
+      setExpiresAtMs(parseIsoMs(resp.otpExpiresAt));
       if (canUseCaptcha) {
         turnstileRef.current?.reset();
         setTurnstileToken('');
@@ -91,85 +192,88 @@ export function VerifyOtpRoute() {
     const [localRaw, domainRaw] = email.split('@');
     const local = localRaw ?? '';
     const domain = domainRaw ?? '';
-    if (local.length <= 2) return `${local[0] ?? '*'}*@${domain}`;
+    if (local.length <= 2) return `${local[0] ?? '*'}***@${domain}`;
     return `${local.slice(0, 2)}***@${domain}`;
   }, [email]);
 
   return (
-    <AuthPageLayout>
-      <AuthHeader mode="login" />
-      <AuthCard>
-        <div className="mb-6 text-center space-y-2">
-          <h2 className="font-mono text-sm uppercase tracking-wider text-text-secondary">
-            Verify Email OTP
-          </h2>
-          <p className="font-mono text-xs text-text-muted">
-            Enter the 6-digit code sent to {maskedEmail || 'your email'}.
-          </p>
-        </div>
+    <AuthLayout>
+      <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+        <CardHeader className="text-center">
+          <CardTitle className="text-xl">Verify email OTP</CardTitle>
+          <CardDescription>Enter the 6-digit code sent to {maskedEmail || 'your email'}.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleVerify}>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="otp">OTP code</FieldLabel>
+                <InputOTP
+                  id="otp"
+                  maxLength={OTP_LENGTH}
+                  value={code}
+                  onChange={value => setCode(value.replace(/\D/g, '').slice(0, OTP_LENGTH))}
+                >
+                  <InputOTPGroup className="w-full justify-center">
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                  </InputOTPGroup>
+                </InputOTP>
+                <FieldDescription className="text-center">
+                  Code expires in {formatCountdown(expirySecondsLeft)}
+                </FieldDescription>
+              </Field>
 
-        <form onSubmit={handleVerify} className="space-y-6">
-          <div className="space-y-2">
-            <label className="font-mono text-xs uppercase tracking-wider text-brand-primary">
-              OTP Code
-            </label>
-            <input
-              inputMode="numeric"
-              pattern="[0-9]*"
-              maxLength={6}
-              value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              className="w-full border border-border-default bg-bg-app px-3 py-3 text-center font-mono text-sm tracking-[0.4em] text-text-secondary"
-              placeholder="000000"
-              required
-            />
-          </div>
+              {canUseCaptcha ? (
+                <Field>
+                  <Turnstile
+                    ref={turnstileRef}
+                    siteKey={TURNSTILE_SITE_KEY}
+                    options={{ theme: 'dark' }}
+                    onSuccess={setTurnstileToken}
+                    onExpire={() => setTurnstileToken('')}
+                  />
+                </Field>
+              ) : null}
 
-          {canUseCaptcha ? (
-            <div className="flex justify-center">
-              <Turnstile
-                ref={turnstileRef}
-                siteKey={TURNSTILE_SITE_KEY}
-                options={{ theme: 'dark' }}
-                onSuccess={(token) => setTurnstileToken(token)}
-                onExpire={() => setTurnstileToken('')}
-              />
-            </div>
-          ) : null}
+              <Field>
+                <Button type="submit" disabled={loading || code.length !== OTP_LENGTH}>
+                  {loading ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    <>
+                      Verify code
+                      <ArrowRight size={16} />
+                    </>
+                  )}
+                </Button>
+              </Field>
 
-          <AuthSubmitButton type="submit" disabled={submitDisabled}>
-            {loading ? (
-              <>
-                <Loader2 size={18} className="animate-spin shrink-0" />
-                <span>VERIFYING...</span>
-              </>
-            ) : (
-              <>
-                VERIFY CODE <ArrowRight size={16} />
-              </>
-            )}
-          </AuthSubmitButton>
-        </form>
-
-        <div className="mt-6 text-center space-y-3">
-          <button
-            type="button"
-            onClick={handleResend}
-            disabled={resending}
-            className="font-mono text-xs uppercase tracking-wider text-text-muted underline decoration-dotted underline-offset-4 transition-colors hover:text-brand-primary disabled:opacity-60"
-          >
-            {resending ? 'SENDING...' : 'Resend OTP'}
-          </button>
-          <div>
-            <Link
-              href="/auth/login"
-              className="font-mono text-xs uppercase tracking-wider text-text-muted underline decoration-dotted underline-offset-4 transition-colors hover:text-brand-primary"
-            >
-              Back to login
-            </Link>
-          </div>
-        </div>
-      </AuthCard>
-    </AuthPageLayout>
+              <Field>
+                {resendSecondsLeft > 0 ? (
+                  <FieldDescription className="text-center">
+                    Resend available in {formatCountdown(resendSecondsLeft)}
+                  </FieldDescription>
+                ) : (
+                  <Button type="button" onClick={handleResend} disabled={resending}>
+                    {resending ? 'Sending...' : 'Resend code'}
+                  </Button>
+                )}
+                <FieldDescription className="text-center">
+                  Back to <Link href="/auth/login">login</Link>
+                </FieldDescription>
+              </Field>
+            </FieldGroup>
+          </form>
+        </CardContent>
+      </Card>
+    </AuthLayout>
   );
 }

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 
-import { Badge, DeployJobStatusBadge, DeploymentStatusBadge, StatusBadge } from './Badge';
+import { Badge } from './Badge';
 
 const meta: Meta<typeof Badge> = {
   title: 'Primitives/Badge',
@@ -35,27 +35,27 @@ export const Variants: Story = {
   ),
 };
 
-export const ProductStatuses: Story = {
+export const WithIcons: Story = {
   render: () => (
-    <div className="grid gap-3">
-      <div className="flex flex-wrap gap-3">
-        <StatusBadge status="running" />
-        <StatusBadge status="building" />
-        <StatusBadge status="stopped" />
-        <StatusBadge status="error" />
-      </div>
-      <div className="flex flex-wrap gap-3">
-        <DeploymentStatusBadge status="live" />
-        <DeploymentStatusBadge status="deploying" />
-        <DeploymentStatusBadge status="stopped" />
-        <DeploymentStatusBadge status="failed" />
-      </div>
-      <div className="flex flex-wrap gap-3">
-        <DeployJobStatusBadge status="queued" />
-        <DeployJobStatusBadge status="running" />
-        <DeployJobStatusBadge status="succeeded" />
-        <DeployJobStatusBadge status="failed" />
-      </div>
+    <div className="flex flex-wrap gap-3">
+      <Badge
+        variant="success"
+        icon={<span aria-hidden="true" className="h-2 w-2 rounded-full bg-current" />}
+      >
+        Healthy
+      </Badge>
+      <Badge
+        variant="warning"
+        icon={<span aria-hidden="true" className="h-2 w-2 rounded-full bg-current" />}
+      >
+        Pending
+      </Badge>
+      <Badge
+        variant="error"
+        icon={<span aria-hidden="true" className="h-2 w-2 rounded-full bg-current" />}
+      >
+        Failed
+      </Badge>
     </div>
   ),
 };

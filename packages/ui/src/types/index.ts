@@ -18,34 +18,3 @@ export interface PricingPlan {
   recommended?: boolean;
   buttonText?: string;
 }
-
-export interface Template {
-  id: string;
-  title: string;
-  description: string;
-  tags: string[];
-  author: string;
-  stars: number;
-  isOfficial: boolean;
-}
-
-export interface HubResource {
-  id: string;
-  type: string;
-  title: string;
-  description: string;
-  tags: string[];
-  author: string;
-  stars: number;
-  forks: number;
-  updatedAt: string;
-  verified?: boolean;
-}
-
-export interface Feature {
-  id: string;
-  title: string;
-  description: string;
-  pythonCode: string;
-  icon: string;
-}

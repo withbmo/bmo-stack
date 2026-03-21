@@ -1,5 +1,6 @@
-import { EmptyState, LoadingState } from '@pytholit/ui/blocks';
-import { Button } from '@pytholit/ui/ui';
+import { EmptyState, LoadingState } from '@/ui/blocks';
+
+import { Button } from '@/ui/shadcn/ui/button';
 
 export interface AsyncStateProps {
   isLoading: boolean;
@@ -29,7 +30,7 @@ export const AsyncState = ({
       <div className="space-y-3">
         <EmptyState message={errorMessage} />
         {onRetry ? (
-          <Button variant="secondary" size="sm" onClick={onRetry}>
+          <Button onClick={onRetry}>
             Retry
           </Button>
         ) : null}

@@ -1,8 +1,3 @@
-/* Pytholit Design System Styles
- * Theme first so :root and @theme are available for base/utilities
- */
-
+/* Minimal shared style entrypoint for the shadcn reset. */
 @import './theme.css';
 @import './base.css';
-@import './animations.css';
-@import './utilities.css';

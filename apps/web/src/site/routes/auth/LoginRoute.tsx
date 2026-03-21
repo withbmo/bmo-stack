@@ -1,43 +1,27 @@
 'use client';
 
 import type { TurnstileInstance } from '@marsidev/react-turnstile';
-import { Turnstile } from '@marsidev/react-turnstile';
-import { Button } from '@pytholit/ui/ui';
-import { ArrowRight, Loader2 } from 'lucide-react';
-import Link from 'next/link';
+import { toast } from '@/ui/system';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from '@pytholit/ui/ui';
 
 import { env } from '@/env';
+import { Turnstile } from '@marsidev/react-turnstile';
+import { Button } from '@/ui/shadcn/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/shadcn/ui/card';
+import { Field, FieldDescription, FieldGroup, FieldLabel, FieldSeparator } from '@/ui/shadcn/ui/field';
+import { InputWithIcon } from '@/ui/shadcn/ui/input-with-icon';
+import { ArrowRight, Chrome, Github, Loader2, LockIcon, MailIcon } from 'lucide-react';
+import Link from 'next/link';
+import { AuthLayout } from '@/site/components/auth/AuthLayout';
 import { useAuth } from '@/shared/auth';
 import { useAuthForm } from '@/shared/auth/hooks/useAuthForm';
-import { useOAuthProviders } from '@/shared/auth/hooks/useOAuthProviders';
-import { type ApiError, getApiErrorMessage, login } from '@/shared/lib/auth';
-import { AuthCard } from '@/site/components/auth/AuthCard';
-import { AuthHeader } from '@/site/components/auth/AuthHeader';
-import { AuthPageLayout } from '@/site/components/auth/AuthPageLayout';
-import { AuthPanelLoader } from '@/site/components/auth/AuthPanelLoader';
-import { EmailField, PasswordField } from '@/site/components/auth/FormFields';
-import { SocialAuthButtons } from '@/site/components/auth/SocialAuthButtons';
+import { type ApiError, getApiErrorMessage, login, signInWithOAuth } from '@/shared/lib/auth';
 
 const TURNSTILE_SITE_KEY = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
 const IS_DEV = process.env.NODE_ENV === 'development';
 
-/**
- * CAPTCHA Policy:
- * - Production: CAPTCHA required (bot protection via Cloudflare Turnstile)
- * - Development: CAPTCHA optional (for faster local testing)
- *
- * Rate Limiting Compensation:
- * Backend rate limits apply regardless of CAPTCHA (see auth.controller.ts):
- * - Login: 10 requests per 60 seconds
- * - OTP Send: 5 requests per 60 seconds (with 60s cooldown + hourly/daily limits)
- * - OTP Verify: 10 requests per 60 seconds
- *
- * In development, backend rate limiting is the primary protection.
- * In production, CAPTCHA + rate limiting provide defense-in-depth.
- */
+type OAuthButtonProvider = 'github' | 'google';
 
 export function LoginRoute() {
   const router = useRouter();
@@ -49,7 +33,6 @@ export function LoginRoute() {
     useAuthForm({ mode: 'login' });
 
   const [turnstileToken, setTurnstileToken] = useState('');
-  const { providers: oauthProviders, isLoading: isPanelLoading } = useOAuthProviders();
   const turnstileRef = useRef<TurnstileInstance | null>(null);
 
   const redirectTarget = useMemo(() => {
@@ -89,6 +72,14 @@ export function LoginRoute() {
     toast.error(message);
   }, []);
 
+  const handleOAuthSignIn = async (provider: OAuthButtonProvider) => {
+    try {
+      await signInWithOAuth(provider, redirectTarget);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'OAuth sign-in failed. Please try again.'));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
@@ -124,64 +115,97 @@ export function LoginRoute() {
   };
 
   return (
-    <AuthPageLayout>
-      <AuthHeader mode="login" />
+    <AuthLayout>
+      <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+        <CardHeader className="text-center">
+          <CardTitle className="text-xl">Welcome back</CardTitle>
+          <CardDescription>Login with your GitHub or Google account</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit}>
+            <FieldGroup>
+              <Field>
+                <Button variant="outline" type="button" onClick={() => handleOAuthSignIn('github')}>
+                  <Github size={16} />
+                  Login with GitHub
+                </Button>
+                <Button variant="outline" type="button" onClick={() => handleOAuthSignIn('google')}>
+                  <Chrome size={16} />
+                  Login with Google
+                </Button>
+              </Field>
 
-      <AuthCard>
-        {isPanelLoading ? (
-          <AuthPanelLoader label="Loading login..." />
-        ) : (
-          <>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <EmailField value={email} onChange={setEmail} />
+              <FieldSeparator>Or continue with</FieldSeparator>
 
-              <PasswordField value={password} onChange={setPassword} required />
+              <Field>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <InputWithIcon
+                  icon={MailIcon}
+                  iconLabel="Email"
+                  id="email"
+                  type="email"
+                  placeholder="mexample.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                />
+              </Field>
+
+              <Field>
+                <div className="flex items-center">
+                  <FieldLabel htmlFor="password">Password</FieldLabel>
+                  <Link
+                    href="/auth/forgot-password"
+                    className="ml-auto text-sm underline-offset-4 hover:underline"
+                  >
+                    Forgot your password?
+                  </Link>
+                </div>
+                <InputWithIcon
+                  icon={LockIcon}
+                  iconLabel="Password"
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                />
+              </Field>
 
               {requireTurnstile && TURNSTILE_SITE_KEY ? (
-                <div className="flex justify-center">
+                <Field>
                   <Turnstile
                     ref={turnstileRef}
                     siteKey={TURNSTILE_SITE_KEY}
                     options={{ theme: 'dark' }}
-                    onSuccess={token => setTurnstileToken(token)}
+                    onSuccess={setTurnstileToken}
                     onExpire={() => setTurnstileToken('')}
                   />
-                </div>
+                </Field>
               ) : null}
 
-              <Button type="submit" variant="primary" fullWidth disabled={isLoading} size="sm">
-                {isLoading ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin shrink-0" />
-                    <span>VERIFYING...</span>
-                  </>
-                ) : (
-                  <>
-                    LOGIN <ArrowRight size={16} />
-                  </>
-                )}
-              </Button>
-            </form>
-
-            <SocialAuthButtons next={redirectTarget} providers={oauthProviders ?? undefined} />
-          </>
-        )}
-      </AuthCard>
-
-      <div className="mt-6 text-center space-y-2">
-        <Link
-          href="/auth/forgot-password"
-          className="block font-mono text-xs uppercase tracking-wider text-text-muted underline decoration-dotted underline-offset-4 transition-colors hover:text-brand-primary"
-        >
-          Forgot password?
-        </Link>
-        <Link
-          href="/auth/signup"
-          className="font-mono text-xs uppercase tracking-wider text-text-muted underline decoration-dotted underline-offset-4 transition-colors hover:text-brand-primary"
-        >
-          NO ACCOUNT? [REGISTER]
-        </Link>
-      </div>
-    </AuthPageLayout>
+              <Field>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Logging in...
+                    </>
+                  ) : (
+                    <>
+                      Login
+                      <ArrowRight size={16} />
+                    </>
+                  )}
+                </Button>
+                <FieldDescription className="text-center">
+                  Don&apos;t have an account? <Link href="/auth/signup">Sign up</Link>
+                </FieldDescription>
+              </Field>
+            </FieldGroup>
+          </form>
+        </CardContent>
+      </Card>
+    </AuthLayout>
   );
 }

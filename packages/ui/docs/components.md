@@ -4,6 +4,13 @@ This document describes the current package surface, not every possible future c
 
 ## Imports
 
+Preferred import style:
+
+- `@pytholit/ui/ui` for primitives, motion, and helpers
+- `@pytholit/ui/blocks` for shared compositions
+- `@pytholit/ui/system` for shared behavioral and pattern utilities
+- avoid `@pytholit/ui` in new code; it remains compatibility-only
+
 ```ts
 import '@pytholit/ui/styles';
 
@@ -13,15 +20,16 @@ import {
   AccordionItem,
   AccordionTrigger,
   Badge,
+  type BadgeProps,
+  type BadgeVariant,
   Button,
   Card,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DynamicSkeletonProvider,
-  DynamicSlot,
-  DynamicValue,
   FormField,
   Input,
   Modal,
@@ -31,6 +39,7 @@ import {
   MotionStagger,
   PageTransition,
   Popover,
+  PopoverSection,
   Select,
   SelectContent,
   SelectItem,
@@ -41,9 +50,7 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-  Toaster,
   Tooltip,
-  toast,
   cn,
 } from '@pytholit/ui/ui';
 
@@ -57,9 +64,29 @@ import {
   LivingGrid,
   LoadingState,
   ResourceCard,
+  type ResourceCardData,
+  type ResourceCardProps,
   SectionHeader,
   TemplateCard,
+  type TemplateCardData,
+  type TemplateCardProps,
 } from '@pytholit/ui/blocks';
+
+import {
+  DynamicSkeletonProvider,
+  DynamicSlot,
+  DynamicValue,
+  Toaster,
+  toast,
+  useDynamicSkeletonLoading,
+} from '@pytholit/ui/system';
+```
+
+For type-only imports, prefer an explicit `type` import:
+
+```ts
+import type { BadgeProps, BadgeVariant } from '@pytholit/ui/ui';
+import type { TemplateCardData } from '@pytholit/ui/blocks';
 ```
 
 ## Primitives
@@ -68,13 +95,16 @@ import {
 
 Use for generic actions and navigational affordances.
 
-- Variants: `primary`, `secondary`, `ghost`, `danger`
-- Sizes: `sm`, `md`, `lg`, `xl`
-- Shared behaviors: `asChild`, `isLoading`, `fullWidth`
+- Native source: shadcn-generated button hosted in `packages/ui`
+- Variants: `default`, `secondary`, `outline`, `ghost`, `link`, `destructive`
+- Sizes: `default`, `sm`, `lg`, `icon`
+- Shared behaviors:
+  - `asChild`
+  - native composition for loading states
+  - width controlled via standard `className`
 - Accessibility notes:
   - defaults `type="button"`
-  - forwards ref
-  - exposes loading state through `aria-busy`
+  - composes cleanly with links and icons
 
 ### Input
 
@@ -125,10 +155,8 @@ Use for generic grouped content containers.
 Use for compact status or metadata labels.
 
 - Variants: `success`, `warning`, `error`, `muted`, `purple`
-- Includes specialized status helpers:
-  - `StatusBadge`
-  - `DeploymentStatusBadge`
-  - `DeployJobStatusBadge`
+- `Badge` is the only shared primitive export
+- product-specific status mapping should live in app code or, if broadly reused, in `blocks`
 
 ### Tabs
 
@@ -161,7 +189,9 @@ Use for action menus and compact option lists.
   - `DropdownMenu`
   - `DropdownMenuTrigger`
   - `DropdownMenuContent`
-- `DropdownMenuItem`
+  - `DropdownMenuItem`
+  - `DropdownMenuLabel`
+  - `DropdownMenuSeparator`
 - intended for toolbar controls, IDE menus, and compact contextual actions
 
 ### Accordion
@@ -181,6 +211,7 @@ Use for lightweight contextual panels.
 
 - supports controlled and uncontrolled open state
 - supports `triggerAsChild` for existing primitive triggers
+- exports `PopoverSection` for structured content grouping inside the panel
 - intended for menus, quick actions, and contextual detail panels
 
 ### Tooltip
@@ -190,6 +221,16 @@ Use for short, non-essential helper copy.
 - supports hover and focus disclosure
 - best for icon affordances or compact explanatory hints
 
+### Skeleton
+
+Use for loading placeholders.
+
+- `Skeleton` is the plain visual placeholder primitive
+
+## System
+
+System exports are shared package-owned utilities that coordinate behavior or loading patterns across apps. They are not low-level visual primitives.
+
 ### Toast
 
 Use for transient feedback and mutation status.
@@ -197,15 +238,20 @@ Use for transient feedback and mutation status.
 - exports:
   - `toast`
   - `Toaster`
+- import from `@pytholit/ui/system`
 - wraps the package-approved notification experience so app code does not import `sonner` directly
 
-### Skeleton / DynamicSkeleton
+### DynamicSkeleton
 
-Use for loading placeholders.
+Use for shared loading-state orchestration around existing UI.
 
-- `Skeleton` is a plain visual placeholder
-- `DynamicSkeletonProvider` supplies shared loading state
-- `DynamicValue` and `DynamicSlot` support declarative loading swaps
+- exports:
+  - `DynamicSkeletonProvider`
+  - `DynamicSlot`
+  - `DynamicValue`
+  - `useDynamicSkeletonLoading`
+- import from `@pytholit/ui/system`
+- intended for coordinated loading swaps rather than plain visual placeholders
 
 ## Blocks
 

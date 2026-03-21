@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Bell, Settings, ShieldCheck } from 'lucide-react';
 
-import { Button } from './Button';
 import { Popover, PopoverSection } from './Popover';
 
 const meta: Meta<typeof Popover> = {
@@ -39,7 +38,7 @@ export const Default: Story = {
 
 export const WithCustomTrigger: Story = {
   render: () => (
-    <Popover triggerAsChild trigger={<Button variant="secondary">Project menu</Button>} align="end">
+    <Popover triggerAsChild trigger={<button>Project menu</button>} align="end">
       <PopoverSection>
         <div className="font-sans text-sm font-semibold text-text-primary">Environment</div>
         <p className="font-mono text-xs text-text-secondary">

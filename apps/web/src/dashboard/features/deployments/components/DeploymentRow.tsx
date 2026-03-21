@@ -2,7 +2,7 @@ import { Clock, ExternalLink, Globe, MoreVertical, RefreshCw, Square } from 'luc
 
 import type { Deployment } from '@/shared/types';
 
-import { DeploymentStatusBadge } from './DeploymentStatusBadge';
+import { DeploymentStatusBadge } from './status-badges';
 
 interface DeploymentRowProps {
   deployment: Deployment;

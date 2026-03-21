@@ -3,7 +3,8 @@ import 'server-only';
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import type { Template as UITemplate } from '@pytholit/ui/ui';
+import type { Template } from '@/shared/types';
+
 import { parseProjectSpec, validateProjectSpec } from '../../../../../packages/project-spec/dist/index.js';
 
 function inferTags(spec: ReturnType<typeof validateProjectSpec>): string[] {
@@ -48,10 +49,10 @@ async function readTemplateDirectories(rootDir: string): Promise<string[]> {
     .sort((left, right) => left.localeCompare(right));
 }
 
-export async function getTemplateCatalog(): Promise<UITemplate[]> {
+export async function getTemplateCatalog(): Promise<Template[]> {
   const templatesRoot = path.resolve(process.cwd(), '..', '..', 'templates');
   const templateDirs = await readTemplateDirectories(templatesRoot);
-  const templates: UITemplate[] = [];
+  const templates: Template[] = [];
 
   for (const templateDir of templateDirs) {
     const manifestPath = path.join(templatesRoot, templateDir, 'pytholit.toml');
@@ -64,6 +65,7 @@ export async function getTemplateCatalog(): Promise<UITemplate[]> {
         id: spec.project.id,
         title: spec.project.name,
         description: spec.project.description ?? `${spec.project.name} starter template`,
+        framework: spec.project.name,
         tags: inferTags(spec),
         author: 'Pytholit',
         stars: inferStars(spec.project.id),

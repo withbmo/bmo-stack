@@ -1,54 +1,60 @@
 'use client';
 
-import { PageTransition } from '@pytholit/ui/ui';
 import { Settings } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { type ReactNode } from 'react';
 
 import { SETTINGS_TABS } from '@/shared/constants/settings';
+import { PageLayout } from '@/dashboard/components/layout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/ui/shadcn/ui/card';
+import { cn } from '@/ui/lib/utils';
 
 interface SettingsLayoutProps {
+  header?: ReactNode;
   children: ReactNode;
 }
 
-export const SettingsLayout = ({ children }: SettingsLayoutProps) => {
+export const SettingsLayout = ({ header, children }: SettingsLayoutProps) => {
   const pathname = usePathname();
   const basePath = '/dashboard/settings';
 
   return (
-    <div className="flex-1 min-h-[calc(100vh-4rem)] overflow-hidden flex flex-col bg-bg-app">
-      <aside className="w-full md:fixed md:left-0 md:top-16 md:w-64 md:h-[calc(100vh-4rem)] md:overflow-y-auto md:z-10 border-b md:border-b-0 md:border-r border-border-default bg-bg-panel p-6 flex flex-col shrink-0">
-        <div className="mb-6 font-mono text-xs font-bold text-text-primary/85 tracking-widest uppercase flex items-center gap-2">
-          <Settings size={14} /> Settings
-        </div>
-        <nav className="space-y-0.5">
-          {SETTINGS_TABS.map(tab => {
-            const href = `${basePath}/${tab.id}`;
-            const isActive = pathname === href || (tab.id === 'profile' && pathname === basePath);
-            return (
-              <Link
-                key={tab.id}
-                href={href}
-                className={`w-full text-left px-3 py-2.5 font-mono text-xs uppercase tracking-wider transition-all border-l-2 flex items-center gap-3 ${
-                  isActive
-                    ? 'border-border-highlight text-text-primary bg-bg-surface'
-                    : 'border-transparent text-text-primary/75 hover:text-text-primary hover:bg-bg-surface'
-                }`}
-              >
-                <tab.icon size={13} />
-                {tab.label}
-              </Link>
-            );
-          })}
-        </nav>
-      </aside>
+    <PageLayout className="pb-12">
+      {header ? <div className="mb-6">{header}</div> : null}
+      <div className="mx-auto grid w-full max-w-[1200px] gap-6 md:grid-cols-[260px_minmax(0,1fr)]">
+        <Card className="h-fit md:self-start md:sticky md:top-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Settings size={16} />
+              Settings
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            {SETTINGS_TABS.map(tab => {
+              const href = `${basePath}/${tab.id}`;
+              const isActive = pathname === href || (tab.id === 'profile' && pathname === basePath);
+              return (
+                <Link
+                  key={tab.id}
+                  href={href}
+                  className={cn(
+                    'flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors',
+                    isActive
+                      ? 'bg-muted text-foreground'
+                      : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
+                  )}
+                >
+                  <tab.icon size={14} />
+                  {tab.label}
+                </Link>
+              );
+            })}
+          </CardContent>
+        </Card>
 
-      <div className="flex-1 min-h-0 p-8 overflow-y-auto bg-bg-app relative md:ml-64">
-        <div className="max-w-3xl mx-auto">
-          <PageTransition key={pathname ?? ''}>{children}</PageTransition>
-        </div>
+        <div className="min-w-0 space-y-6">{children}</div>
       </div>
-    </div>
+    </PageLayout>
   );
 };

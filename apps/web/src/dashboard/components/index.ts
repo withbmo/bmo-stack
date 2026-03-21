@@ -1,8 +1,6 @@
-// Re-export from @pytholit/ui
-export type { DashboardPageHeaderProps } from '@/shared/components/layout';
+// Re-export from @/ui
 export {
   BackgroundLayers,
-  CyberRings,
   DashboardTabs,
   EmptyState,
   FilterTabButton,
@@ -10,18 +8,16 @@ export {
   LivingGrid,
   LoadingState,
   ResourceCard,
-  SectionHeader,
   TemplateCard,
-} from '@pytholit/ui/blocks';
+} from '@/ui/blocks';
 export {
-  Badge,
-  Button,
-  Card,
-  DeployJobStatusBadge,
-  DeploymentStatusBadge,
   DynamicSkeletonProvider,
   DynamicSlot,
-  DynamicValue,
+  useDynamicSkeletonLoading,
+} from '@/ui/system';
+export {
+  Badge,
+  Card,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -34,13 +30,17 @@ export {
   SelectTrigger,
   SelectValue,
   Skeleton,
-  StatusBadge,
   Tooltip,
-  useDynamicSkeletonLoading,
-} from '@pytholit/ui/ui';
+} from '@/ui';
+export { Button, buttonVariants } from '@/ui/shadcn/ui/button';
 
 // Layout
 export type { AsyncStateProps } from '../shared/state/AsyncState';
 export { AsyncState } from '../shared/state/AsyncState';
-export { DashboardPageHeader, PageLayout } from '@/shared/components/layout';
-export { DashboardLayout } from './layout';
+export {
+  DashboardLayout,
+  DashboardPageHeader,
+  PageLayout,
+  type DashboardPageHeaderProps,
+  type PageLayoutProps,
+} from './layout';

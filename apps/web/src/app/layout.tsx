@@ -1,8 +1,13 @@
 import './globals.css';
 
 import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 
+import { AppBackground } from './AppBackground';
 import { Providers } from './providers';
+import { cn } from "@/ui/lib/utils";
+
+const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   title: 'Pytholit',
@@ -16,9 +21,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-scroll-behavior="smooth">
-      <body>
-        <Providers>{children}</Providers>
+    <html lang="en" data-scroll-behavior="smooth" className={cn("dark", "font-sans", inter.variable)}>
+      <body className="min-h-screen">
+        <AppBackground />
+        <Providers>
+          <div className="relative z-10">{children}</div>
+        </Providers>
       </body>
     </html>
   );

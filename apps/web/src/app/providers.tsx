@@ -1,7 +1,7 @@
 'use client';
 
+import { Toaster } from '@/ui/system';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from '@pytholit/ui/ui';
 import { useState } from 'react';
 
 import { AuthProvider } from '@/shared/auth/stores/auth-context';

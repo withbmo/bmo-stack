@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect } from 'react';
 
 import { Button, EmptyState } from '@/dashboard/components';
-import { PageLayout } from '@/shared/components/layout';
+import { PageLayout } from '@/dashboard/components/layout';
 
 export default function ErrorPage({
   error,
@@ -23,7 +23,7 @@ export default function ErrorPage({
       <div className="space-y-4">
         <EmptyState message="Something went wrong." />
         <div className="flex items-center gap-3">
-          <Button variant="secondary" size="sm" onClick={reset}>
+          <Button onClick={reset}>
             Retry
           </Button>
           <Link

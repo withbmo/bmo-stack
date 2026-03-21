@@ -2,11 +2,12 @@
 
 Pytholit's internal design system package.
 
-It provides four layers:
+It provides five layers:
 
 - Foundations: tokens, styles, motion rules, and shared utilities
 - Primitives: generic reusable UI building blocks exported from `@pytholit/ui/ui`
 - Blocks: sanctioned shared compositions exported from `@pytholit/ui/blocks`
+- System: cross-app behavioral and pattern utilities exported from `@pytholit/ui/system`
 - Guidance: Storybook, docs, and contribution rules that explain how the system evolves
 
 ## Public Entry Points
@@ -16,15 +17,18 @@ import '@pytholit/ui/styles';
 
 import { Button, MotionFade, cn } from '@pytholit/ui/ui';
 import { SectionHeader, TemplateCard } from '@pytholit/ui/blocks';
+import { toast, Toaster } from '@pytholit/ui/system';
 ```
 
 `@pytholit/ui` still exists as a compatibility barrel, but new code should prefer the subpath entrypoints because they preserve the architecture.
+Do not use `@pytholit/ui` for new code unless you are intentionally working on legacy compatibility.
 
 ## Migration Status
 
-- `@pytholit/ui/ui` and `@pytholit/ui/blocks` are the canonical import paths
+- `@pytholit/ui/ui`, `@pytholit/ui/blocks`, and `@pytholit/ui/system` are the canonical import paths
 - app consumers have been migrated away from the root compatibility barrel
-- Storybook is structured by `Foundations`, `Primitives`, `Blocks`, and `Motion`
+- the root `@pytholit/ui` entrypoint remains compatibility-only and is intentionally de-emphasized
+- Storybook is structured by `Foundations`, `Primitives`, `Blocks`, `Motion`, `Patterns`, and `Guidance`
 - generated Storybook output is treated as local build output and is ignored in git
 
 ## Layer Rules
@@ -78,11 +82,18 @@ packages/ui/src/
 - `Accordion`
 - `Popover`
 - `Tooltip`
-- `Toast`
 - `Skeleton`
-- `DynamicSkeleton`
 - motion primitives
 - `cn`
+
+## Current System Surface
+
+- `DynamicSkeletonProvider`
+- `DynamicSlot`
+- `DynamicValue`
+- `useDynamicSkeletonLoading`
+- `toast`
+- `Toaster`
 
 Queued next primitives for the design-system roadmap:
 
@@ -145,7 +156,7 @@ pnpm storybook
 - Use Radix-backed patterns for accessibility-heavy primitives.
 - Keep `BaseInteractiveCard` and similar helpers internal.
 - Document every public primitive and shared block in Storybook.
-- Prefer `@pytholit/ui/ui` and `@pytholit/ui/blocks` in consuming apps.
+- Prefer `@pytholit/ui/ui`, `@pytholit/ui/blocks`, and `@pytholit/ui/system` in consuming apps.
 
 ## Further Docs
 
