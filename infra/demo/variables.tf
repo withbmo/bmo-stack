@@ -26,7 +26,7 @@ variable "domain_name" {
 variable "app_domain_prefix" {
   type        = string
   default     = ""
-  description = "Optional prefix for app/api/terminal hostnames. Example: dev => dev.pytholit.dev"
+  description = "Optional prefix for app/api hostnames. Example: dev => dev.pytholit.dev"
 }
 
 variable "enable_alb" {
@@ -120,17 +120,13 @@ variable "postgres_instances" {
 
 variable "images" {
   type = object({
-    web              = string
-    api              = string
-    terminal_gateway = string
-    ingress_router   = string
+    web = string
+    api = string
   })
 
   default = {
-    web              = "public.ecr.aws/docker/library/nginx:stable"
-    api              = "public.ecr.aws/docker/library/nginx:stable"
-    terminal_gateway = "public.ecr.aws/docker/library/nginx:stable"
-    ingress_router   = "public.ecr.aws/docker/library/nginx:stable"
+    web = "public.ecr.aws/docker/library/nginx:stable"
+    api = "public.ecr.aws/docker/library/nginx:stable"
   }
 }
 

@@ -91,10 +91,6 @@ output "nameservers_for_godaddy_root_domain" {
   } : null
 }
 
-output "env_alb_dns_name" {
-  value = try(module.alb_env[0].alb_dns_name, null)
-}
-
 output "acm_app_certificate_arn" {
   value = try(module.dns_acm[0].app_certificate_arn, null)
 }

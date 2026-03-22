@@ -52,34 +52,6 @@ resource "aws_route53_record" "api" {
   }
 }
 
-resource "aws_route53_record" "terminal" {
-  count = local.use_alb ? 1 : 0
-
-  zone_id = var.zone_id
-  name    = "terminal.${var.app_domain_name}"
-  type    = "A"
-
-  alias {
-    name                   = var.app_alb_dns_name
-    zone_id                = var.app_alb_zone_id
-    evaluate_target_health = true
-  }
-}
-
-resource "aws_route53_record" "env_wildcard" {
-  count = local.use_alb ? 1 : 0
-
-  zone_id = var.zone_id
-  name    = "*.${var.app_domain_name}"
-  type    = "A"
-
-  alias {
-    name                   = var.env_alb_dns_name
-    zone_id                = var.env_alb_zone_id
-    evaluate_target_health = true
-  }
-}
-
 resource "aws_route53_record" "extra_txt" {
   for_each = { for r in var.extra_txt_records : r.name => r }
 

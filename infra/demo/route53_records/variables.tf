@@ -18,14 +18,6 @@ variable "app_alb_zone_id" {
   type = string
 }
 
-variable "env_alb_dns_name" {
-  type = string
-}
-
-variable "env_alb_zone_id" {
-  type = string
-}
-
 variable "enable_alb_records" {
   type    = bool
   default = true

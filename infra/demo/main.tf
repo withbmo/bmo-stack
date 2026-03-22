@@ -126,8 +126,6 @@ module "route53_delegated" {
   zone_name          = local.app_domain_name
   app_alb_dns_name   = var.enable_alb ? module.alb_app[0].alb_dns_name : null
   app_alb_zone_id    = var.enable_alb ? module.alb_app[0].alb_zone_id : null
-  env_alb_dns_name   = var.enable_alb ? module.alb_env[0].alb_dns_name : null
-  env_alb_zone_id    = var.enable_alb ? module.alb_env[0].alb_zone_id : null
   enable_alb_records = var.enable_alb
   tags               = local.tags
 }
@@ -150,8 +148,6 @@ module "route53_records" {
 
   app_alb_dns_name = module.alb_app[0].alb_dns_name
   app_alb_zone_id  = module.alb_app[0].alb_zone_id
-  env_alb_dns_name = module.alb_env[0].alb_dns_name
-  env_alb_zone_id  = module.alb_env[0].alb_zone_id
 
   enable_alb_records = var.enable_alb
 
@@ -173,18 +169,6 @@ module "alb_app" {
   tags                  = local.tags
 }
 
-module "alb_env" {
-  count = var.enable_alb ? 1 : 0
-
-  source                = "./alb_env"
-  vpc_id                = module.servicesvpc.vpc_id
-  public_subnet_ids     = module.servicesvpc.public_subnet_ids
-  alb_security_group_id = module.security.alb_env_security_group_id
-  certificate_arn       = var.enable_dns_acm ? coalesce(module.dns_acm[0].env_certificate_arn, module.dns_acm[0].app_certificate_arn) : null
-  enable_https          = var.enable_dns_acm
-  tags                  = local.tags
-}
-
 module "dns_acm" {
   count = var.enable_dns_acm ? 1 : 0
 
@@ -192,8 +176,6 @@ module "dns_acm" {
   app_domain_name            = local.app_domain_name
   validation_route53_zone_id = var.manage_root_dns ? module.route53_root[0].zone_id : (local.delegated_dns_enabled ? module.route53_delegated[0].zone_id : null)
   manage_validation_records  = var.manage_root_dns
-  app_alb_dns_name           = var.enable_alb ? module.alb_app[0].alb_dns_name : ""
-  env_alb_dns_name           = var.enable_alb ? module.alb_env[0].alb_dns_name : ""
   tags                       = local.tags
 }
 
@@ -267,38 +249,3 @@ module "ecs_api" {
 
   depends_on = [module.alb_app, module.elasticache]
 }
-
-module "ecs_terminal_gateway" {
-  source                 = "./ecs/terminal-gateway"
-  cluster_arn            = module.ecs_shared.cluster_arn
-  cluster_name           = module.ecs_shared.cluster_name
-  private_subnet_ids     = module.servicesvpc.private_subnet_ids
-  security_group_id      = module.security.ecs_services_security_group_id
-  execution_role_arn     = module.iam.ecs_execution_role_arn
-  task_role_arn          = module.iam.terminal_task_role_arn
-  env_session_secret_arn = module.secrets.env_session_secret_arn
-  enable_load_balancer   = var.enable_alb
-  target_group_arn       = var.enable_alb ? module.alb_app[0].terminal_target_group_arn : null
-  image                  = var.images.terminal_gateway
-  tags                   = local.tags
-
-  depends_on = [module.alb_app]
-}
-
-module "ecs_ingress_router" {
-  source                 = "./ecs/ingress-router"
-  cluster_arn            = module.ecs_shared.cluster_arn
-  cluster_name           = module.ecs_shared.cluster_name
-  private_subnet_ids     = module.servicesvpc.private_subnet_ids
-  security_group_id      = module.security.ecs_services_security_group_id
-  execution_role_arn     = module.iam.ecs_execution_role_arn
-  task_role_arn          = module.iam.ingress_task_role_arn
-  env_session_secret_arn = module.secrets.env_session_secret_arn
-  enable_load_balancer   = var.enable_alb
-  target_group_arn       = var.enable_alb ? module.alb_env[0].ingress_target_group_arn : null
-  image                  = var.images.ingress_router
-  tags                   = local.tags
-
-  depends_on = [module.alb_env]
-}
-

@@ -42,20 +42,8 @@ resource "aws_iam_role" "api_task" {
   tags               = var.tags
 }
 
-resource "aws_iam_role" "ingress_task" {
-  name               = "demo-ingress-task-role"
-  assume_role_policy = data.aws_iam_policy_document.ecs_task_assume_role.json
-  tags               = var.tags
-}
-
 resource "aws_iam_role" "orchestrator_task" {
   name               = "demo-orchestrator-task-role"
-  assume_role_policy = data.aws_iam_policy_document.ecs_task_assume_role.json
-  tags               = var.tags
-}
-
-resource "aws_iam_role" "terminal_task" {
-  name               = "demo-terminal-task-role"
   assume_role_policy = data.aws_iam_policy_document.ecs_task_assume_role.json
   tags               = var.tags
 }
@@ -64,11 +52,6 @@ resource "aws_iam_role" "web_task" {
   name               = "demo-web-task-role"
   assume_role_policy = data.aws_iam_policy_document.ecs_task_assume_role.json
   tags               = var.tags
-}
-
-resource "aws_iam_role_policy_attachment" "terminal_ssm" {
-  role       = aws_iam_role.terminal_task.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMFullAccess"
 }
 
 resource "aws_iam_role_policy_attachment" "orchestrator_ec2" {
@@ -122,14 +105,6 @@ output "api_task_role_arn" {
 
 output "api_task_role_name" {
   value = aws_iam_role.api_task.name
-}
-
-output "terminal_task_role_arn" {
-  value = aws_iam_role.terminal_task.arn
-}
-
-output "ingress_task_role_arn" {
-  value = aws_iam_role.ingress_task.arn
 }
 
 output "orchestrator_task_role_arn" {

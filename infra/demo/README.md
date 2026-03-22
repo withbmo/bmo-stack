@@ -2,7 +2,7 @@
 
 This stack provisions the demo baseline for:
 - ServicesVPC + EnvsVPC + TGW
-- ECS Fargate services (web/api/terminal/ingress/orchestrator)
+- ECS Fargate services (web/api/orchestrator)
 - Env VM substrate
 - DynamoDB routing table
 - ALBs + ACM + external DNS outputs (GoDaddy-managed zone)

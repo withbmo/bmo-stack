@@ -9,7 +9,6 @@ export const JWT_EXPIRES_IN_DEFAULT = '15m';
 export const UPLOAD_DIR_DEFAULT = 'uploads';
 export const STORAGE_DRIVER_DEFAULT = 'local';
 export const ENV_SESSION_TTL_SECONDS_DEFAULT = 120;
-export const TERMINAL_GATEWAY_WS_URL_DEFAULT = 'wss://terminal.pytholit.dev/ws';
 export const WIZARD_DEFAULT_VERSION_DEFAULT = '2026.02.08';
 export const WIZARD_DEFAULT_TEMPLATE_ID_DEFAULT = 'python-service';
 export const WIZARD_LEGACY_TEMPLATE_ID_DEFAULT = 'python-service';

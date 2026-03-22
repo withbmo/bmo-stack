@@ -1,6 +1,6 @@
 resource "aws_acm_certificate" "app" {
   domain_name = var.app_domain_name
-  # Cover api/terminal and env hosts in the delegated app subdomain.
+  # Cover api and other subdomains in the delegated app subdomain.
   subject_alternative_names = ["*.${var.app_domain_name}"]
   validation_method         = "DNS"
 

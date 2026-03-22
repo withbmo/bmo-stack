@@ -14,7 +14,6 @@ import {
   JWT_EXPIRES_IN_DEFAULT,
   JWT_SECRET_DEFAULT,
   STORAGE_DRIVER_DEFAULT,
-  TERMINAL_GATEWAY_WS_URL_DEFAULT,
   UPLOAD_DIR_DEFAULT,
   WIZARD_DEFAULT_TEMPLATE_ID_DEFAULT,
   WIZARD_DEFAULT_VERSION_DEFAULT,
@@ -89,8 +88,6 @@ export function validateEnv(rawEnv: Record<string, unknown> = process.env) {
     INTERNAL_SECRET: str({ default: '' }),
     ENV_SESSION_SECRET: str({ default: '' }),
     ENV_SESSION_TTL_SECONDS: num({ default: ENV_SESSION_TTL_SECONDS_DEFAULT }),
-    TERMINAL_GATEWAY_WS_URL: str({ default: TERMINAL_GATEWAY_WS_URL_DEFAULT }),
-    ENABLE_EXTERNAL_PROD_API_KEY_MODE: bool({ default: false }),
   });
 
   // Normalize whitespace once at boot so feature config services can consume stable values.

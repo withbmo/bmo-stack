@@ -24,17 +24,5 @@ output "managed_records" {
       value = var.app_alb_dns_name
       note  = "API via ALB"
     },
-    {
-      type  = "A(ALIAS)"
-      name  = "terminal.${var.zone_name}"
-      value = var.app_alb_dns_name
-      note  = "Terminal via ALB"
-    },
-    {
-      type  = "A(ALIAS)"
-      name  = "*.${var.zone_name}"
-      value = var.env_alb_dns_name
-      note  = "Wildcard env routes via ALB"
-    }
   ]
 }

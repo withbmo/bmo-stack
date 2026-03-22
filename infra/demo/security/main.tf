@@ -27,35 +27,6 @@ resource "aws_security_group" "alb_app" {
   tags = merge(var.tags, { Name = "demo-alb-app-sg" })
 }
 
-resource "aws_security_group" "alb_env" {
-  name        = "demo-alb-env-sg"
-  description = "Public ALB env SG"
-  vpc_id      = var.services_vpc_id
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = merge(var.tags, { Name = "demo-alb-env-sg" })
-}
-
 resource "aws_security_group" "ecs_services" {
   name        = "demo-ecs-services-sg"
   description = "ECS services SG"
@@ -71,20 +42,6 @@ resource "aws_security_group" "ecs_services" {
   ingress {
     from_port       = 3001
     to_port         = 3001
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb_app.id]
-  }
-
-  ingress {
-    from_port       = 3402
-    to_port         = 3402
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb_env.id]
-  }
-
-  ingress {
-    from_port       = 3403
-    to_port         = 3403
     protocol        = "tcp"
     security_groups = [aws_security_group.alb_app.id]
   }
@@ -164,10 +121,6 @@ resource "aws_security_group" "elasticache_redis" {
 
 output "alb_app_security_group_id" {
   value = aws_security_group.alb_app.id
-}
-
-output "alb_env_security_group_id" {
-  value = aws_security_group.alb_env.id
 }
 
 output "ecs_services_security_group_id" {

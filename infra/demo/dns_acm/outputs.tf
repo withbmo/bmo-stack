@@ -7,34 +7,5 @@ output "env_certificate_arn" {
 }
 
 output "required_dns_records" {
-  value = local.manage_validation_records ? [] : concat(
-    [
-      {
-        type  = "CNAME"
-        name  = var.app_domain_name
-        value = var.app_alb_dns_name
-        note  = "App root"
-      },
-      {
-        type  = "CNAME"
-        name  = "api.${var.app_domain_name}"
-        value = var.app_alb_dns_name
-        note  = "API"
-      },
-      {
-        type  = "CNAME"
-        name  = "terminal.${var.app_domain_name}"
-        value = var.app_alb_dns_name
-        note  = "Terminal"
-      },
-      {
-        type  = "CNAME"
-        name  = "*.${var.app_domain_name}"
-        value = var.env_alb_dns_name
-        note  = "Dev wildcard"
-      },
-    ],
-    local.app_validation_records,
-    local.env_validation_records
-  )
+  value = local.manage_validation_records ? [] : concat(local.app_validation_records, local.env_validation_records)
 }

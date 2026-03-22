@@ -9,8 +9,7 @@ pytholit-v2/
 ├── apps/
 │   ├── web/               # Next.js frontend
 │   ├── api/               # Nest.js backend
-│   ├── ingress-router/    # Ingress/routing service
-│   └── terminal-gateway/  # Terminal session gateway
+│   └── (more services soon)
 ├── packages/
 │   ├── contracts/         # Shared TypeScript types
 │   ├── db/                # Prisma schema & client
