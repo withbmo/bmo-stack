@@ -14,9 +14,9 @@ export function getFileIcon(
 ) {
   if (type === 'folder') {
     return isOpen ? (
-      <FolderOpen size={14} className="text-brand-primary" />
+      <FolderOpen size={14} className="text-primary" />
     ) : (
-      <Folder size={14} className="text-brand-primary" />
+      <Folder size={14} className="text-primary" />
     );
   }
   if (name.endsWith('.py'))
@@ -24,8 +24,8 @@ export function getFileIcon(
   if (name.endsWith('.json'))
     return <FileJson size={14} className="text-yellow-400" />;
   if (name.endsWith('.md'))
-    return <FileText size={14} className="text-text-secondary" />;
+    return <FileText size={14} className="text-foreground" />;
   if (name.endsWith('.txt'))
-    return <FileText size={14} className="text-text-muted" />;
-  return <File size={14} className="text-text-muted" />;
+    return <FileText size={14} className="text-muted-foreground" />;
+  return <File size={14} className="text-muted-foreground" />;
 }

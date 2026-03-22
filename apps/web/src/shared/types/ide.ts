@@ -58,7 +58,7 @@ export interface ContextMenuState {
   nodeType: 'file' | 'folder' | null;
 }
 
-export type ViewType = 'ide' | 'api' | 'status' | 'database' | 'config';
+export type ViewType = 'ide' | 'web' | 'api' | 'status' | 'database' | 'config';
 
 export interface TechStackOption {
   id: string;

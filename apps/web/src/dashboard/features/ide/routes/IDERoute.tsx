@@ -4,60 +4,78 @@ import 'swagger-ui-react/swagger-ui.css';
 
 import {
   Activity,
-  AlertTriangle,
   Code2,
   Database,
+  ExternalLink,
   Globe,
   Play,
   Plus,
+  RefreshCw,
   Save,
   Settings,
-  Trash2,
+  Terminal,
   X,
-  Zap,
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import SwaggerUI from 'swagger-ui-react';
 
-import { Input } from '@/dashboard/components';
-
+import type { FileMetadata, ViewType } from '@/shared/types';
+import { Button } from '@/ui/shadcn/ui/button';
+import { Card } from '@/ui/shadcn/ui/card';
+import { Input } from '@/ui/shadcn/ui/input';
+import { Separator } from '@/ui/shadcn/ui/separator';
+import { Tabs, TabsList, TabsTrigger } from '@/ui/shadcn/ui/tabs';
 import {
-  AgentPanel,
+  WebPreview,
+  WebPreviewBody,
+  WebPreviewConsole,
+  WebPreviewNavigation,
+  WebPreviewNavigationButton,
+  WebPreviewUrl,
+} from '@/components/ai-elements/web-preview';
+
+import { IdePromptInput } from '../components/IdePromptInput';
+import { IdeConversation } from '../components/IdeConversation';
+import { getFileIcon } from '../utils/get-file-icon';
+import {
   CHAT_MAX,
   CHAT_MIN,
   EDITOR_MIN,
-  EditorArea,
-  FileTree,
-  SystemMonitor,
-  TerminalPanel,
+  FILES_MAX,
+  FILES_MIN,
   useIdeState,
 } from '..';
 
 const OPENAPI_SPEC_URL = '/openapi.json';
 
-const ResizeHandle = ({
-  onResize,
-  className = '',
-}: {
-  onResize: (deltaX: number) => void;
-  className?: string;
-}) => {
+
+function useProjectIdParam(): string | undefined {
+  const params = useParams();
+  const raw = params.projectId;
+  return Array.isArray(raw) ? raw[0] : (raw ?? undefined);
+}
+
+function ResizeHandle({ onResize }: { onResize: (deltaX: number) => void }) {
   const [isDragging, setIsDragging] = useState(false);
   const lastXRef = useRef(0);
 
   useEffect(() => {
     if (!isDragging) return;
+
     const handleMove = (e: MouseEvent) => {
       const deltaX = e.clientX - lastXRef.current;
       lastXRef.current = e.clientX;
       onResize(deltaX);
     };
+
     const handleUp = () => setIsDragging(false);
+
     document.addEventListener('mousemove', handleMove);
     document.addEventListener('mouseup', handleUp);
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
+
     return () => {
       document.removeEventListener('mousemove', handleMove);
       document.removeEventListener('mouseup', handleUp);
@@ -66,63 +84,50 @@ const ResizeHandle = ({
     };
   }, [isDragging, onResize]);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    lastXRef.current = e.clientX;
-    setIsDragging(true);
-  };
-
   return (
     <div
       role="separator"
       aria-orientation="vertical"
-      onMouseDown={handleMouseDown}
-      className={`group flex w-0.5 shrink-0 cursor-col-resize items-center justify-center transition-colors ${
-        isDragging ? 'bg-brand-primary/40' : 'bg-border-default/80 hover:bg-brand-primary/30'
-      } ${className}`}
+      onMouseDown={e => {
+        e.preventDefault();
+        lastXRef.current = e.clientX;
+        setIsDragging(true);
+      }}
+      className={[
+        'group relative z-10 my-2 w-3 shrink-0 cursor-col-resize',
+      ].join(' ')}
     >
-      <div className="h-full min-h-[40px] w-px shrink-0 bg-border-default group-hover:bg-brand-primary" />
+      <div
+        className={[
+          'absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-border transition-colors',
+          isDragging ? 'bg-primary' : 'group-hover:bg-primary',
+        ].join(' ')}
+      />
     </div>
   );
-};
+}
 
-const SidebarIcon = ({
-  icon: Icon,
-  label,
-  isActive,
-  onClick,
-}: {
-  icon: React.ComponentType<{
-    size?: number;
-    strokeWidth?: number;
-    className?: string;
-  }>;
-  label: string;
-  isActive: boolean;
-  onClick: () => void;
-}) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={`group relative flex h-14 w-full items-center justify-center transition-all duration-200
-      ${
-        isActive
-          ? 'border-l-2 border-brand-primary bg-bg-panel text-text-primary'
-          : 'border-l-2 border-transparent text-text-muted hover:bg-white/5 hover:text-text-primary'
-      }
-    `}
-  >
-    <Icon size={20} strokeWidth={1.5} className={isActive ? 'text-brand-primary' : ''} />
-    <div className="pointer-events-none absolute left-full z-50 ml-1 whitespace-nowrap border border-border-default bg-bg-panel px-3 py-1.5 font-mono text-[10px] font-bold text-text-primary opacity-0 shadow-[4px_4px_0px_0px_rgba(30,30,30,1)] transition-opacity group-hover:opacity-100">
-      {label}
-    </div>
-  </button>
-);
+function buildFileTree(files: Record<string, FileMetadata>) {
+  const byParent = new Map<string | null, FileMetadata[]>();
 
-function useProjectIdParam(): string | undefined {
-  const params = useParams();
-  const raw = params.projectId;
-  return Array.isArray(raw) ? raw[0] : (raw ?? undefined);
+  Object.values(files).forEach(node => {
+    const key = node.parentId;
+    const list = byParent.get(key) ?? [];
+    list.push(node);
+    byParent.set(key, list);
+  });
+
+  for (const [k, list] of byParent) {
+    byParent.set(
+      k,
+      list.sort((a, b) => {
+        if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      })
+    );
+  }
+
+  return byParent;
 }
 
 export const IDERoute = () => {
@@ -130,311 +135,424 @@ export const IDERoute = () => {
   const router = useRouter();
 
   const {
+    files,
+    fileContents,
+    openFileIds,
+    activeFileId,
+    activeFile,
+    handleFileSelect,
+    handleCloseTab,
+    handleFileToggle,
+    handleCodeChange,
     chatMessages,
-    chatInput,
-    setChatInput,
-    handleChatSubmit,
-    chatMode,
-    setChatMode,
+    submitMessage,
     selectedLLM,
     setSelectedLLM,
-    modeDropdownOpen,
-    setModeDropdownOpen,
-    llmDropdownOpen,
-    setLlmDropdownOpen,
     isThinking,
-    agentContext,
-    chatFormRef,
-    messagesEndRef,
     clearChat,
     activeView,
     setActiveView,
     chatPanelWidth,
     setChatPanelWidth,
+    filesPanelWidth,
+    setFilesPanelWidth,
     projectConfig,
     setProjectConfig,
   } = useIdeState(projectId);
 
-  return (
-    <div className="flex h-screen w-full flex-col overflow-hidden bg-bg-app font-sans text-text-primary">
-      {/* IDE Header */}
-      <div className="flex h-12 items-center justify-between border-b border-border-default bg-bg-panel px-4">
-        <div className="flex items-center gap-4">
-          <button
-            type="button"
-            onClick={() => router.push('/dashboard')}
-            className="text-text-muted transition-colors hover:text-text-primary"
-          >
-            <X size={16} />
-          </button>
-          <span className="font-mono text-sm font-bold">{projectId || 'untitled'}</span>
-          <span className="rounded bg-border-default/20 px-2 py-0.5 font-mono text-[10px] text-text-muted">
-            Running
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            className="flex items-center gap-2 bg-brand-primary px-3 py-1.5 font-mono text-xs font-bold text-white transition-colors hover:bg-brand-neon"
-          >
-            <Play size={12} fill="currentColor" /> RUN
-          </button>
-          <button type="button" className="p-2 text-text-muted transition-colors hover:text-text-primary">
-            <Save size={16} />
-          </button>
-          <div className="flex h-8 w-8 items-center justify-center rounded-full border border-brand-primary bg-brand-primary/20 text-xs font-bold text-brand-primary">
-            U1
-          </div>
-        </div>
+  const filesByParent = useMemo(() => buildFileTree(files), [files]);
+  const [previewUrl, setPreviewUrl] = useState('http://localhost:3000');
+  const [previewReloadKey, setPreviewReloadKey] = useState(0);
+  const [previewLogs, setPreviewLogs] = useState<Array<{ level: 'log' | 'warn' | 'error'; message: string; timestamp: Date }>>([
+    {
+      level: 'log',
+      message: 'Web preview initialized.',
+      timestamp: new Date(),
+    },
+  ]);
+
+  const views: Array<{ id: ViewType; label: string; icon: React.ComponentType<{ className?: string }> }> = [
+    { id: 'ide', label: 'IDE', icon: Code2 },
+    { id: 'web', label: 'Web', icon: Globe },
+    { id: 'api', label: 'API', icon: Globe },
+    { id: 'status', label: 'Status', icon: Activity },
+    { id: 'database', label: 'Database', icon: Database },
+    { id: 'config', label: 'Config', icon: Settings },
+  ];
+
+  const renderTreeNode = (node: FileMetadata, depth = 0): React.ReactNode => {
+    const isFolder = node.type === 'folder';
+    const isActive = activeFileId === node.id;
+
+    return (
+      <div key={node.id}>
+        <button
+          type="button"
+          onClick={() => (isFolder ? handleFileToggle(node.id) : handleFileSelect(node.id))}
+          className={[
+            'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors',
+            isActive
+              ? 'bg-primary/10 text-foreground'
+              : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+          ].join(' ')}
+          style={{ paddingLeft: `${8 + depth * 14}px` }}
+        >
+          {getFileIcon(node.name, node.type, node.isOpen)}
+          <span className="truncate">{node.name}</span>
+        </button>
+
+        {isFolder && node.isOpen
+          ? (filesByParent.get(node.id) ?? []).map(child => renderTreeNode(child, depth + 1))
+          : null}
       </div>
+    );
+  };
 
-      {/* Main Layout */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Navigation Sidebar */}
-        <div className="z-10 flex w-14 flex-col items-center border-r border-border-default bg-bg-app py-2">
-          <SidebarIcon
-            icon={Code2}
-            label="Code Editor"
-            isActive={activeView === 'ide'}
-            onClick={() => setActiveView('ide')}
-          />
-          <SidebarIcon
-            icon={Globe}
-            label="API Playground"
-            isActive={activeView === 'api'}
-            onClick={() => setActiveView('api')}
-          />
-          <SidebarIcon
-            icon={Activity}
-            label="System Status"
-            isActive={activeView === 'status'}
-            onClick={() => setActiveView('status')}
-          />
-          <SidebarIcon
-            icon={Database}
-            label="Database Viewer"
-            isActive={activeView === 'database'}
-            onClick={() => setActiveView('database')}
-          />
-          <SidebarIcon
-            icon={Settings}
-            label="Config"
-            isActive={activeView === 'config'}
-            onClick={() => setActiveView('config')}
-          />
-        </div>
+  return (
+    <div className="h-[100dvh] w-full overflow-hidden bg-background p-2 text-foreground">
+      <div className="flex h-full w-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => router.push('/dashboard')}>
+              <X className="size-4" /> Back
+            </Button>
+            <span className="text-sm font-medium text-foreground">{projectId ? `Editor • ${projectId}` : 'Editor'}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm">
+              <Save className="size-4" /> Save
+            </Button>
+            <Button size="sm">
+              <Play className="size-4" /> Run
+            </Button>
+          </div>
+        </header>
 
-        {/* View Content */}
-        <div className="flex-1 flex overflow-hidden relative">
-          {/* IDE VIEW */}
-          {activeView === 'ide' && (
-            <div className="flex-1 flex overflow-hidden min-w-0">
-              {/* AI Agent Panel */}
-              <AgentPanel
-                chatMessages={chatMessages}
-                chatInput={chatInput}
-                setChatInput={setChatInput}
-                handleChatSubmit={handleChatSubmit}
-                chatMode={chatMode}
-                setChatMode={setChatMode}
-                selectedLLM={selectedLLM}
-                setSelectedLLM={setSelectedLLM}
-                modeDropdownOpen={modeDropdownOpen}
-                setModeDropdownOpen={setModeDropdownOpen}
-                llmDropdownOpen={llmDropdownOpen}
-                setLlmDropdownOpen={setLlmDropdownOpen}
-                isThinking={isThinking}
-                agentContext={agentContext}
-                chatFormRef={chatFormRef}
-                messagesEndRef={messagesEndRef}
-                clearChat={clearChat}
-                width={chatPanelWidth}
-              />
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="border-b border-border bg-card px-2 py-2">
+            <Tabs value={activeView} onValueChange={value => setActiveView(value as ViewType)}>
+              <TabsList className="h-9 rounded-md bg-muted p-1">
+                {views.map(view => {
+                  const Icon = view.icon;
+                  return (
+                    <TabsTrigger
+                      key={view.id}
+                      value={view.id}
+                      className="h-7 px-3 text-xs text-muted-foreground data-[state=active]:bg-background data-[state=active]:text-foreground"
+                    >
+                      <Icon className="size-3.5" />
+                      {view.label}
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+            </Tabs>
+          </div>
+
+          {activeView === 'ide' ? (
+            <div className="flex min-h-0 flex-1 overflow-hidden bg-background py-1">
+              <section
+                className="flex shrink-0 bg-background p-2"
+                style={{ width: chatPanelWidth }}
+              >
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                  <div className="flex h-11 items-center justify-between border-b border-border px-3">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Assistant
+                    </span>
+                    <Button variant="ghost" size="sm" onClick={clearChat}>
+                      Clear
+                    </Button>
+                  </div>
+
+                  <div className="min-h-0 flex-1">
+                    <IdeConversation isThinking={isThinking} messages={chatMessages} />
+                  </div>
+
+                  <IdePromptInput
+                    isThinking={isThinking}
+                    selectedLLM={selectedLLM}
+                    setSelectedLLM={setSelectedLLM}
+                    onSubmitText={submitMessage}
+                  />
+                </div>
+              </section>
 
               <ResizeHandle
                 onResize={deltaX => {
-                  setChatPanelWidth(w => Math.min(CHAT_MAX, Math.max(CHAT_MIN, w + deltaX)));
+                  setChatPanelWidth(width => Math.min(CHAT_MAX, Math.max(CHAT_MIN, width + deltaX)));
                 }}
               />
 
-              <FileTree />
+              <section
+                className="flex shrink-0 bg-background p-2"
+                style={{ width: filesPanelWidth }}
+              >
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                  <div className="flex h-11 items-center justify-between border-b border-border px-3">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Files
+                    </span>
+                    <Button variant="ghost" size="icon" aria-label="Add file">
+                      <Plus className="size-4" />
+                    </Button>
+                  </div>
+
+                  <div className="min-h-0 flex-1 overflow-y-auto p-2">
+                    {(filesByParent.get(null) ?? []).map(node => renderTreeNode(node))}
+                  </div>
+                </div>
+              </section>
 
               <ResizeHandle
-                onResize={() => {
-                  /* files panel fixed width for now */
+                onResize={deltaX => {
+                  setFilesPanelWidth(width => Math.min(FILES_MAX, Math.max(FILES_MIN, width + deltaX)));
                 }}
               />
 
-              <div
-                className="flex min-w-0 flex-1 flex-col bg-bg-app"
-                style={{ minWidth: EDITOR_MIN }}
-              >
-                <EditorArea />
-                <TerminalPanel />
-              </div>
-            </div>
-          )}
+              <section className="flex min-w-0 flex-1 bg-background p-2" style={{ minWidth: EDITOR_MIN }}>
+                <div className="flex min-h-0 h-full w-full flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                  <div className="flex h-11 items-end overflow-x-auto border-b border-border bg-muted/30 px-1 pt-1">
+                    {openFileIds.map(fileId => {
+                      const file = files[fileId];
+                      if (!file || file.type !== 'file') return null;
+                      const isActive = activeFileId === fileId;
 
-          {/* API Playground View */}
-          {activeView === 'api' && (
-            <div className="flex-1 min-w-0 w-full flex flex-col overflow-hidden api-playground-swagger">
-              <div className="h-full overflow-auto border border-border-default bg-bg-panel">
-                <SwaggerUI url={OPENAPI_SPEC_URL} />
-              </div>
-            </div>
-          )}
-
-          {/* System Status View */}
-          {activeView === 'status' && (
-            <div className="flex-1 min-w-0 w-full flex flex-col overflow-hidden">
-              <SystemMonitor />
-            </div>
-          )}
-
-          {/* Database View Placeholder */}
-          {activeView === 'database' && (
-            <div className="flex flex-1 flex-col items-center justify-center bg-bg-panel text-text-muted">
-              <div className="mb-6 flex h-24 w-24 items-center justify-center border border-border-default bg-bg-app animate-in zoom-in duration-300">
-                <Database size={48} className="text-blue-400" />
-              </div>
-              <h3 className="mb-2 font-sans text-2xl font-bold tracking-widest text-text-primary">
-                MODULE_NOT_LOADED
-              </h3>
-              <p className="max-w-xs text-center font-mono text-xs leading-relaxed text-text-secondary/50">
-                This capability is currently in development.
-              </p>
-            </div>
-          )}
-
-          {/* Config View: Env Vars + Danger Zone */}
-          {activeView === 'config' && (
-            <div className="flex min-w-0 w-full flex-1 flex-col overflow-auto bg-bg-panel p-8">
-              <div className="max-w-2xl space-y-10">
-                <div>
-                  <h2 className="mb-2 flex items-center gap-2 font-sans text-xl font-bold text-text-primary">
-                    <Zap size={18} className="text-brand-primary" /> ENVIRONMENT_VARS
-                  </h2>
-                  <p className="mb-4 font-mono text-xs text-text-muted">
-                    Key-value pairs injected at runtime. Keep secrets out of code.
-                  </p>
-                  <div className="space-y-3">
-                    {projectConfig.envVars.map(ev => (
-                      <div
-                        key={ev.id}
-                        className="flex items-center gap-2 border border-border-default bg-bg-app p-3"
-                      >
-                        <Input
-                          value={ev.key}
-                          onChange={e => {
-                            setProjectConfig(c => ({
-                              ...c,
-                              envVars: c.envVars.map(v =>
-                                v.id === ev.id ? { ...v, key: e.target.value } : v
-                              ),
-                            }));
-                          }}
-                          placeholder="KEY"
-                          className="flex-1"
-                          variant="ide"
-                          intent="brand"
-                          size="sm"
-                        />
-                        <Input
-                          value={ev.value}
-                          onChange={e => {
-                            setProjectConfig(c => ({
-                              ...c,
-                              envVars: c.envVars.map(v =>
-                                v.id === ev.id ? { ...v, value: e.target.value } : v
-                              ),
-                            }));
-                          }}
-                          placeholder="VALUE"
-                          className="flex-1"
-                          variant="ide"
-                          intent="brand"
-                          size="sm"
-                        />
+                      return (
                         <button
+                          key={fileId}
                           type="button"
-                          onClick={() => {
-                            setProjectConfig(c => ({
-                              ...c,
-                              envVars: c.envVars.filter(v => v.id !== ev.id),
-                            }));
-                          }}
-                          className="border border-border-default p-2 text-text-muted transition-colors hover:border-red-500 hover:text-red-500"
-                          title="Remove"
+                          onClick={() => handleFileSelect(fileId)}
+                          className={[
+                            'group -mb-px mr-1 flex h-9 items-center gap-2 rounded-t-md border px-3 text-xs transition-colors',
+                            isActive
+                              ? 'border-border bg-background text-foreground'
+                              : 'border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-muted/60 hover:text-foreground',
+                          ].join(' ')}
                         >
-                          <Trash2 size={14} />
+                          <span className="truncate max-w-[160px]">{file.name}</span>
+                          <span
+                            onClick={e => handleCloseTab(e, fileId)}
+                            className="rounded p-0.5 opacity-60 hover:bg-accent hover:opacity-100"
+                          >
+                            <X className="size-3" />
+                          </span>
                         </button>
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setProjectConfig(c => ({
-                          ...c,
-                          envVars: [
-                            ...c.envVars,
-                            {
-                              id: String(Date.now()),
-                              key: '',
-                              value: '',
-                            },
-                          ],
-                        }));
-                      }}
-                      className="flex w-full items-center justify-center gap-2 border-2 border-dashed border-border-default py-3 font-mono text-xs font-bold text-text-muted transition-colors hover:border-brand-primary hover:text-brand-primary"
-                    >
-                      <Plus size={14} /> ADD_VAR
-                    </button>
+                      );
+                    })}
                   </div>
-                </div>
 
-                <div className="border border-red-500/30 bg-red-500/5 p-6">
-                  <h2 className="font-sans font-bold text-xl text-red-500 mb-2 flex items-center gap-2">
-                    <AlertTriangle size={18} /> DANGER_ZONE
-                  </h2>
-                  <p className="mb-6 font-mono text-xs text-text-muted">
-                    Irreversible actions. Proceed with caution.
-                  </p>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between border border-border-default bg-bg-app p-4">
-                      <div>
-                        <div className="mb-1 font-sans font-bold text-text-primary">DELETE_PROJECT</div>
-                        <div className="font-mono text-xs text-text-muted">
-                          Remove this project and all deployments. Cannot be undone.
-                        </div>
+                  <div className="min-h-0 flex-1 overflow-hidden">
+                    {activeFile ? (
+                      <textarea
+                        value={activeFile.content ?? fileContents[activeFile.id] ?? ''}
+                        onChange={e => handleCodeChange(e.target.value)}
+                        className="h-full w-full resize-none bg-background p-4 font-mono text-sm leading-6 text-foreground outline-none"
+                        spellCheck={false}
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                        Open a file to start editing.
                       </div>
-                      <button
-                        type="button"
-                        className="px-4 py-2 border border-red-500 text-red-500 font-mono text-xs font-bold hover:bg-red-500 hover:text-white transition-colors"
-                      >
-                        DELETE
-                      </button>
+                    )}
+                  </div>
+
+                  <div className="h-40 border-t border-border bg-card p-3">
+                    <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+                      <Terminal className="size-4" /> Terminal
                     </div>
-                    <div className="flex items-center justify-between border border-border-default bg-bg-app p-4">
-                      <div>
-                        <div className="mb-1 font-sans font-bold text-text-primary">
-                          TRANSFER_OWNERSHIP
-                        </div>
-                        <div className="font-mono text-xs text-text-muted">
-                          Transfer this project to another user or team.
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        className="border border-border-default px-4 py-2 font-mono text-xs font-bold text-text-muted transition-colors hover:border-text-primary hover:text-text-primary"
-                      >
-                        TRANSFER
-                      </button>
+                    <div className="h-[calc(100%-1.5rem)] overflow-y-auto rounded-md border border-border bg-background p-2 font-mono text-xs text-muted-foreground">
+                      <div>$ pnpm dev</div>
+                      <div>Ready in 1.4s</div>
+                      <div className="text-foreground">localhost:3000</div>
                     </div>
                   </div>
                 </div>
+              </section>
+            </div>
+          ) : null}
+
+          {activeView === 'api' ? (
+            <div className="min-h-0 flex-1 overflow-hidden p-4">
+              <Card className="h-full overflow-auto border-border bg-background p-0">
+                <SwaggerUI url={OPENAPI_SPEC_URL} />
+              </Card>
+            </div>
+          ) : null}
+
+          {activeView === 'web' ? (
+            <div className="flex min-h-0 flex-1 overflow-hidden bg-background py-1">
+              <section
+                className="flex shrink-0 bg-background p-2"
+                style={{ width: chatPanelWidth }}
+              >
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                  <div className="flex h-11 items-center justify-between border-b border-border px-3">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Assistant
+                    </span>
+                    <Button variant="ghost" size="sm" onClick={clearChat}>
+                      Clear
+                    </Button>
+                  </div>
+
+                  <div className="min-h-0 flex-1">
+                    <IdeConversation isThinking={isThinking} messages={chatMessages} />
+                  </div>
+
+                  <IdePromptInput
+                    isThinking={isThinking}
+                    selectedLLM={selectedLLM}
+                    setSelectedLLM={setSelectedLLM}
+                    onSubmitText={submitMessage}
+                  />
+                </div>
+              </section>
+
+              <ResizeHandle
+                onResize={deltaX => {
+                  setChatPanelWidth(width => Math.min(CHAT_MAX, Math.max(CHAT_MIN, width + deltaX)));
+                }}
+              />
+
+              <section className="flex min-w-0 flex-1 bg-background p-2" style={{ minWidth: EDITOR_MIN }}>
+                <WebPreview
+                  className="h-full w-full"
+                  defaultUrl={previewUrl}
+                  onUrlChange={url => {
+                    setPreviewUrl(url);
+                    setPreviewLogs(prev => [
+                      ...prev.slice(-24),
+                      { level: 'log', message: `Navigated to ${url}`, timestamp: new Date() },
+                    ]);
+                  }}
+                >
+                  <WebPreviewNavigation>
+                    <WebPreviewNavigationButton
+                      onClick={() => {
+                        setPreviewReloadKey(key => key + 1);
+                        setPreviewLogs(prev => [
+                          ...prev.slice(-24),
+                          { level: 'log', message: 'Preview refreshed.', timestamp: new Date() },
+                        ]);
+                      }}
+                      tooltip="Refresh"
+                    >
+                      <RefreshCw className="size-4" />
+                    </WebPreviewNavigationButton>
+                    <WebPreviewUrl onChange={event => setPreviewUrl(event.target.value)} value={previewUrl} />
+                    <WebPreviewNavigationButton
+                      onClick={() => window.open(previewUrl, '_blank', 'noopener,noreferrer')}
+                      tooltip="Open in new tab"
+                    >
+                      <ExternalLink className="size-4" />
+                    </WebPreviewNavigationButton>
+                  </WebPreviewNavigation>
+                  <WebPreviewBody key={previewReloadKey} src={previewUrl} />
+                  <WebPreviewConsole logs={previewLogs} />
+                </WebPreview>
+              </section>
+            </div>
+          ) : null}
+
+          {activeView === 'status' ? (
+            <div className="min-h-0 flex-1 overflow-auto p-4">
+              <div className="grid gap-4 md:grid-cols-4">
+                <Card className="border-border bg-card p-4">
+                  <p className="text-xs text-muted-foreground">CPU</p>
+                  <p className="mt-2 text-2xl font-semibold">32%</p>
+                </Card>
+                <Card className="border-border bg-card p-4">
+                  <p className="text-xs text-muted-foreground">Memory</p>
+                  <p className="mt-2 text-2xl font-semibold">1.8 GB</p>
+                </Card>
+                <Card className="border-border bg-card p-4">
+                  <p className="text-xs text-muted-foreground">Disk</p>
+                  <p className="mt-2 text-2xl font-semibold">68%</p>
+                </Card>
+                <Card className="border-border bg-card p-4">
+                  <p className="text-xs text-muted-foreground">Health</p>
+                  <p className="mt-2 text-2xl font-semibold text-primary">Healthy</p>
+                </Card>
               </div>
             </div>
-          )}
+          ) : null}
+
+          {activeView === 'database' ? (
+            <div className="flex min-h-0 flex-1 items-center justify-center p-4">
+              <Card className="w-full max-w-xl border-border bg-card p-8 text-center">
+                <Database className="mx-auto size-12 text-muted-foreground" />
+                <h3 className="mt-4 text-xl font-semibold">Database Viewer</h3>
+                <p className="mt-2 text-sm text-muted-foreground">Coming soon.</p>
+              </Card>
+            </div>
+          ) : null}
+
+          {activeView === 'config' ? (
+            <div className="min-h-0 flex-1 overflow-auto p-4">
+              <Card className="max-w-3xl border-border bg-card p-6">
+                <h2 className="text-xl font-semibold">Project Configuration</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Environment and deployment settings.</p>
+
+                <Separator className="my-6" />
+
+                <div className="space-y-3">
+                  {projectConfig.envVars.map(ev => (
+                    <div key={ev.id} className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
+                      <Input
+                        value={ev.key}
+                        onChange={e => {
+                          setProjectConfig(config => ({
+                            ...config,
+                            envVars: config.envVars.map(item =>
+                              item.id === ev.id ? { ...item, key: e.target.value } : item
+                            ),
+                          }));
+                        }}
+                        placeholder="KEY"
+                      />
+                      <Input
+                        value={ev.value}
+                        onChange={e => {
+                          setProjectConfig(config => ({
+                            ...config,
+                            envVars: config.envVars.map(item =>
+                              item.id === ev.id ? { ...item, value: e.target.value } : item
+                            ),
+                          }));
+                        }}
+                        placeholder="VALUE"
+                      />
+                      <Button
+                        variant="destructive"
+                        onClick={() => {
+                          setProjectConfig(config => ({
+                            ...config,
+                            envVars: config.envVars.filter(item => item.id !== ev.id),
+                          }));
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => {
+                    setProjectConfig(config => ({
+                      ...config,
+                      envVars: [...config.envVars, { id: crypto.randomUUID(), key: '', value: '' }],
+                    }));
+                  }}
+                >
+                  <Plus className="size-4" /> Add Variable
+                </Button>
+              </Card>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

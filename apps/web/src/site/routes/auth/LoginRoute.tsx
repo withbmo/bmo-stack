@@ -5,7 +5,6 @@ import { toast } from '@/ui/system';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { env } from '@/env';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { Button } from '@/ui/shadcn/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/shadcn/ui/card';
@@ -17,9 +16,9 @@ import { AuthLayout } from '@/site/components/auth/AuthLayout';
 import { useAuth } from '@/shared/auth';
 import { useAuthForm } from '@/shared/auth/hooks/useAuthForm';
 import { type ApiError, getApiErrorMessage, login, signInWithOAuth } from '@/shared/lib/auth';
+import { getTurnstileSiteKey, shouldUseTurnstile } from '@/shared/lib/turnstile';
 
-const TURNSTILE_SITE_KEY = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
-const IS_DEV = process.env.NODE_ENV === 'development';
+const TURNSTILE_SITE_KEY = getTurnstileSiteKey();
 
 type OAuthButtonProvider = 'github' | 'google';
 
@@ -42,7 +41,7 @@ export function LoginRoute() {
     return '/dashboard';
   }, [nextParam]);
 
-  const requireTurnstile = !IS_DEV;
+  const requireTurnstile = shouldUseTurnstile();
 
   useEffect(() => {
     if (isAuthenticated) {

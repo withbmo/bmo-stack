@@ -29,7 +29,6 @@ export function useChatState(activeFile: FileNode | null) {
   const [isThinking, setIsThinking] = useState(false);
   const [agentContext, setAgentContext] = useState<AgentContext>({ files: [] });
   const chatFormRef = useRef<HTMLFormElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (activeFile && !agentContext.files.includes(activeFile.name)) {
@@ -39,10 +38,6 @@ export function useChatState(activeFile: FileNode | null) {
       }));
     }
   }, [activeFile, agentContext.files]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatMessages, isThinking]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -55,31 +50,39 @@ export function useChatState(activeFile: FileNode | null) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleChatSubmit = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!chatInput.trim() || isThinking) return;
+  const submitMessage = useCallback(
+    (input: string) => {
+      const trimmed = input.trim();
+      if (!trimmed || isThinking) return;
 
       const userMsg: ChatMessage = {
         id: Date.now(),
         role: 'user',
-        text: chatInput,
+        text: trimmed,
         timestamp: Date.now(),
         contextFiles: agentContext.files.length > 0 ? [...agentContext.files] : undefined,
       };
       setChatMessages(prev => [...prev, userMsg]);
-      setChatInput('');
       setIsThinking(true);
 
-      // Simulate agent response with realistic delay
       const thinkTime = 800 + Math.random() * 1200;
       setTimeout(() => {
         setIsThinking(false);
-        const agentMsg = buildAgentResponse(chatInput, chatMode, activeFile);
+        const agentMsg = buildAgentResponse(trimmed, chatMode, activeFile);
         setChatMessages(prev => [...prev, agentMsg]);
       }, thinkTime);
     },
-    [chatInput, isThinking, agentContext.files, chatMode, activeFile]
+    [isThinking, agentContext.files, chatMode, activeFile]
+  );
+
+  const handleChatSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!chatInput.trim() || isThinking) return;
+      submitMessage(chatInput);
+      setChatInput('');
+    },
+    [chatInput, isThinking, submitMessage]
   );
 
   const clearChat = useCallback(() => {
@@ -99,6 +102,7 @@ export function useChatState(activeFile: FileNode | null) {
     chatInput,
     setChatInput,
     handleChatSubmit,
+    submitMessage,
     chatMode,
     setChatMode,
     selectedLLM,
@@ -110,7 +114,6 @@ export function useChatState(activeFile: FileNode | null) {
     isThinking,
     agentContext,
     chatFormRef,
-    messagesEndRef,
     clearChat,
   };
 }

@@ -9,6 +9,7 @@ import { Button } from '@/ui/shadcn/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/ui/shadcn/ui/card';
 import { Input } from '@/ui/shadcn/ui/input';
 import { Separator } from '@/ui/shadcn/ui/separator';
+import { Tabs, TabsList, TabsTrigger } from '@/ui/shadcn/ui/tabs';
 
 import { useHubResources } from '../hooks/useHubResources';
 import type { HubResource, ResourceType } from '@/shared/types';
@@ -57,19 +58,23 @@ export const HubRoute = () => {
                 />
               </div>
 
-              <div className="flex flex-wrap gap-2">
-                <Button variant={filter === 'all' ? 'default' : 'outline'} onClick={() => setFilter('all')}>
-                  All
-                </Button>
-                <Button variant={filter === 'readme' ? 'default' : 'outline'} onClick={() => setFilter('readme')}>
-                  <FileText />
-                  Protocols
-                </Button>
-                <Button variant={filter === 'skill' ? 'default' : 'outline'} onClick={() => setFilter('skill')}>
-                  <Brain />
-                  Skills
-                </Button>
-              </div>
+              <Tabs
+                value={filter}
+                onValueChange={value => setFilter(value as FilterType)}
+                className="w-full md:w-auto"
+              >
+                <TabsList className="w-full md:w-auto">
+                  <TabsTrigger value="all">All</TabsTrigger>
+                  <TabsTrigger value="readme">
+                    <FileText />
+                    Protocols
+                  </TabsTrigger>
+                  <TabsTrigger value="skill">
+                    <Brain />
+                    Skills
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
           </CardContent>
         </Card>

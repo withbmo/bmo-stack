@@ -5,7 +5,6 @@ import { toast } from '@/ui/system';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { env } from '@/env';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { Button } from '@/ui/shadcn/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/shadcn/ui/card';
@@ -16,9 +15,9 @@ import Link from 'next/link';
 import { AuthLayout } from '@/site/components/auth/AuthLayout';
 import { useAuth } from '@/shared/auth';
 import { getApiErrorMessage, sendOtp, verifyOtp } from '@/shared/lib/auth';
+import { getTurnstileSiteKey, shouldUseTurnstile } from '@/shared/lib/turnstile';
 
-const TURNSTILE_SITE_KEY = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
-const IS_DEV = process.env.NODE_ENV === 'development';
+const TURNSTILE_SITE_KEY = getTurnstileSiteKey();
 const OTP_LENGTH = 6;
 const DEFAULT_RESEND_SECONDS = 60;
 const DEFAULT_EXPIRES_SECONDS = 10 * 60;
@@ -59,7 +58,7 @@ export function VerifyOtpRoute() {
     return queryMs ?? Date.now() + DEFAULT_EXPIRES_SECONDS * 1000;
   });
 
-  const canUseCaptcha = !IS_DEV && Boolean(TURNSTILE_SITE_KEY);
+  const canUseCaptcha = shouldUseTurnstile() && Boolean(TURNSTILE_SITE_KEY);
   const timerStorageKey = useMemo(
     () => (email ? `auth:otp-timers:${email}` : null),
     [email]

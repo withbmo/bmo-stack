@@ -10,8 +10,8 @@ export const EDITOR_MIN = 300;
 
 export function useResizablePanels() {
   const [activeView, setActiveView] = useState<ViewType>('ide');
-  const [chatPanelWidth, setChatPanelWidth] = useState(280);
-  const [filesPanelWidth, setFilesPanelWidth] = useState(220);
+  const [chatPanelWidth, setChatPanelWidth] = useState(380);
+  const [filesPanelWidth, setFilesPanelWidth] = useState(240);
 
   return {
     activeView,

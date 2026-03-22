@@ -5,7 +5,6 @@ import { toast } from '@/ui/system';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useRef, useState } from 'react';
 
-import { env } from '@/env';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { Button } from '@/ui/shadcn/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/shadcn/ui/card';
@@ -18,6 +17,7 @@ import { AuthLayout } from '@/site/components/auth/AuthLayout';
 import { useAuth } from '@/shared/auth';
 import { useAuthForm } from '@/shared/auth/hooks/useAuthForm';
 import { usePasswordStrength } from '@/shared/auth/hooks/usePasswordStrength';
+import { getTurnstileSiteKey, shouldUseTurnstile } from '@/shared/lib/turnstile';
 import {
   type ApiError,
   getApiErrorMessage,
@@ -26,8 +26,7 @@ import {
   signup,
 } from '@/shared/lib/auth';
 
-const TURNSTILE_SITE_KEY = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
-const IS_DEV = process.env.NODE_ENV === 'development';
+const TURNSTILE_SITE_KEY = getTurnstileSiteKey();
 
 type OAuthButtonProvider = 'github' | 'google';
 
@@ -81,7 +80,7 @@ export function SignupRoute() {
     e.preventDefault();
     clearError();
 
-    if (!IS_DEV && !turnstileToken) {
+    if (shouldUseTurnstile() && !turnstileToken) {
       toast.error('Please complete the security check.');
       return;
     }
@@ -283,7 +282,7 @@ export function SignupRoute() {
                 <FieldError>{fieldErrors.confirmPassword}</FieldError>
               </Field>
 
-              {!IS_DEV && TURNSTILE_SITE_KEY ? (
+              {shouldUseTurnstile() && TURNSTILE_SITE_KEY ? (
                 <Field>
                   <Turnstile
                     ref={turnstileRef}
