@@ -1,21 +1,5 @@
 // Re-export from @/ui
 export {
-  BackgroundLayers,
-  DashboardTabs,
-  EmptyState,
-  FilterTabButton,
-  GlitchText,
-  LivingGrid,
-  LoadingState,
-  ResourceCard,
-  TemplateCard,
-} from '@/ui/blocks';
-export {
-  DynamicSkeletonProvider,
-  DynamicSlot,
-  useDynamicSkeletonLoading,
-} from '@/ui/system';
-export {
   Badge,
   Card,
   DropdownMenu,
@@ -32,6 +16,12 @@ export {
   Skeleton,
   Tooltip,
 } from '@/ui';
+export {
+  BackgroundLayers,
+  DashboardTabs,
+  EmptyState,
+  LoadingState,
+} from '@/ui/blocks';
 export { Button, buttonVariants } from '@/ui/shadcn/ui/button';
 
 // Layout
@@ -40,7 +30,7 @@ export { AsyncState } from '../shared/state/AsyncState';
 export {
   DashboardLayout,
   DashboardPageHeader,
-  PageLayout,
   type DashboardPageHeaderProps,
+  PageLayout,
   type PageLayoutProps,
 } from './layout';

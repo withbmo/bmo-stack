@@ -6,11 +6,6 @@ export {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from './DropdownMenu';
-export {
-  DynamicSkeletonProvider,
-  DynamicSlot,
-  useDynamicSkeletonLoading,
-} from './DynamicSkeleton';
 export { Input } from './Input';
 export { Modal } from './Modal';
 export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './Select';

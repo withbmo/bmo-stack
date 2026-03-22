@@ -5,9 +5,4 @@
  * visual primitives. They typically coordinate behavior across screens or
  * applications.
  */
-export {
-  DynamicSkeletonProvider,
-  DynamicSlot,
-  useDynamicSkeletonLoading,
-} from './components/ui/DynamicSkeleton';
 export { toast, Toaster } from './components/ui/Toast';
