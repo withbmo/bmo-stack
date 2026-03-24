@@ -1,4 +1,8 @@
-import type { DeployJobStatus, DeployJobStepStatus } from '@pytholit/contracts';
+import type {
+  DeployJobStep as ContractDeployJobStep,
+  DeployJobStatus,
+  DeployJobStepStatus,
+} from '@pytholit/contracts';
 
 export type DeploymentStatus = 'deploying' | 'live' | 'failed' | 'stopped';
 
@@ -16,13 +20,9 @@ export interface Deployment {
 export type { DeployJobStatus, DeployJobStepStatus };
 export type DeployStepStatus = DeployJobStepStatus;
 
-export interface DeployJobStep {
-  key: string;
-  title: string;
-  status: DeployJobStepStatus;
-}
+export type DeployJobStep = ContractDeployJobStep;
 
-export interface DeployJob {
+export interface DeployJobViewModel {
   id: string;
   projectId: string;
   triggeredBy: string;

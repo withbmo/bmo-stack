@@ -1,9 +1,9 @@
-import type { DeployJob } from '@/shared/types';
+import type { DeployJobViewModel } from '@/shared/types';
 
 import { DeployJobRow } from './DeployJobRow';
 
 interface DeployJobTableProps {
-  jobs: DeployJob[];
+  jobs: DeployJobViewModel[];
 }
 
 export const DeployJobTable = ({ jobs }: DeployJobTableProps) => (

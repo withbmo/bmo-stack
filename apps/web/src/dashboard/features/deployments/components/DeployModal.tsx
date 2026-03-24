@@ -9,12 +9,12 @@ import {
 import { RefreshCw, Rocket } from 'lucide-react';
 
 import { Button } from '@/ui/shadcn/ui/button';
-import type { Project } from '@/shared/types';
+import type { ProjectViewModel } from '@/shared/types';
 
 interface DeployModalProps {
   isOpen: boolean;
   onClose: () => void;
-  projects: Project[];
+  projects: ProjectViewModel[];
   selectedProjectId: string;
   onSelectedProjectChange: (id: string) => void;
   onDeploy: () => void;

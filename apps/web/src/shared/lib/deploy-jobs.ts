@@ -3,7 +3,10 @@ import type {
   DeployJobStep as ContractDeployJobStep,
 } from '@pytholit/contracts';
 
-import type { DeployJob as ViewDeployJob, DeployJobStep as ViewDeployJobStep } from '../types';
+import type {
+  DeployJobStep as DeployJobStepViewModel,
+  DeployJobViewModel,
+} from '../types';
 import { API_V1, apiRequest, snakeToCamel } from './client';
 
 // API responses are mapped into UI-friendly types in src/types.
@@ -11,10 +14,10 @@ import { API_V1, apiRequest, snakeToCamel } from './client';
 
 type ApiDeployJob = ContractDeployJob;
 
-const mapStepStatus = (status: ContractDeployJobStep['status']): ViewDeployJobStep['status'] =>
+const mapStepStatus = (status: ContractDeployJobStep['status']): DeployJobStepViewModel['status'] =>
   status;
 
-const mapDeployJob = (job: ApiDeployJob): ViewDeployJob => ({
+const mapDeployJob = (job: ApiDeployJob): DeployJobViewModel => ({
   id: job.id,
   projectId: job.projectId,
   triggeredBy: job.triggeredByUserId ? `user_${job.triggeredByUserId}` : 'system',
@@ -33,7 +36,7 @@ const mapDeployJob = (job: ApiDeployJob): ViewDeployJob => ({
 export async function listDeployJobs(
   token: string | undefined,
   params: { projectId?: string }
-): Promise<ViewDeployJob[]> {
+): Promise<DeployJobViewModel[]> {
   const query = new URLSearchParams();
   if (params.projectId) query.set('project_id', params.projectId);
   const path = `${API_V1}/deploy-jobs${query.toString() ? `?${query}` : ''}`;
@@ -41,7 +44,10 @@ export async function listDeployJobs(
   return jobs.map(mapDeployJob);
 }
 
-export async function getDeployJob(token: string | undefined, jobId: string): Promise<ViewDeployJob> {
+export async function getDeployJob(
+  token: string | undefined,
+  jobId: string
+): Promise<DeployJobViewModel> {
   const job = snakeToCamel(
     await apiRequest<ApiDeployJob>(`${API_V1}/deploy-jobs/${jobId}`, {
       method: 'GET',
@@ -57,7 +63,7 @@ export async function createDeployJob(
     projectId: string;
     source?: { origin: string; ref: string };
   }
-): Promise<ViewDeployJob> {
+): Promise<DeployJobViewModel> {
   const job = snakeToCamel(
     await apiRequest<ApiDeployJob>(`${API_V1}/deploy-jobs`, {
       method: 'POST',
@@ -68,7 +74,10 @@ export async function createDeployJob(
   return mapDeployJob(job);
 }
 
-export async function cancelDeployJob(token: string | undefined, jobId: string): Promise<ViewDeployJob> {
+export async function cancelDeployJob(
+  token: string | undefined,
+  jobId: string
+): Promise<DeployJobViewModel> {
   const job = snakeToCamel(
     await apiRequest<ApiDeployJob>(`${API_V1}/deploy-jobs/${jobId}/cancel`, {
       method: 'POST',

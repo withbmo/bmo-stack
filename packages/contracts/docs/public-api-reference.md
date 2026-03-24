@@ -14,13 +14,6 @@ Fields:
 - `feedback`: suggestion list
 - `isStrong`: whether the password meets the product threshold
 
-### `OAuthProvider`
-
-Current supported values:
-
-- `'google'`
-- `'github'`
-
 ### `EnabledOAuthProvidersResponse`
 
 Used by the API auth helper route that returns which OAuth providers are enabled in the current environment.
@@ -29,7 +22,7 @@ Shape:
 
 ```ts
 {
-  providers: OAuthProvider[];
+  providers: ('google' | 'github')[];
 }
 ```
 

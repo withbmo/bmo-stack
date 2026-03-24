@@ -1,13 +1,14 @@
-export type ProjectStatus = 'running' | 'stopped' | 'building' | 'error';
-export type ProjectLifecycleState = 'active' | 'archived';
+import type { Project as ContractProject } from '@pytholit/contracts';
 
-export interface Project {
+export type ProjectStatus = 'running' | 'stopped' | 'building' | 'error';
+
+export interface ProjectViewModel {
   id: string;
   name: string;
   framework: string;
   region: string;
   status: ProjectStatus;
-  lifecycleState: ProjectLifecycleState;
+  lifecycleState: ContractProject['lifecycleState'];
   archivedAt: string | null;
   lastDeployed: string;
   cpuUsage: number;

@@ -35,7 +35,6 @@ The package currently exports:
 - `DEPLOY_JOB_STATUS`
 - `DEPLOY_JOB_STEP_STATUS`
 - `PasswordStrengthResponse`
-- `OAuthProvider`
 - `EnabledOAuthProvidersResponse`
 - `OAuthOnboardingStatusResponse`
 

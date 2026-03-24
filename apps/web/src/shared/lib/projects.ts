@@ -1,6 +1,6 @@
 import type { Project as ContractProject } from '@pytholit/contracts';
 
-import type { Project as ViewProject } from '../types';
+import type { ProjectViewModel } from '../types';
 import { API_V1, apiRequest, snakeToCamel } from './client';
 
 // API responses are mapped into UI-friendly types in src/types.
@@ -9,7 +9,7 @@ import { API_V1, apiRequest, snakeToCamel } from './client';
 type ApiProject = ContractProject;
 export type ProjectListState = 'active' | 'archived' | 'all';
 
-const mapProject = (project: ApiProject): ViewProject => ({
+const mapProject = (project: ApiProject): ProjectViewModel => ({
   id: project.id,
   name: project.name,
   framework: 'FastAPI',
@@ -27,7 +27,7 @@ const PROJECTS_PREFIX = `${API_V1}/projects`;
 export async function listProjects(
   token?: string,
   state: ProjectListState = 'active',
-): Promise<ViewProject[]> {
+): Promise<ProjectViewModel[]> {
   const projects = snakeToCamel(
     await apiRequest<ApiProject[]>(PROJECTS_PREFIX, {
       method: 'GET',
@@ -41,7 +41,7 @@ export async function listProjects(
 export async function getProject(
   token: string | undefined,
   projectId: string
-): Promise<ViewProject> {
+): Promise<ProjectViewModel> {
   const project = snakeToCamel(
     await apiRequest<ApiProject>(`${PROJECTS_PREFIX}/${projectId}`, {
       method: 'GET',
@@ -54,7 +54,7 @@ export async function getProject(
 export async function createProject(
   token: string | undefined,
   payload: { name: string; slug?: string; repo_export_enabled?: boolean }
-): Promise<ViewProject> {
+): Promise<ProjectViewModel> {
   const project = snakeToCamel(
     await apiRequest<ApiProject>(PROJECTS_PREFIX, {
       method: 'POST',
@@ -69,7 +69,7 @@ export async function updateProject(
   token: string | undefined,
   projectId: string,
   payload: { name?: string; slug?: string; repo_export_enabled?: boolean }
-): Promise<ViewProject> {
+): Promise<ProjectViewModel> {
   const project = snakeToCamel(
     await apiRequest<ApiProject>(`${PROJECTS_PREFIX}/${projectId}`, {
       method: 'PATCH',
@@ -83,7 +83,7 @@ export async function updateProject(
 export async function archiveProject(
   token: string | undefined,
   projectId: string,
-): Promise<ViewProject> {
+): Promise<ProjectViewModel> {
   const project = snakeToCamel(
     await apiRequest<ApiProject>(`${PROJECTS_PREFIX}/${projectId}/archive`, {
       method: 'PATCH',
@@ -97,7 +97,7 @@ export async function archiveProject(
 export async function restoreProject(
   token: string | undefined,
   projectId: string,
-): Promise<ViewProject> {
+): Promise<ProjectViewModel> {
   const project = snakeToCamel(
     await apiRequest<ApiProject>(`${PROJECTS_PREFIX}/${projectId}/restore`, {
       method: 'PATCH',

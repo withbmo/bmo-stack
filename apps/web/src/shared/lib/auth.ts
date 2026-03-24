@@ -5,7 +5,7 @@ import { API_V1, apiRequest, getApiErrorMessage, getApiFieldErrors } from './cli
 
 const AUTH_PREFIX = `${API_V1}/auth`;
 const AUTH_FLOW_PREFIX = `${API_V1}/auth-flow`;
-export type OAuthProvider = 'google' | 'github';
+export type OAuthProvider = EnabledOAuthProvidersResponse['providers'][number];
 const OTP_TTL_MS = 10 * 60 * 1000;
 const OTP_COOLDOWN_MS = 60 * 1000;
 
@@ -205,5 +205,5 @@ export async function getEnabledOAuthProviders(): Promise<OAuthProvider[]> {
   const response = await apiRequest<EnabledOAuthProvidersResponse>(`${AUTH_FLOW_PREFIX}/providers`, {
     method: 'GET',
   });
-  return response.providers.filter((p): p is OAuthProvider => p === 'google' || p === 'github');
+  return response.providers;
 }

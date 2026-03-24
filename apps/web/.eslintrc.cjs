@@ -43,4 +43,29 @@ module.exports = {
       },
     ],
   },
+  overrides: [
+    {
+      files: ['src/shared/types/projects.ts', 'src/shared/types/deployments.ts'],
+      rules: {
+        'no-restricted-syntax': [
+          'error',
+          {
+            selector: "TSInterfaceDeclaration[id.name='Project']",
+            message:
+              'Use ProjectViewModel for web-local UI shapes; reserve Project for @pytholit/contracts API contracts.',
+          },
+          {
+            selector: "TSInterfaceDeclaration[id.name='DeployJob']",
+            message:
+              'Use DeployJobViewModel for web-local UI shapes; reserve DeployJob for @pytholit/contracts API contracts.',
+          },
+          {
+            selector: "TSTypeAliasDeclaration[id.name='ProjectLifecycleState']",
+            message:
+              'Derive lifecycle state from contract types instead of redefining local unions.',
+          },
+        ],
+      },
+    },
+  ],
 };

@@ -3,12 +3,12 @@ import Link from 'next/link';
 
 import { Button } from '@/ui/shadcn/ui/button';
 import { formatTimestamp } from '@/shared/lib/date';
-import type { DeployJob } from '@/shared/types';
+import type { DeployJobViewModel } from '@/shared/types';
 
 import { DeployJobStatusBadge } from './status-badges';
 
 interface DeployJobRowProps {
-  job: DeployJob;
+  job: DeployJobViewModel;
 }
 
 export const DeployJobRow = ({ job }: DeployJobRowProps) => {

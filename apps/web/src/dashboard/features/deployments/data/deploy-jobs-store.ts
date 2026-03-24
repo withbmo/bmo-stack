@@ -1,6 +1,6 @@
 import { DEPLOY_JOB_STATUS, DEPLOY_JOB_STEP_STATUS } from '@pytholit/contracts';
 
-import type { DeployJob, DeployJobStep, DeployStepStatus } from '@/shared/types';
+import type { DeployJobStep, DeployJobViewModel, DeployStepStatus } from '@/shared/types';
 
 const BASE_STEPS: DeployJobStep[] = [
   { key: 'validate', title: 'Validate config', status: DEPLOY_JOB_STEP_STATUS.QUEUED },
@@ -10,7 +10,7 @@ const BASE_STEPS: DeployJobStep[] = [
   { key: 'finalize', title: 'Finalize', status: DEPLOY_JOB_STEP_STATUS.QUEUED },
 ];
 
-let deployJobs: DeployJob[] = [
+let deployJobs: DeployJobViewModel[] = [
   {
     id: 'job-001',
     projectId: 'p-001',
@@ -59,12 +59,15 @@ export const getDeployJobs = () => deployJobs;
 
 export const getDeployJobById = (jobId: string) => deployJobs.find(job => job.id === jobId) || null;
 
-export const createDeployJob = (job: DeployJob) => {
+export const createDeployJob = (job: DeployJobViewModel) => {
   deployJobs = [job, ...deployJobs];
   notify();
 };
 
-export const updateDeployJob = (jobId: string, updater: (job: DeployJob) => DeployJob) => {
+export const updateDeployJob = (
+  jobId: string,
+  updater: (job: DeployJobViewModel) => DeployJobViewModel
+) => {
   deployJobs = deployJobs.map(job => (job.id === jobId ? updater(job) : job));
   notify();
 };
