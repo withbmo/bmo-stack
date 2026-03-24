@@ -52,5 +52,17 @@ module.exports = {
     ],
     'simple-import-sort/imports': 'warn',
     'simple-import-sort/exports': 'warn',
+    'no-restricted-imports': [
+      'error',
+      {
+        patterns: [
+          {
+            group: ['**/packages/**/dist/**', 'packages/**/dist/**'],
+            message:
+              'Do not import from workspace package dist output. Use the package entrypoint (for example @pytholit/<package>) instead.',
+          },
+        ],
+      },
+    ],
   },
 };

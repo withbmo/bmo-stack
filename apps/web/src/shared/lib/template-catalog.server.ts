@@ -5,7 +5,7 @@ import path from 'node:path';
 
 import type { Template } from '@/shared/types';
 
-import { parseProjectSpec, validateProjectSpec } from '../../../../../packages/project-spec/dist/index.js';
+import { parseProjectSpec, validateProjectSpec } from '@pytholit/project-spec';
 
 function inferTags(spec: ReturnType<typeof validateProjectSpec>): string[] {
   const tags = new Set<string>();

@@ -72,6 +72,7 @@ pnpm templates:validate
 - Call out any migrations, follow-up work, or breaking changes
 - Include screenshots for UI changes when helpful
 - Keep PRs small enough to review safely
+- Pull requests are validated by CI (`.github/workflows/ci.yml`) with lint and type-check gates
 
 ## Security
 

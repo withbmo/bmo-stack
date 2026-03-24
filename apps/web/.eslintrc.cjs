@@ -6,6 +6,13 @@ module.exports = {
     'no-restricted-imports': [
       'error',
       {
+        patterns: [
+          {
+            group: ['**/packages/**/dist/**', 'packages/**/dist/**'],
+            message:
+              'Do not import from workspace package dist output. Use the package entrypoint (for example @pytholit/<package>) instead.',
+          },
+        ],
         paths: [
           {
             name: '@pytholit/ui',
