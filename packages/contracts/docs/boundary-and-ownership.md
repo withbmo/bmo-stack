@@ -34,7 +34,6 @@ Those belong in:
 - `apps/api` for server-only runtime and controller concerns
 - `packages/validation` for validation schemas and DTO support
 - `apps/web` for UI/view-model state and client-only helpers
-- `packages/ui` for reusable component-facing types
 
 ## Ownership model
 

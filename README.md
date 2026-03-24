@@ -14,7 +14,6 @@ pytholit-v2/
 │   ├── contracts/         # Shared TypeScript types
 │   ├── db/                # Prisma schema & client
 │   ├── project-spec/      # TOML project spec parser/validator/planner
-│   ├── ui/                # Design system
 │   └── validation/        # Zod schemas & DTOs
 ├── templates/             # Full starter projects with pytholit.toml
 └── .devcontainer/         # Reproducible development environment

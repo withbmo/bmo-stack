@@ -57,16 +57,6 @@ Avoid:
 - putting page-local state types into `@pytholit/contracts`
 - forcing UI-only models to match backend wire shapes when the UI needs extra fields
 
-## In `packages/ui`
-
-Use contracts only for values that must match application runtime semantics, such as deployment statuses.
-
-Example:
-
-```ts
-import type { DeployJobStatus } from '@pytholit/contracts';
-```
-
 ## Adding a New Contract
 
 When adding a new export:

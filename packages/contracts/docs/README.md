@@ -54,7 +54,6 @@ Current main consumers:
 
 - `apps/api` for controller/service response typing
 - `apps/web` for API response typing and deployment status constants
-- `packages/ui` for deployment status typing
 
 ## Guiding Rule
 
