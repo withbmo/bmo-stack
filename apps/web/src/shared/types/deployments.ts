@@ -1,24 +1,11 @@
 import type {
   DeployJobStep as ContractDeployJobStep,
   DeployJobStatus,
-  DeployJobStepStatus,
 } from '@pytholit/contracts';
 
 export type DeploymentStatus = 'deploying' | 'live' | 'failed' | 'stopped';
 
-export interface Deployment {
-  id: string;
-  projectId: string;
-  projectName: string;
-  status: DeploymentStatus;
-  region: string;
-  deployedAt: string;
-  url?: string;
-  buildDuration?: number;
-}
-
-export type { DeployJobStatus, DeployJobStepStatus };
-export type DeployStepStatus = DeployJobStepStatus;
+export type { DeployJobStatus,  };
 
 export type DeployJobStep = ContractDeployJobStep;
 

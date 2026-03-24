@@ -22,10 +22,3 @@ export interface ProjectConfig {
   envVars: { id: string; key: string; value: string }[];
   autoDeploy: boolean;
 }
-
-export interface ActivityLog {
-  id: string;
-  message: string;
-  timestamp: string;
-  type: 'info' | 'success' | 'warning' | 'error';
-}

@@ -65,21 +65,6 @@ export async function createProject(
   return mapProject(project);
 }
 
-export async function updateProject(
-  token: string | undefined,
-  projectId: string,
-  payload: { name?: string; slug?: string; repo_export_enabled?: boolean }
-): Promise<ProjectViewModel> {
-  const project = snakeToCamel(
-    await apiRequest<ApiProject>(`${PROJECTS_PREFIX}/${projectId}`, {
-      method: 'PATCH',
-      token,
-      body: JSON.stringify(payload),
-    })
-  );
-  return mapProject(project);
-}
-
 export async function archiveProject(
   token: string | undefined,
   projectId: string,

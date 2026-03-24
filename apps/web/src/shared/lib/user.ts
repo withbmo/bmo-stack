@@ -1,17 +1,17 @@
-import type { OAuthOnboardingStatusResponse, User } from '@pytholit/contracts';
+import type { User } from '@pytholit/contracts';
 
 import { API_V1, apiRequest } from './client';
 
 export type { User };
 
-export interface UserProfileUpdate {
+interface UserProfileUpdate {
   username?: string;
   firstName?: string;
   lastName?: string;
   bio?: string | null;
 }
 
-export interface CompleteOAuthOnboardingInput {
+interface CompleteOAuthOnboardingInput {
   username: string;
   firstName: string;
   lastName: string;
@@ -57,7 +57,7 @@ export async function getCurrentUser(token?: string): Promise<User> {
   }
 }
 
-export function invalidateUserCache(): void {
+function invalidateUserCache(): void {
   meCache = null;
 }
 
@@ -91,15 +91,6 @@ export async function deleteAvatar(token?: string): Promise<User> {
   invalidateUserCache();
   return apiRequest<User>(`${USERS_PREFIX}/me/avatar`, {
     method: 'DELETE',
-    token,
-  });
-}
-
-export async function getOAuthOnboardingStatus(
-  token?: string
-): Promise<OAuthOnboardingStatusResponse> {
-  return apiRequest<OAuthOnboardingStatusResponse>(`${USERS_PREFIX}/me/oauth-onboarding`, {
-    method: 'GET',
     token,
   });
 }

@@ -2,7 +2,7 @@ import { cn } from '@/ui';
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-export interface DashboardPageHeaderProps {
+interface DashboardPageHeaderProps {
   badge?: {
     icon: LucideIcon;
     label: string;

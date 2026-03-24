@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/shared/auth';
 import { FullScreenLoader } from '@/shared/components/FullScreenLoader';
 
-export const PageLoader = () => <FullScreenLoader label="Loading..." />;
+const PageLoader = () => <FullScreenLoader label="Loading..." />;
 
 /**
  * Protects dashboard routes: requires auth, redirects to login if invalid.

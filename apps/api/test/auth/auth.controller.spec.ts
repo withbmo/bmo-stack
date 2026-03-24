@@ -1,6 +1,6 @@
 import { ConfigService } from '@nestjs/config';
-
 import type { PasswordStrengthResponse } from '@pytholit/contracts';
+
 import { AuthController } from '../../src/auth/auth.controller';
 
 describe('AuthController', () => {

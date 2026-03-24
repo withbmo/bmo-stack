@@ -1,0 +1,8 @@
+{
+  "ignore": [
+    "apps/web/src/ui/components/**",
+    "apps/web/src/ui/**",
+    "apps/web/src/components/**",
+    "templates/**"
+  ]
+}

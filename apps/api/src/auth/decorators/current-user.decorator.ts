@@ -31,4 +31,4 @@ export const CurrentUser = createParamDecorator<
 });
 
 // Re-export type for convenience when importing decorator
-export type { AuthenticatedUser } from '../auth.types.js';
+;

@@ -1,5 +1,5 @@
 /** Central OAuth provider registry used across auth config and plugins. */
-export interface OAuthProviderDef {
+interface OAuthProviderDef {
   clientIdKey: string;
   clientSecretKey: string;
   callbackUrlKey?: string;

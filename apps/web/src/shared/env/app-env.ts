@@ -1,8 +1,8 @@
 import { env } from '@/env';
 
-export type AppEnvName = 'development' | 'production';
+type AppEnvName = 'development' | 'production';
 
-export interface WebAppEnv {
+interface WebAppEnv {
   name: AppEnvName;
   isDevelopment: boolean;
   isProduction: boolean;

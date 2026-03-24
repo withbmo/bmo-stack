@@ -2,7 +2,7 @@ import { EmptyState, LoadingState } from '@/ui/blocks';
 
 import { Button } from '@/ui/shadcn/ui/button';
 
-export interface AsyncStateProps {
+interface AsyncStateProps {
   isLoading: boolean;
   error?: unknown;
   empty?: boolean;

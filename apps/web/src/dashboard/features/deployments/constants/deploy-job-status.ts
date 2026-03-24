@@ -4,7 +4,7 @@ export type DeployJobStatusFilter =
   | 'all'
   | (typeof DEPLOY_JOB_STATUS)[keyof typeof DEPLOY_JOB_STATUS];
 
-export interface DeployJobStatusTab {
+interface DeployJobStatusTab {
   value: DeployJobStatusFilter;
   label: string;
 }

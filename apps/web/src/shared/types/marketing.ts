@@ -1,24 +1,4 @@
-export interface Feature {
-  id: string;
-  title: string;
-  description: string;
-  pythonCode: string;
-  icon: string;
-}
 
-export interface Stat {
-  label: string;
-  value: string;
-  detail?: string;
-}
-
-export interface WorkflowStep {
-  id: string;
-  title: string;
-  description: string;
-  meta: string;
-  icon: string;
-}
 
 export type ResourceType = 'readme' | 'skill';
 

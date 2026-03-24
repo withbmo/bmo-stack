@@ -10,7 +10,7 @@ interface UseAuthFormOptions {
 }
 
 /** Username allowed: 3–30 chars, only a–z, A–Z, 0–9, _ */
-export const USERNAME_REGEX = AUTH_CONSTANTS.USERNAME_REGEX;
+const USERNAME_REGEX = AUTH_CONSTANTS.USERNAME_REGEX;
 
 interface UseAuthFormReturn {
   // Form fields

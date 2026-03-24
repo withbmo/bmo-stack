@@ -3,7 +3,7 @@ import type { ConfigService } from '@nestjs/config';
 import { OAUTH_PROVIDERS, type OAuthProviderKey } from '../auth-providers.config.js';
 
 /** Checks if an OAuth provider is fully configured with client ID and secret. */
-export const isProviderEnabled = (configService: ConfigService, key: OAuthProviderKey): boolean => {
+const isProviderEnabled = (configService: ConfigService, key: OAuthProviderKey): boolean => {
   const def = OAUTH_PROVIDERS[key];
   return (
     Boolean(configService.get<string>(def.clientIdKey)) &&

@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import {
   createProjectPlans,
   parseProjectSpec,
-  validateProjectSpec,
   type ProjectSpec,
+  validateProjectSpec,
 } from '@pytholit/project-spec';
 
 @Injectable()

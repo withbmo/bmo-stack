@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+
 
 export interface FileNode {
   id: string;
@@ -50,19 +50,4 @@ export interface AgentContext {
   selection?: { file: string; from: number; to: number };
 }
 
-export interface ContextMenuState {
-  visible: boolean;
-  x: number;
-  y: number;
-  nodeId: string | null;
-  nodeType: 'file' | 'folder' | null;
-}
-
 export type ViewType = 'ide' | 'web' | 'api' | 'status' | 'database' | 'config';
-
-export interface TechStackOption {
-  id: string;
-  name: string;
-  icon: ReactNode;
-  description: string;
-}

@@ -9,11 +9,11 @@ const resourceConfigSchema = z
 const metadataSchema = z.object({}).catchall(z.string()).default({});
 const injectSchema = z.object({}).catchall(z.string().min(1));
 
-export const runtimeSchema = z.object({
+const runtimeSchema = z.object({
   modules: z.array(z.string().min(1)).default([]),
 }).default({ modules: [] });
 
-export const deploymentSchema = z.object({
+const deploymentSchema = z.object({
   target: z.string().min(1).default('autoscale'),
   router: z.string().min(1).default('application'),
   defaultEnvironment: z.string().min(1).default('development'),
@@ -23,7 +23,7 @@ export const deploymentSchema = z.object({
   defaultEnvironment: 'development',
 });
 
-export const artifactSchema = z.object({
+const artifactSchema = z.object({
   id: z.string().min(1),
   kind: z.string().min(1),
   path: z.string().min(1),
@@ -38,7 +38,7 @@ export const artifactSchema = z.object({
   env: stringRecordSchema,
 });
 
-export const serviceSchema = z.object({
+const serviceSchema = z.object({
   id: z.string().min(1),
   artifact: z.string().min(1),
   kind: z.string().min(1),
@@ -62,14 +62,14 @@ export const serviceSchema = z.object({
   }).optional(),
 });
 
-export const routeSchema = z.object({
+const routeSchema = z.object({
   service: z.string().min(1),
   path: z.string().min(1),
   stripPrefix: z.boolean().default(false),
   host: z.string().min(1).optional(),
 });
 
-export const resourceSchema = z.object({
+const resourceSchema = z.object({
   id: z.string().min(1),
   kind: z.string().min(1),
   mode: z.string().min(1).default('managed'),
@@ -78,14 +78,14 @@ export const resourceSchema = z.object({
   config: resourceConfigSchema,
 });
 
-export const bindingSchema = z.object({
+const bindingSchema = z.object({
   service: z.string().min(1),
   resource: z.string().min(1),
   whenEnabled: z.boolean().default(true),
   inject: injectSchema,
 });
 
-export const environmentSchema = z.object({
+const environmentSchema = z.object({
   domain: z.string().min(1).optional(),
   env: stringRecordSchema,
 }).default({ env: {} });

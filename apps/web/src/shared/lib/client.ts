@@ -1,6 +1,6 @@
 import { getWebAppEnv } from '@/shared/env/app-env';
 
-export const API_BASE = getWebAppEnv().apiBase;
+const API_BASE = getWebAppEnv().apiBase;
 export const API_V1 = "/api/v1";
 
 export interface ApiError {

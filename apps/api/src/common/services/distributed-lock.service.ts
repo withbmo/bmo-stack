@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Redlock } from '@sesamecare-oss/redlock';
 import { Redis } from 'ioredis';
 
-export type LockRunResult<T> =
+type LockRunResult<T> =
   | { acquired: false }
   | { acquired: true; result: T };
 

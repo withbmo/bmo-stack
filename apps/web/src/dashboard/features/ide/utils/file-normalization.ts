@@ -33,10 +33,3 @@ export function normalizeFileTree(initialData: FileNode[]): NormalizedFileState 
   visit(initialData, null);
   return { files, fileContents };
 }
-
-/** Root-level file IDs (where parentId === null). */
-export function getRootIds(files: Record<string, FileMetadata>): string[] {
-  return Object.values(files)
-    .filter(f => f.parentId === null)
-    .map(f => f.id);
-}

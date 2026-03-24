@@ -1,7 +1,7 @@
 import { cn } from '@/ui';
 import type { ReactNode } from 'react';
 
-export interface PageLayoutProps {
+interface PageLayoutProps {
   children: ReactNode;
   className?: string;
 }

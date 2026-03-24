@@ -2,8 +2,8 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from 
 import type { DeployJob } from '@pytholit/contracts';
 
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
-import { CreateDeployJobDto } from './dto/create-deploy-job.dto.js';
 import { DeployJobsService } from './deploy-jobs.service.js';
+import { CreateDeployJobDto } from './dto/create-deploy-job.dto.js';
 
 /**
  * Deploy Jobs Controller

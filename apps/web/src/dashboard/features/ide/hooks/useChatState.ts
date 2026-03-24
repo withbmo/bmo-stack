@@ -2,14 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { AgentContext, AgentMode, ChatMessage, FileNode, ToolStep } from '@/shared/types';
 
-const LLM_OPTIONS = [
-  { id: 'claude', label: 'Claude' },
-  { id: 'gpt', label: 'GPT-4o' },
-  { id: 'gemini', label: 'Gemini' },
-  { id: 'mistral', label: 'Mistral' },
-] as const;
-
-export { LLM_OPTIONS };
+;
 
 export function useChatState(activeFile: FileNode | null) {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([

@@ -6,7 +6,7 @@ import { useIdeStore } from '../stores/ide-store';
 /**
  * Build a FileNode-like object from normalized state (for consumers that expect legacy shape, e.g. useChatState).
  */
-export function getFileFromNormalized(
+function getFileFromNormalized(
   files: Record<string, FileMetadata>,
   fileContents: Record<string, string>,
   id: string

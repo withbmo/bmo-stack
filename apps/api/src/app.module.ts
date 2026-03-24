@@ -13,8 +13,8 @@ import { CommonModule } from './common/common.module.js';
 import { validateEnv } from './config/env.js';
 import { DatabaseModule } from './database/database.module.js';
 import { DeployJobsModule } from './deploy-jobs/deploy-jobs.module.js';
-import { ProjectsModule } from './projects/projects.module.js';
 import { ProjectSpecModule } from './project-spec/project-spec.module.js';
+import { ProjectsModule } from './projects/projects.module.js';
 import { UsersModule } from './users/users.module.js';
 import { WizardModule } from './wizard/wizard.module.js';
 

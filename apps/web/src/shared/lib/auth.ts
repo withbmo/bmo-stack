@@ -4,8 +4,7 @@ import type { ApiError } from './client';
 import { API_V1, apiRequest, getApiErrorMessage, getApiFieldErrors } from './client';
 
 const AUTH_PREFIX = `${API_V1}/auth`;
-const AUTH_FLOW_PREFIX = `${API_V1}/auth-flow`;
-export type OAuthProvider = EnabledOAuthProvidersResponse['providers'][number];
+type OAuthProvider = EnabledOAuthProvidersResponse['providers'][number];
 const OTP_TTL_MS = 10 * 60 * 1000;
 const OTP_COOLDOWN_MS = 60 * 1000;
 
@@ -45,26 +44,11 @@ export async function signInWithOAuth(provider: OAuthProvider, next?: string): P
   }
 }
 
-/**
- * @deprecated Use signInWithOAuth() instead which properly initiates the OAuth flow
- */
-export function getOAuthLoginUrl(_provider: OAuthProvider, _next?: string): string {
-  // Better Auth uses POST to /sign-in/social, not a GET redirect
-  // This function is kept for backwards compatibility but won't work correctly
-  console.warn('getOAuthLoginUrl is deprecated. Use signInWithOAuth() instead.');
-  return `${AUTH_PREFIX}/sign-in/social`;
-}
-
-export interface Token {
-  access_token: string;
-  token_type: 'bearer';
-}
-
-export type AuthFlowStatus =
+type AuthFlowStatus =
   | { status: 'authenticated' }
   | { status: 'otp_required'; otpExpiresAt: string; nextRequestAt: string };
 
-export type OtpSendResponse = {
+type OtpSendResponse = {
   status: 'sent';
   otpExpiresAt: string;
   nextRequestAt: string;
@@ -200,10 +184,3 @@ export async function logout(): Promise<{ message: string }> {
 
 export { getApiErrorMessage, getApiFieldErrors };
 export type { ApiError };
-
-export async function getEnabledOAuthProviders(): Promise<OAuthProvider[]> {
-  const response = await apiRequest<EnabledOAuthProvidersResponse>(`${AUTH_FLOW_PREFIX}/providers`, {
-    method: 'GET',
-  });
-  return response.providers;
-}

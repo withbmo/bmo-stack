@@ -6,7 +6,7 @@ const DELIMITER = ':';
 const HKDF_INFO = 'pytholit-token-encryption-v1';
 
 /** Versioned prefix that unambiguously marks an encrypted value. */
-export const ENCRYPTED_PREFIX = 'enc:v1:';
+const ENCRYPTED_PREFIX = 'enc:v1:';
 
 /** Returns true if the value was produced by `encryptToken`. */
 export function isEncrypted(value: string): boolean {
