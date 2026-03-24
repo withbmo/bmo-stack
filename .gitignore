@@ -76,3 +76,8 @@ packages/db/src/generated/
 
 # Local cache
 .pnpm-store/
+
+# Deadcode analysis temp outputs
+.knip-report.json
+.knip-unused-files.txt
+.web-typecheck.log
