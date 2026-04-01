@@ -1,0 +1,26 @@
+.git
+.DS_Store
+
+# Dependencies / caches
+node_modules
+**/node_modules
+.pnpm-store
+.turbo
+**/.turbo
+
+# Build outputs
+dist
+**/dist
+build
+**/build
+coverage
+**/coverage
+.next
+**/.next
+
+# Logs / temp
+*.log
+.knip-report.json
+.knip-unused-files.txt
+.web-typecheck.log
+*.tsbuildinfo

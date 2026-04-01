@@ -7,18 +7,16 @@ node_modules/
 coverage/
 *.lcov
 
-# Next.js
+# Build outputs (Next.js, Vite, etc.)
 .next/
 out/
-build/
 dist/
-
-# Production
-/build
+/build/
 
 # Misc
 .DS_Store
 *.pem
+*.log
 
 # Debug
 npm-debug.log*
@@ -26,11 +24,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# Local env files
+# Local env files (keep .env.example committed)
 .env
-.env*.local
-.env.development
-.env.production
+.env.*
+!.env.example
+!**/.env.example
 
 # Vercel
 .vercel
@@ -53,20 +51,6 @@ prisma/migrations/
 *~
 .cursor/
 .claude/
-
-# Terraform
-**/.terraform/*
-*.tfstate
-*.tfstate.*
-*.tfplan
-*tfplan*
-crash.log
-override.tf
-override.tf.json
-*_override.tf
-*_override.tf.json
-.terraformrc
-terraform.rc
 
 # Prisma generated client (regenerated via `pnpm db:generate`)
 packages/db/src/generated/

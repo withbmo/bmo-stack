@@ -1,4 +1,4 @@
-.PHONY: help dev install check templates-validate db-migrate db-push db-studio kill-ports
+.PHONY: help dev install check clean templates-validate db-migrate db-push db-studio kill-ports
 
 # ── Default ────────────────────────────────────────────────────────────────────
 help:
@@ -6,6 +6,7 @@ help:
 	@echo "  make dev          Run all apps in watch mode (turbo dev)"
 	@echo "  make install      Install all dependencies"
 	@echo "  make check        Run the main repo quality checks"
+	@echo "  make clean        Remove local build artifacts/caches"
 	@echo "  make templates-validate  Validate all starter templates"
 	@echo "  make db-migrate   Run Prisma migrations"
 	@echo "  make db-push      Push the current Prisma schema to a fresh local database"
@@ -22,6 +23,9 @@ install:
 
 check:
 	pnpm check
+
+clean:
+	pnpm clean
 
 templates-validate:
 	pnpm templates:validate
